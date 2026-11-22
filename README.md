@@ -13,6 +13,7 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/Rayjk123/decision-life-sim/actions/workflows/verify.yml"><img src="https://github.com/Rayjk123/decision-life-sim/actions/workflows/verify.yml/badge.svg" alt="verify"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white" alt="Node 20+">
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
