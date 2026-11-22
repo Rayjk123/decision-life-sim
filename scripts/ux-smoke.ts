@@ -61,6 +61,17 @@ await page.locator('#gotit').click();
 check('world selector has a world', (await page.locator('#world option').count()) > 0);
 check('headline KPIs render', ((await page.locator('#kpis').innerText()).trim().length) > 20);
 check('archetype chart draws', (await page.locator('#chart svg, #chart canvas').count()) > 0 && (await page.locator('#chart svg *, #chart canvas').count()) > 3);
+const ticks = await page.locator('#chart svg > text[text-anchor="end"]').evaluateAll((els) => els.map((e) => e.textContent ?? ''));   // innerText is empty for SVG text
+const val = (t: string) => { const m = /\$([\d.]+)([kM]?)/.exec(t); return m ? Number(m[1]) * (m[2] === 'M' ? 1e6 : m[2] === 'k' ? 1e3 : 1) : NaN; };
+const vs = ticks.map(val), step = vs[1] - vs[0], mant = step / 10 ** Math.floor(Math.log10(step));
+check('chart ticks are round and evenly spaced', vs.length >= 3 && vs.every((v, i) => Math.abs(v - i * step) < step * 0.02) && [1, 2, 2.5, 5].some((f) => Math.abs(mant - f) < 0.01), ticks.join(' '));
+const chartBox = await page.locator('#chart').boundingBox();
+if (chartBox) await page.mouse.move(chartBox.x + chartBox.width * 0.6, chartBox.y + chartBox.height * 0.5);
+await page.waitForTimeout(150);
+const tipText = (await page.locator('#tip').isVisible()) ? await page.locator('#tip').innerText() : '';
+check('hovering the chart shows every archetype that year', /Year \d+/.test(tipText) && tipText.split('\n').length >= 6, tipText.slice(0, 80));
+await page.screenshot({ path: join(shots, '1b-chart-hover.png') });
+await page.mouse.move(1, 1);
 check('chart legend lists archetypes', (await page.locator('#legend').innerText()).split(/\n|  /).filter(Boolean).length >= 5);
 const leaders = await page.locator('#leaders tr.click').count();
 check('leaderboard has rows', leaders >= 5, `${leaders} rows`);

@@ -36,6 +36,9 @@ pre{white-space:pre-wrap;font-size:12px;background:#f7f5f0;border-radius:6px;pad
 .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px}
 .legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mute);margin-top:6px}
 svg text{font-size:11px;fill:var(--mute)}
+#chart{position:relative;touch-action:pan-y}
+#tip{position:absolute;pointer-events:none;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.08);padding:6px 9px;font-size:12px;min-width:170px;display:none;z-index:2}
+#tip .r{display:flex;justify-content:space-between;gap:12px;white-space:nowrap}#tip .r b{font-weight:600;font-variant-numeric:tabular-nums}
 #person{position:fixed;inset:0 0 0 auto;width:min(460px,100%);background:#fff;border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.08);padding:18px;overflow:auto;display:none;z-index:5}
 #person.open{display:block}
 .close{float:right}
@@ -132,10 +135,14 @@ async function drawChart() {
   if (!years.length) { el.innerHTML = '<p class="empty">Charts appear after the first full year.</p>'; return; }
   const W = el.clientWidth, H = el.clientHeight, L = 52, B = 22, T = 8;
   const keys = Object.keys(COLORS);
-  const max = Math.max(1, ...years.flatMap((y) => keys.map((k) => y.byArchetype[k]?.medianNetWorth ?? 0)));
+  const peak = Math.max(1, ...years.flatMap((y) => keys.map((k) => y.byArchetype[k]?.medianNetWorth ?? 0)));
+  // Round ticks: a 1/2/2.5/5 x 10^n step, about four intervals, axis top rounded up to a tick
+  const raw = peak / 4, mag = 10 ** Math.floor(Math.log10(raw));
+  const stepV = [1, 2, 2.5, 5, 10].map((f) => f * mag).find((v) => v >= raw);
+  const max = Math.ceil(peak / stepV) * stepV;
   const x = (i) => L + (i / Math.max(1, years.length - 1)) * (W - L - 8);
   const y = (v) => T + (1 - Math.max(0, v) / max) * (H - T - B);
-  const ticks = [0, .25, .5, .75, 1].map((f) => f * max);
+  const ticks = Array.from({ length: Math.round(max / stepV) + 1 }, (_, i) => i * stepV);
   let s = `<svg width="${W}" height="${H}" role="img" aria-label="Median net worth by archetype over time">`;
   for (const t of ticks) s += `<line x1="${L}" x2="${W-8}" y1="${y(t)}" y2="${y(t)}" stroke="#eeebe4"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${money(t)}</text>`;
   const step = Math.max(1, Math.round(years.length / 6));
@@ -144,7 +151,25 @@ async function drawChart() {
     const pts = years.map((yr, i) => yr.byArchetype[k] ? `${x(i)},${y(yr.byArchetype[k].medianNetWorth)}` : null).filter(Boolean);
     if (pts.length > 1) s += `<polyline fill="none" stroke="${COLORS[k]}" stroke-width="2" points="${pts.join(' ')}"/>`;
   }
-  el.innerHTML = s + '</svg>';
+  s += `<line id="guide" x1="0" x2="0" y1="${T}" y2="${H-B}" stroke="#9aa0ad" stroke-dasharray="3 3" visibility="hidden"/>`;
+  s += `<rect id="hover" x="${L}" y="${T}" width="${W-L-8}" height="${H-T-B}" fill="transparent"/>`;
+  el.innerHTML = s + '</svg><div id="tip" role="status"></div>';
+  // Hover/touch readout: nearest year, every archetype's median, highest first
+  const hover = el.querySelector('#hover'), tip = el.querySelector('#tip'), guide = el.querySelector('#guide');
+  const show = (ev) => {
+    const box = el.getBoundingClientRect();
+    const px = ev.clientX - box.left;
+    const i = Math.max(0, Math.min(years.length - 1, Math.round(((px - L) / (W - L - 8)) * (years.length - 1))));
+    const yr = years[i];
+    const rows = keys.filter((k) => yr.byArchetype[k]).sort((a, b) => yr.byArchetype[b].medianNetWorth - yr.byArchetype[a].medianNetWorth);
+    tip.innerHTML = `<div class="mute" style="margin-bottom:3px">Year ${yr.year} · median net worth</div>` + rows.map((k) => `<div class="r"><span><i class="dot" style="background:${COLORS[k]}"></i>${LABELS[k]}</span><b>${money(yr.byArchetype[k].medianNetWorth)}</b></div>`).join('');
+    guide.setAttribute('x1', x(i)); guide.setAttribute('x2', x(i)); guide.setAttribute('visibility', 'visible');
+    tip.style.display = 'block';
+    const left = x(i) + 12 + tip.offsetWidth > W ? x(i) - tip.offsetWidth - 12 : x(i) + 12;
+    tip.style.left = `${Math.max(0, left)}px`; tip.style.top = `${T}px`;
+  };
+  const hide = () => { tip.style.display = 'none'; guide.setAttribute('visibility', 'hidden'); };
+  hover.addEventListener('pointermove', show); hover.addEventListener('pointerdown', show); hover.addEventListener('pointerleave', hide);
   $('legend').innerHTML = keys.map((k) => `<span><i class="dot" style="background:${COLORS[k]}"></i>${LABELS[k]}</span>`).join('');
 }
 
