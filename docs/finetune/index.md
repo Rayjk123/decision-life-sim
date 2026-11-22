@@ -67,8 +67,8 @@ Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<na
 
 | Run | Changes vs E01 | Question it answers | Status |
 |---|---|---|---|
-| E01 | heuristic labels (baseline) | the baseline | running |
-| E02 | d3 hard labels | does distilling a decision model beat rules? | queued |
+| E01 | heuristic labels (baseline) | the baseline | ✅ 77.6% / record 43% |
+| E02 | d3 hard labels | does distilling a decision model beat rules? | running |
 | E03 | d3 **soft** labels | do full probabilities teach more than top picks? | queued |
 | E04 | Haiku v1.2 labels (needs train batches 16–29 + val 30–34 labelled) | in-character labels vs d3 | needs labels |
 | E05 | Haiku v1.1 (noisy) labels, same states as E04 | how much does hidden label noise cost? | needs E04 |
@@ -112,8 +112,9 @@ Plus a **glossary**, a **study guide** (reading order, self-check questions with
 | 12 | 2026-11-22 | Haiku relabel under rubric v1.2 | ✅ | Batches 1–15 relabelled by 5 fresh Haiku agents. **Cushion consistency: v1.1 40/113 (35%), agent-dependent from 0% to 100% → v1.2 110/113 (97%), consistent in every batch.** One clarified sentence removed the hidden label noise. New gap found: whether to *sell a rental to restore a zero-cash cushion* (Haiku: no; Opus test labels: yes) → next rubric note. Check: `research/finetune/cushion-consistency.cjs` |
 | 11b | 2026-11-22 | smoke run results | ✅ | **Pipeline works end to end** (load → LoRA → train → evaluate → calibrate → save, over SSH). 60 steps (≈ 480 decisions, 13% of an epoch) in **4.7 min** (1.7 decisions/s), **peak VRAM 2.7 GB** of 12 (4B will fit; bigger batches possible). Training loss 1.81 → 1.28, validation 1.52 → 1.35. **Test accuracy 49.2% per question** (chance ≈ 15%), record accuracy 11.7%. **Calibration ECE 0.085 → 0.064**; temperatures: choice 0.88 (sharpened), score 1.11 (softened). Bug in my script: the per-question-type breakdown lumps everything (Clef items hold all of a decision's questions); replacing it with an evaluator that scores each question and archetype separately. Full-run budget at this speed: ~75–80 min for 2 epochs of 3,678 decisions at 1,024 tokens |
 | 13 | 2026-11-22 | teachers vs Opus gold | 📊 | Before training anything: how well does each *teacher* match the Opus gold labels (80 states)? **Move: heuristic 55%, d3 55%, Haiku 78%.** Spend level exact: 28% / 35% / 70%; invest share exact: 33% / 32% / 17% (that question is noisy for everyone). **d3 is no better a teacher of acting in character than the hand-written heuristic.** Prediction: students trained on d3 or heuristic labels top out near 55% on gold moves; a Haiku-trained student could approach ~78%. Script: `research/finetune/teacher-agreement.cjs` |
-| 14 | 2026-11-22 | E01 started | ⏳ | 0.8B on heuristic labels, 2 epochs at 2,048 tokens: the baseline |
+| 14 | 2026-11-22 | E01 started | ✅ | 0.8B on heuristic labels, 2 epochs at 2,048 tokens: the baseline |
 | 15 | 2026-11-22 | Opus gold test batch 36 + Haiku train complete | ✅ | Gold test set now **80 states** (batches 35–36). With 120 Opus labels, teacher agreement on moves: **heuristic 62%, d3 59%, Haiku 78%** (Haiku measured on 40). The heuristic/d3 tie holds as the sample grows. Haiku train set complete: **1,200 train + 40 val** under v1.2. Rubric v1.3 candidates raised by labellers: selling a rental to rebuild a zero-cash cushion; whether "under 25 → pay student debt" overrides a "change nothing" fallback |
+| 16 | 2026-11-22 | **E01 result** (0.8B, heuristic labels, 2 epochs, 2,048 tokens) | ✅ | **Test 77.6% per question** (smoke 49%), **record accuracy 43.1%** (all of a decision's questions right; smoke 12%), **ECE 0.022**. At 2,048 tokens: 0 truncated, 0 skipped (smoke: 68% truncated). 922 steps in **22.6 min** (1.47 s/step; faster than the smoke run, whose time included one-off compilation), peak VRAM 2.5 GB. Validation loss 0.935 → 0.561, flat over the last ~200 steps (900 and 922 both 0.561): **2 epochs is about where it stops learning** (E08 tests 1 vs 4). Training loss ends at ~0.45–0.52, a little under validation: mild, healthy gap, no overfitting yet. Caveat: this is accuracy at *imitating the heuristic*; agreement with gold labels comes from the evaluator (next row) |
 
 ## What the source says (unsloth 2026.11.9, `unsloth/models/decision.py`)
 
