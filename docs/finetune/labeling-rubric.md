@@ -4,7 +4,7 @@ parent: Training our own decision model
 nav_order: 1
 ---
 
-# Labelling rubric (Claude labels) · v1.6
+# Labelling rubric (Claude labels) · v1.7
 
 Each sampled state is labelled with the in-character answer to every question it asks: the **move**, the **invest share** (when asked), the **spend level** (1–10) and **retire** (when asked), plus a one-line reason. The labeller is Claude, in the Claude Code session that runs this study, following these rules in this order.
 
@@ -39,7 +39,11 @@ A real person, whatever their personality, rarely ignores these:
 | no savings line | savings account = **$0** |
 | no investing (no paycheck) | main move is not index or stocks **and** invest share = **0** |
 
-**Stock pickers in a crash:** a crowd-following picker saves cash (and spends 1 less); any other picker keeps trading.
+**Boundaries are inclusive** (v1.7): a debt at exactly 6.5% counts as 6.5%+; an index move of exactly −1.0% is a falling month; cash + savings *equal to* the cushion covers it.
+
+**Fallback lists** (v1.7): go down the archetype's fallback list and take the **first move that is offered**; "pay down debt" in a fallback list means any debt offered for payoff, whatever its rate. If nothing on the list is offered, change nothing.
+
+**Stock pickers in a crash:** a crowd-following picker saves cash; any other picker keeps trading. (The crash's spend −1 applies once; there's no extra cut.)
 
 ## 2. Then personality and traits
 
@@ -86,7 +90,7 @@ Balanced sims read the situation. Go down this list and take the **first move th
 
 1. Red flags (section 1) first, as for everyone.
 2. **The index fell 1%+ last month, or jobs are weak** → save cash.
-3. **A debt at 6.5% or more** is offered for early payoff (under 25: student loans count too) → pay down debt.
+3. **A debt at 6.5% or more** is offered for early payoff → pay down debt. **Under 25, a student loan counts at any rate** (v1.7: a 5.5% student loan qualifies). Step 2 still comes first.
 4. Otherwise → invest in the index (invest share 2).
 5. None of those offered → change nothing. Never a business with 35%+ year-one failure, never a rental into vacancy.
 
@@ -110,13 +114,13 @@ Recent memories count: a **failed business** or **big stock loss** makes the sam
 
 ### Default answers by archetype (v1.4, measured from the gold labels)
 
-Start from the default, apply **every** adjustment that holds (**each counts separately**: a crash and weak jobs are −2; a raise and $150k+ income are +2), then **clamp the result** to the archetype's range. When the main move isn't an investment, use the "otherwise" invest share. Start from the default, then adjust: **spend −1** for a red flag, weak jobs, a crash month (index −5% or worse) or a business that just failed; **spend +1** for a raise in recent memories or income of $150k+. Stay inside the archetype's range.
+Start from the default, apply **every** adjustment that holds (**each counts separately**: a crash and weak jobs are −2; a raise and $150k+ income are +2), then **clamp the result** (a **no-paycheck cap beats the range**: an unemployed sim spends at most 2, or 3 for spenders and status seekers, even if the archetype's range starts higher; the floor is 1) to the archetype's range. When the main move isn't an investment, use the "otherwise" invest share. Start from the default, then adjust: **spend −1** for a red flag, weak jobs, a crash month (index −5% or worse) or a business that just failed; **spend +1** for a raise in recent memories or income of $150k+. Stay inside the archetype's range.
 
 | Archetype | Spend level (default, range) | Invest share when the move is index/stocks | Invest share otherwise |
 |---|---|---|---|
 | Saver | 3 (2–3) | 2 | 2 |
 | Index investor | 4 (3–4) | 4 (3 for low income or a thin cushion) | 0 |
-| Early retiree | 2 (2–3) | 4 | 3 |
+| Early retiree | 2 (2–3) | 4 (always; the thin-cushion and low-income exception is for index investors only) | 3 |
 | Stock picker | 5 (4–5) | 3 (2 in a falling month) | 2 |
 | Real estate investor | 4 (4–5) | 2 | 2 (3 with lots of spare cash) |
 | Business owner | 5 (4–5) | 3 | 3 |
@@ -142,3 +146,4 @@ Start from the default, apply **every** adjustment that holds (**each counts sep
 - **v1.4** (2026-11-22): Haiku under v1.3 matched gold on **94% of moves (120 test states)**, up from 78%, but only **42% of invest shares and 51% of spend levels exactly**: v1.3 gave ranges, not answers. v1.4 adds a **default spend level and invest share per archetype** (the gold labels' modes) with explicit ±1 adjustments, and fixes the recurring move misses: **savers pay down 6.5%+ or student debt before saving** (3 of 7 misses), **a purchase must leave the cushion covered** after its down payment, and the **cash crunch also triggers on zero cash with spending above take-home**. One gold label changed to follow the purchase check (logged).
 - **v1.5** (2026-11-22): wave 1 under v1.4 (960 states, 8 Haiku agents) raised the same questions again and again: what counts as a thin cushion, low income, a falling month or lots of spare cash; whether a $0-down car beats a 24% card; whether a crowd-following picker trades in a crash; whether "unemployed for 0 months" means no paycheck. Two labellers bought a $0-down car with a 24% card outstanding, and v1.4's cash-crunch sentence read literally as "any 8% debt triggers a sale". v1.5 puts a **number behind every soft term**, says expensive debt and a short cushion block **every** purchase, splits the crunch into two plain conditions, and says how to combine and clamp spend adjustments. A rule checker (`research/finetune/check-labels.cjs`) now flags labels that break the hard rules.
 - **v1.6** (2026-11-22): wave 2 (960 more states). Rule B sold a rental for a sim with $0 cash but **$254k** of savings; the one gold state behind rule B had savings barely over the cushion, so **B now needs savings under 2× the cushion**. Spend adjustments are explicitly **cumulative** (labellers split between "−1 per cause" and "−1 total"; as code, the two readings match gold spend on 61% vs 59% of states, so either is defensible, but one must be chosen). No savings line means $0; no paycheck means invest share 0.
+- **v1.7** (2026-11-22): wave 3 (960 extra states). Labellers split on **under-25 balanced sims with a 5.5% student loan** (one invested, two paid it down): the rule now says outright that a student loan counts at any rate under 25. Also: boundaries are inclusive; fallback lists take the first offered move; the no-paycheck spend cap beats the archetype range; the thin-cushion invest exception is for index investors only; a crowd-following picker's crash cut isn't doubled.
