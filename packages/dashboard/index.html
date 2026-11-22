@@ -140,7 +140,7 @@ async function loadMonth(m) {
   $('filters').innerHTML = Object.entries(FILTERS).map(([k, [label, fn]]) => `<button class="pill ${k === filter ? 'on' : ''}" data-f="${k}">${label} ${decisions.filter(fn).length}</button>`).join('');
   $('filters').querySelectorAll('button').forEach((b) => b.onclick = () => { filter = b.dataset.f; loadMonth(m); });
   const list = decisions.filter(FILTERS[filter][1]);
-  $('decnote').textContent = `${decisions.length} decisions · ${decisions[0]?.provider ?? ''}`;
+  $('decnote').textContent = `${decisions.length} decisions · ${decisions[0]?.model ?? decisions[0]?.provider ?? ''}`;
   $('decisions').innerHTML = list.length ? `<table>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(d.picked)}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : '<p class="empty">No decisions match.</p>';
   $('decisions').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => showDecision(decisions[+tr.dataset.i]));
   $('card').innerHTML = '';
@@ -157,7 +157,7 @@ function showDecision(d) {
   const share = d.answers.investShare ? ` · invest share level ${d.investLevel}` : '';
   const retire = d.answers.retire !== undefined ? ` · retire p=${d.answers.retire.toFixed(2)}${d.retired ? ' (retired)' : ''}` : '';
   $('card').innerHTML = `<div class="card" style="border-color:${color}">
-    <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.provider)} · ${d.latencyMs} ms · ${d.tokens} tokens${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>
+    <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.model ?? d.provider)} · ${d.latencyMs} ms · ${d.tokens} tokens${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>
     <div class="small mute" style="margin-bottom:6px">Why asked: ${esc(d.reason ?? '')}${share}${retire}</div>
     ${options}
     <div class="small" style="margin:10px 0 4px"><b>The dice roll</b> <span class="mute">(after sharpening by discipline)</span></div>

@@ -57,14 +57,14 @@ export function kevDecider(opts: KevOptions): Decider & { stats: { calls: number
       const body = { model, state: req.state, questions: req.questions };
       const key = createHash('sha256').update(JSON.stringify(body)).digest('hex');
       const hit = cache.get(key);
-      if (hit) { stats.cacheHits++; return hit; }
+      if (hit) { stats.cacheHits++; return { ...hit, model }; }   // older cache lines predate the model field
       const started = Date.now();
       stats.calls++;
       let r: KevResponse;
       try { r = await post(body); } catch (e) { stats.errors++; throw e; }
       const latency = r.latency_ms ?? Date.now() - started;
       stats.latencies.push(latency);
-      const result: DecisionResult = { answers: toAnswers(r, req), provider: 'kev', latencyMs: latency, tokens: r.usage?.input_tokens ?? 0 };
+      const result: DecisionResult = { answers: toAnswers(r, req), provider: 'kev', model, latencyMs: latency, tokens: r.usage?.input_tokens ?? 0 };
       cache.set(key, result);
       if (opts.cacheFile) appendFileSync(opts.cacheFile, JSON.stringify({ key, result }) + '\n');
       return result;

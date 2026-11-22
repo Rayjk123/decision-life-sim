@@ -29,7 +29,9 @@ const { values: a } = parseArgs({
 });
 
 const seed = Number(a.seed);
-const out = worldDir(a.out!, seed, a.decider!);
+// a non-default model gets its own world folder (seed-1-d3), so a d3 run never lands in seed-1-kev
+const label = a.decider === 'kev' && a.model !== 'kev-latest' ? a.model!.replace(/[^\w.-]+/g, '_') : a.decider!;
+const out = worldDir(a.out!, seed, label);
 let decider: Decider = heuristicDecider;
 let kev: ReturnType<typeof kevDecider> | undefined;
 if (a.decider === 'kev') {
@@ -38,7 +40,7 @@ if (a.decider === 'kev') {
 }
 
 const t0 = Date.now();
-console.log(`decision-life-sim · seed ${seed} · ${a.pop} sims · ${a.months} months · decider ${decider.name} · policy ${a.policy} · style ${a.style} · out ${out}`);
+console.log(`decision-life-sim · seed ${seed} · ${a.pop} sims · ${a.months} months · decider ${decider.name}${a.decider === 'kev' ? ` (model ${a.model})` : ''} · policy ${a.policy} · style ${a.style} · out ${out}`);
 const res = await runWorld({
   seed, pop: Number(a.pop), months: Number(a.months), decider, outDir: out, resume: a.resume,
   policy: a.policy as 'events' | 'monthly', style: a.style as StateStyle, concurrency: Number(a.concurrency),

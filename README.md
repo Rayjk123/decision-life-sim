@@ -170,7 +170,7 @@ The world experiment also measures "world separation", the average distance betw
 
 ## Output
 
-Each run writes `world/seed-<seed>-<decider>/`:
+Each run writes `world/seed-<seed>-<decider>/`, or `world/seed-<seed>-<model>/` for a non-default model (e.g. `seed-1-d3`). Every decision records the `model` that answered:
 
 - `log/events.ndjson`, `log/decisions.ndjson`: full history, one JSON object per line
 - `snapshots/month-N.json`: the whole world every 12 months (used by `--resume`)

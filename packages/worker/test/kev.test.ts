@@ -50,4 +50,6 @@ test('the Kev gateway sends the TypeSafe request shape, parses answers and cache
   assert.equal(r1.tokens, 321);
   assert.ok(Math.abs(Object.values(r1.answers.main).reduce((a, b) => a + b, 0) - 1) < 1e-9);
   assert.deepEqual(r1, r2);
+  assert.equal(r1.model, 'kev-latest', 'the result names the model that answered');
+  assert.equal(r2.model, 'kev-latest', 'a cache hit names it too');
 });

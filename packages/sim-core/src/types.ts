@@ -127,7 +127,8 @@ export interface Answers {
 export interface DecisionRecord {
   simId: SimId;
   month: number;
-  provider: string;          // 'kev' | 'heuristic' | 'heuristic-fallback'
+  provider: string;          // 'kev' (the /v1/systemone protocol) | 'heuristic' | 'heuristic-fallback' | 'random'
+  model?: string;            // the model that actually answered, e.g. 'd3' or 'kev-latest' (provider alone can't tell Kev from d3)
   moves: string[];
   answers: Answers;
   picked: string;
@@ -201,6 +202,7 @@ export interface DecisionRequest {
 export interface DecisionResult {
   answers: Answers;
   provider: string;
+  model?: string;
   latencyMs: number;
   tokens: number;
 }
