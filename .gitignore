@@ -6,3 +6,7 @@ world/
 .DS_Store
 evals-results/
 experiments/
+
+# fine-tuning datasets and run artifacts (large; regenerable from research/finetune scripts)
+research/finetune/data/
+research/finetune/runs/
