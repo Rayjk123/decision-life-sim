@@ -65,7 +65,21 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets.push({ id, kind: 'home', value: q.price, boughtMonth: m });
       sim.loans.push({ id: `${id}-loan`, kind: 'mortgage', balance: q.loan, annualRate: q.rate, payment: q.payment, assetId: id });
       remember(sim, `Bought a ${fmt(q.price)} ${q.tierLabel} home`);
-      return { valid: true, events: [ev('bought_home', `Bought a ${fmt(q.price)} ${q.tierLabel} home`, { price: q.price, assetId: id, tier: q.tierLabel })] };
+      const events = [ev('bought_home', `Bought a ${fmt(q.price)} ${q.tierLabel} home`, { price: q.price, assetId: id, tier: q.tierLabel })];
+      // Moving into the new home ends any tenancy now, so no snapshot shows a sim both owning a home and renting
+      // (found by the adversarial property test; settleRentals used to clean this up a month later).
+      if (sim.rentsUnit) {
+        const landlord = world.sims.find((s) => s.id === sim.landlordId);
+        const unit = landlord?.assets.find((a) => a.id === sim.rentsUnit);
+        if (landlord && unit && unit.tenantId === sim.id) {
+          unit.tenantId = undefined;
+          unit.vacantMonths = 0;
+          remember(landlord, 'A rental went vacant');
+          events.push({ month: m, simId: landlord.id, type: 'vacancy', text: 'A rental went vacant (the tenant bought a home)' });
+        }
+        sim.rentsUnit = undefined; sim.landlordId = undefined; sim.unitRent = undefined;
+      }
+      return { valid: true, events };
     }
 
     case 'buy_rental': {

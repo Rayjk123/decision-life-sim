@@ -68,7 +68,9 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 1. ~~(S) `npm run verify`~~ done in iteration 1.
 2. ~~(M) `npm run health`~~ done in iteration 2 (part of `verify`).
 3. ~~(S) GitHub Actions CI~~ done in iteration 3 (`.github/workflows/verify.yml`).
-4. (M) Randomized property test: random legal-move sequences over many seeds, checking money conservation, no negative cash after shortfall handling, loans ≥ 0, asset and owner consistency, tenant and landlord symmetry.
+4. ~~(M) Randomized property test~~ done in iteration 4 (`packages/worker/test/adversarial.test.ts`).
+4b. (S) Cross-sim money conservation: each month, total `rent_received` by sim landlords equals total rent paid by sim tenants, and estates paid out equal estates left (minus the 10% costs). The per-sim ledger can't see money created *between* sims.
+4c. (S) Add a third adversary that churns (buy then sell a rental, start then close businesses) and one that never pays anything off.
 5. (S) Eval regression check that compares a new d3 run to the recorded best and prints the pairs that flipped.
 
 **B0. Found in the first 20-year d3:4b world** (seed 1, 200 sims, 9,386 decisions, 0 fallbacks, 17.5 min)
@@ -101,6 +103,8 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 17. (M) Run the 1,000-sim world with d3:4b and record month time. Target ≤ 90 s.
 
 **E. Software-factory structure**
+- (M) Move `scripts/verify-lib.ts` and `scripts/health-lib.ts` into a `packages/qa` workspace. Tests currently import from `scripts/` across package boundaries.
+- (S) Eval integrity: hold out 6 golden scenarios that no prompt or style change is tuned on, and report them separately on the results page.
 18. (M) A decider registry and config (`deciders.json`: name, url, model, style), so a new model is config, not code. Record the model in every decision log line.
 19. (S) `CONTRIBUTING.md` recipes: add a move, a decider, a golden scenario, a chart. Plus a PR template carrying the gate checklist.
 
@@ -112,3 +116,4 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 | 1 | 2026-11-22 | build (A1) | `npm run verify`: one command for types, tests (with a floor on the count), deterministic heuristic eval regression, docs-in-sync (`docs:results --check`) and a leak scan (LAN IPs, GitHub/API tokens, private keys) over tracked files. Floors in `scripts/verify.baseline.json`; `scripts/` now typechecked; 3 tests for the gate's own logic | verify green in 2.7 s; 40 tests | Proven by planting 4 faults (LAN IP, stale generated table, failing test; prose outside generated blocks is allowed). Also: the 20-year d3:4b world finished, 9,386 decisions, 0 fallbacks, 17.5 min; findings in backlog B0 |
 | 2 | 2026-11-22 | build (A2) | `npm run health` (G7 + G8, now inside `verify`): 3 seeds × 50 years × 200 sims, in memory, heuristic. Integrity scan over the whole world (finite numbers, whole cents, no negative debts, assets or holdings), 7 realism bands, 6 s/run budget. 3 tests incl. planted NaN, fractional cents and negative debt | verify green in 5.8 s; 43 tests | Breach proven by narrowing a band. Health found 3 realism gaps (wealth too high, too equal, retirement at 56–57), now top of backlog B |
 | 3 | 2026-11-22 | build (A3) | GitHub Actions `verify` workflow on every push and PR, Node 20 + 22 matrix, `npm ci && npm run verify -- --all`; CI badge in the README | CI green on both (run 44993509432): 12.6 s / 18.0 s | Identical eval numbers on Node 20, 22 and macOS (cross-platform determinism). CI runners are ~2.5× slower: health ≈ 2.5 s/run against the 6 s budget. Gotcha: `npm ci --dry-run` deleted `node_modules` locally; don't use it as a check |
+| 4 | 2026-11-22 | adversarial review | Property test with two hostile deciders (uniform random; max-leverage: biggest purchase, all-in, retire ASAP), every sim every month, 3 seeds × 30 years, checking ledger, integrity, tenancy symmetry, one home, collateral, bankrupt borrowing and cash ≥ 0. **Bug fixed:** buying a home didn't end the sim's tenancy until next month's rental settlement, so every snapshot (dashboard, yearly saves) could show a sim owning a home while renting someone's unit, and vacancy counts were off. Rent was never double-charged (settlement runs before upkeep), so no money was created. Now ended at purchase in the executor | verify green 7.1 s; 45 tests; CI checked | Test proven to fail without the fix. One false alarm was my own off-by-one (`bankruptUntil` means "before this month"). Filed: cross-sim money conservation (4b), more adversaries (4c), a `packages/qa` boundary, held-out eval scenarios. Health metrics unchanged |
