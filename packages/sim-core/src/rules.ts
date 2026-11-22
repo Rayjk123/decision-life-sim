@@ -5,7 +5,7 @@ import { BUSINESSES, BUSINESS_PROFIT_SCALE, CAREER, HOME_TIERS, STARTER_HOME, ty
 import { rngFor } from './rng.ts';
 import { amortizedPayment, dollars, fmt, k } from './money.ts';
 import {
-  ageInt, businessIncomeMonthly, canBorrow, car, dti, emergencyFloor, essentialSpend, grossMonthlyIncome, home, inSchool, liquidAbove, offeredRate, rentPaid, rentals,
+  ageInt, businessIncomeMonthly, canBorrow, car, cashCushion, dti, emergencyFloor, essentialSpend, grossMonthlyIncome, home, inSchool, liquidAbove, offeredRate, rentPaid, rentals,
 } from './finance.ts';
 
 export const MAX_DTI = 0.43;
@@ -52,7 +52,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   if (inSchool(sim, m) || sim.missedPayments > 0) return moves;
 
   const floor = emergencyFloor(sim, m);
-  const spare = sim.cash - floor;
+  const spare = sim.cash - cashCushion(sim, m);   // savings already holding part of the cushion frees that much cash
   const liquid = liquidAbove(sim, m); // purchases can sell investments for the down payment
 
   if (spare > dollars(2000)) {

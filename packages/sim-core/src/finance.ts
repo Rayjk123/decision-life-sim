@@ -124,6 +124,8 @@ export function livingCost(sim: Sim, month: number): Cents {
   const gross = sim.employed ? sim.salary / 12 : sim.selfEmployed ? businessIncomeMonthly(sim) : (careerSalary(sim, month) / 12) * 0.5;
   const net = gross * (1 - taxRate(gross * 12));
   const afterHousing = Math.max(0, net - housingCost(sim, month) - scheduledLoanPayments(sim, month));
+  // TODO(golden-change run): essentials for one person cost ~$1,800/mo (out of work ~$1,300); raising this changes
+  // what the model sees in 10 golden requests, so it ships with the d3 re-eval (docs/LOOP.md B-TOP budgets a).
   const floor = sim.employed || sim.selfEmployed ? dollars(1100) : dollars(800); // out of work: bare-bones budget
   return Math.round(Math.max(floor, afterHousing * consumptionShare(sim)));
 }
@@ -138,18 +140,22 @@ export function balanceSheet(sim: Sim) {
   const other = sim.assets.filter((a) => a.kind === 'car' || a.kind === 'business').reduce((s, a) => s + a.value, 0);
   const debt = sim.loans.reduce((s, l) => s + l.balance, 0);
   const investments = sim.index + sim.stocks;
-  return { cash: sim.cash, investments, property, other, debt, netWorth: sim.cash + investments + property + other - debt };
+  const savings = sim.savings ?? 0;
+  return { cash: sim.cash, savings, investments, property, other, debt, netWorth: sim.cash + savings + investments + property + other - debt };
 }
 
 export const netWorth = (sim: Sim) => balanceSheet(sim).netWorth;
 
 /** Cash plus sellable investments above the emergency floor: what a purchase can draw on. */
 export function liquidAbove(sim: Sim, month: number): Cents {
-  return sim.cash + sim.index + Math.round(sim.stocks * 0.95) - emergencyFloor(sim, month);
+  return sim.cash + (sim.savings ?? 0) + sim.index + Math.round(sim.stocks * 0.95) - emergencyFloor(sim, month);
 }
 
-/** Sell investments (index first) until cash reaches the target. */
+/** Draw savings, then sell investments (index first), until cash reaches the target. */
 export function raiseCash(sim: Sim, target: Cents) {
+  if (sim.cash >= target) return;
+  const fromSavings = Math.min(sim.savings ?? 0, target - sim.cash);
+  if (fromSavings > 0) { sim.savings = (sim.savings ?? 0) - fromSavings; post(sim, 'from_savings', fromSavings); }
   if (sim.cash >= target) return;
   const fromIndex = Math.min(sim.index, target - sim.cash);
   sim.index -= fromIndex; post(sim, 'sell_investments', fromIndex);
@@ -164,6 +170,22 @@ export function essentialSpend(sim: Sim, month: number): Cents {
 }
 
 /** Cash a sim keeps untouched: three months of essentials (savers keep more). */
+/** The part of the emergency cushion that must sit in checking cash: whatever savings doesn't already cover. */
+export function cashCushion(sim: Sim, month: number): Cents {
+  return Math.max(0, emergencyFloor(sim, month) - (sim.savings ?? 0));
+}
+
+/**
+ * Share of each month's saving that goes into investments rather than the savings account. People who invest by
+ * nature (index investors, early retirees, stock pickers) invest most; otherwise it rises with risk-taking and falls
+ * with loss aversion, so cautious sims keep most of it in savings.
+ */
+export function riskyShare(sim: Sim): number {
+  if (sim.archetype === 'index' || sim.archetype === 'fire' || sim.archetype === 'picker') return 0.9;
+  const t = sim.traits;
+  return Math.max(0, Math.min(1, 0.3 + 1.2 * (t.risk - 0.5) - 0.8 * ((t.lossAversion ?? 0.5) - 0.5)));
+}
+
 export function emergencyFloor(sim: Sim, month: number): Cents {
   const months = sim.archetype === 'saver' ? 6 : sim.archetype === 'spender' ? 1.5 : 3;
   return Math.round(essentialSpend(sim, month) * months);

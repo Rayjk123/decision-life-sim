@@ -9,7 +9,7 @@ import { flowTotal, post } from './ledger.ts';
 import { remember } from './memory.ts';
 import { businessProfit } from './economy.ts';
 import {
-  ageInt, ageYears, balanceSheet, career, careerSalary, effectiveAutoInvest, emergencyFloor, grossMonthlyIncome, home, incomeBasis, inSchool,
+  ageInt, ageYears, balanceSheet, career, careerSalary, cashCushion, effectiveAutoInvest, emergencyFloor, essentialSpend, riskyShare, grossMonthlyIncome, home, incomeBasis, inSchool,
   livingCost, propertyCarry, rentPaid, rentals, taxRate,
 } from './finance.ts';
 
@@ -193,12 +193,27 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
 
   // 7. Standing order and retiree drawdown
   const surplus = flowTotal(sim) - flowsBefore;
-  if (surplus > 0 && !sim.retired && sim.cash > emergencyFloor(sim, m) && effectiveAutoInvest(sim) > 0) {
+  if (surplus > 0 && !sim.retired && sim.cash > cashCushion(sim, m) && effectiveAutoInvest(sim) > 0) {
+    // The standing order splits by temperament: cautious sims keep most of it in the savings account
     const amt = Math.round(surplus * effectiveAutoInvest(sim));
-    post(sim, 'auto_invest', -amt);
-    if (sim.archetype === 'picker') sim.stocks += amt; else sim.index += amt;
+    const risky = Math.round(amt * riskyShare(sim));
+    post(sim, 'auto_invest', -risky);
+    if (sim.archetype === 'picker') sim.stocks += risky; else sim.index += risky;
+    post(sim, 'to_savings', -(amt - risky));
+    sim.savings = (sim.savings ?? 0) + (amt - risky);
+  }
+  // Habitual savers keep their emergency cushion in the savings account, with one month of essentials in checking
+  if (!sim.retired && (sim.saveHabit ?? 1) >= 0.5) {
+    const need = emergencyFloor(sim, m) - (sim.savings ?? 0);
+    const buffer = essentialSpend(sim, m);
+    const move = Math.min(need, sim.cash - buffer);
+    if (move > 0) { post(sim, 'to_savings', -move); sim.savings = (sim.savings ?? 0) + move; }
   }
   const living = livingCost(sim, m);
+  if (sim.retired && sim.cash < living * 2 && (sim.savings ?? 0) > 0) {
+    const fromSavings = Math.min(sim.savings ?? 0, living * 2 - sim.cash);
+    sim.savings = (sim.savings ?? 0) - fromSavings; post(sim, 'from_savings', fromSavings);
+  }
   if (sim.retired && sim.cash < living * 2) {
     const take = Math.min(living * 2 - sim.cash, sim.index + sim.stocks);
     const fromIndex = Math.min(sim.index, take);
@@ -206,7 +221,9 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
     post(sim, 'sell_investments', take);
   }
 
-  // 8. Markets move holdings and property
+  // 8. Markets move holdings and property; savings earn ~0.5%/yr after inflation, checking cash loses ~2.5%/yr to it
+  if (sim.savings) sim.savings = Math.round(sim.savings * (1 + 0.005 / 12));
+  if (sim.cash > 0) post(sim, 'inflation', -Math.round((sim.cash * 0.025) / 12));
   sim.index = Math.round(sim.index * (1 + world.market.lastIndexReturn));
   sim.stocks = Math.round(sim.stocks * Math.max(0, 1 + world.market.stockReturn + rng.normal(0, 0.045))); // each sim's own picks
   for (const a of sim.assets) {
@@ -214,7 +231,11 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
     if (a.kind === 'car') a.value = Math.round(a.value * (1 - 0.15 / 12));
   }
 
-  // 9. Shortfalls: sell investments, then the credit card up to its limit, then bills go unpaid
+  // 9. Shortfalls: draw savings, sell investments, then the credit card up to its limit, then bills go unpaid
+  if (sim.cash < 0 && (sim.savings ?? 0) > 0) {
+    const fromSavings = Math.min(sim.savings ?? 0, -sim.cash);
+    sim.savings = (sim.savings ?? 0) - fromSavings; post(sim, 'from_savings', fromSavings);
+  }
   if (sim.cash < 0) {
     const fromIndex = Math.min(sim.index, -sim.cash); sim.index -= fromIndex; post(sim, 'sell_investments', fromIndex);
     const fromStocks = Math.min(sim.stocks, -sim.cash); sim.stocks -= fromStocks; post(sim, 'sell_investments', fromStocks);
@@ -233,7 +254,7 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
     const pay = Math.min(pastDue.balance, Math.max(0, sim.cash));
     pastDue.balance -= pay; post(sim, 'past_due_payment', -pay);
   }
-  const floor = emergencyFloor(sim, m);
+  const floor = cashCushion(sim, m);
   if (card.balance > 0 && sim.cash > floor) {
     const pay = Math.min(card.balance, sim.cash - floor);
     card.balance -= pay; post(sim, 'card_payment', -pay);
@@ -298,7 +319,7 @@ export function bankrupt(world: World, sim: Sim): SimEvent[] {
   }
   sim.assets = [];
   sim.selfEmployed = false;
-  recovered += sim.index + sim.stocks; sim.index = 0; sim.stocks = 0;
+  recovered += sim.index + sim.stocks + (sim.savings ?? 0); sim.index = 0; sim.stocks = 0; sim.savings = 0;
   post(sim, 'bankruptcy', recovered);
   // Unsecured debt is paid from what's left, then wiped, except student loans, which survive bankruptcy.
   for (const l of sim.loans) {

@@ -1,5 +1,5 @@
 {
-  "_note": "G7/G8 bands. Wide on purpose: they catch a broken economy, not tuning. Measured 2026-11-22 (heuristic, seeds 1-3, 50y, 200 sims): bankruptcy 0.006-0.009/sim-year, homeownership 35+ 0.66-0.87, unemployment 0.01-0.11, median NW $0.39M-$1.52M, gini 0.47-0.54, median retirement age 56-57, ~1 s per run. Tighten toward real-world figures as realism work lands (see docs/LOOP.md backlog B). Credit (derived score, iteration 8): median ~815, p90-p10 ~145; US median ~715, so the median band is generous until wealth realism lands. Iteration 13 (estates split among heirs): median NW $0.29M-1.27M, gini 0.53-0.58; floors raised to lock the gain. Iteration 14 (saving habits): median NW $0.22M-0.66M, gini 0.57-0.64; floors raised again.",
+  "_note": "G7/G8 bands. Wide on purpose: they catch a broken economy, not tuning. Measured 2026-11-22 (heuristic, seeds 1-3, 50y, 200 sims): bankruptcy 0.006-0.009/sim-year, homeownership 35+ 0.66-0.87, unemployment 0.01-0.11, median NW $0.39M-$1.52M, gini 0.47-0.54, median retirement age 56-57, ~1 s per run. Tighten toward real-world figures as realism work lands (see docs/LOOP.md backlog B). Credit (derived score, iteration 8): median ~815, p90-p10 ~145; US median ~715, so the median band is generous until wealth realism lands. Iteration 13 (estates split among heirs): median NW $0.29M-1.27M, gini 0.53-0.58; floors raised to lock the gain. Iteration 14 (saving habits): median NW $0.22M-0.66M, gini 0.57-0.64; floors raised again. Iteration 15 (savings accounts): median NW $0.20M-0.63M, gini 0.59-0.64, savings holders 33-61%, no-stocks share only 7-10% (target 35-50% once Phase 2 gives decisions a save_cash move: raise the noStocksShare floor then).",
   "seeds": [
     1,
     2,
@@ -44,6 +44,14 @@
     "creditSpread": [
       60,
       400
+    ],
+    "noStocksShare": [
+      0,
+      0.8
+    ],
+    "savingsHolders": [
+      0.2,
+      0.9
     ]
   }
 }

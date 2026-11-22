@@ -2,7 +2,7 @@
 import type { Move, Sim, SimEvent, World } from './types.ts';
 import { BUSINESS, BUSINESS_PROFIT_SCALE } from './data.ts';
 import { amortizedPayment, fmt, k } from './money.ts';
-import { emergencyFloor, liquidAbove, offeredRate, raiseCash } from './finance.ts';
+import { cashCushion, emergencyFloor, liquidAbove, offeredRate, raiseCash } from './finance.ts';
 import { businessCash, isFullTimeBusiness, quoteHome, quoteRental } from './rules.ts';
 import { remember } from './memory.ts';
 import { rngFor } from './rng.ts';
@@ -17,7 +17,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
   const m = world.month;
   const ev = (type: SimEvent['type'], text: string, data?: Record<string, unknown>): SimEvent => ({ month: m, simId: sim.id, type, text, data });
   const floor = emergencyFloor(sim, m);
-  const spare = sim.cash - floor;
+  const spare = sim.cash - cashCushion(sim, m);
   const share = SHARE_LEVELS[Math.max(0, Math.min(SHARE_LEVELS.length - 1, shareLevel))];
   const nextId = (kind: string) => `${sim.id}-${kind}-${m}`;
   const invalid = { valid: false, events: [] as SimEvent[] };

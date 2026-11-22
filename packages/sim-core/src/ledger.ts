@@ -7,7 +7,8 @@ export type FlowKind =
   | 'rent_paid' | 'home_costs' | 'rental_costs' | 'rent_received' | 'living' | 'loan_payments' | 'repairs'
   | 'business_profit' | 'business_exit' | 'auto_invest' | 'invest' | 'sell_investments' | 'pay_debt'
   | 'down_payment' | 'closing_costs' | 'sale_proceeds' | 'business_startup' | 'car_down_payment'
-  | 'card_draw' | 'card_payment' | 'unpaid_bills' | 'past_due_payment' | 'bankruptcy' | 'inheritance' | 'rental_sale';
+  | 'card_draw' | 'card_payment' | 'unpaid_bills' | 'past_due_payment' | 'bankruptcy' | 'inheritance' | 'rental_sale'
+  | 'to_savings' | 'from_savings' | 'inflation';
 
 export function post(sim: Sim, kind: FlowKind, amount: Cents) {
   if (!amount) return;

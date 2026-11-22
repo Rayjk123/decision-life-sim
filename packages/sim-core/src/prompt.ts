@@ -9,7 +9,7 @@ import { ARCHETYPE } from './data.ts';
 import { fmt } from './money.ts';
 import { SHARE_LABELS } from './executor.ts';
 import {
-  ageInt, balanceSheet, businessIncomeMonthly, career, effectiveAutoInvest, emergencyFloor, grossMonthlyIncome, home, housingCost, inSchool,
+  ageInt, balanceSheet, businessIncomeMonthly, career, cashCushion, effectiveAutoInvest, emergencyFloor, grossMonthlyIncome, home, housingCost, inSchool,
   livingCost, rentals, scheduledLoanPayments, taxRate,
 } from './finance.ts';
 
@@ -73,7 +73,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     return {
       who: `${firstName(sim)}, ${age}, ${ARCHETYPE[sim.archetype].label}`,
       work: workLine(sim, world),
-      cash: fmt(sim.cash), invested: fmt(sim.index + sim.stocks), debt: fmt(bs.debt), net_worth: fmt(bs.netWorth),
+      cash: fmt(sim.cash), ...(sim.savings ? { savings: fmt(sim.savings) } : {}), invested: fmt(sim.index + sim.stocks), debt: fmt(bs.debt), net_worth: fmt(bs.netWorth),
       home: h ? 'owns' : 'rents', rentals: rs.length, business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'none',
       market: `index ${pct(mk.lastIndexReturn)}, homes ${homeDir}, rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs ${mk.jobsSignal}`,
       recent: sim.memory.slice(0, 3).join('; ') || 'none',
@@ -82,11 +82,11 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
 
   if (style === 'focused') {
     // Personality first, only the facts that should move a decision, nothing empty, no repeated lines.
-    const spare = Math.max(0, sim.cash - emergencyFloor(sim, m));
+    const spare = Math.max(0, sim.cash - cashCushion(sim, m));
     const s: Record<string, unknown> = {
       who: `${sim.name}, ${age}, ${workLine(sim, world)}. ${sim.persona}`,
       character: traitPhrases(t) || 'average on every trait',
-      money: `${fmt(spare)} spare cash beyond a ${fmt(emergencyFloor(sim, m))} cushion; ${fmt(sim.index + sim.stocks)} invested; net worth ${fmt(bs.netWorth)}; saves about ${fmt(Math.max(0, takeHome - spend))} a month`,
+      money: `${fmt(spare)} spare cash beyond a ${fmt(emergencyFloor(sim, m))} cushion; ${sim.savings ? `${fmt(sim.savings)} in a savings account; ` : ''}${fmt(sim.index + sim.stocks)} invested; net worth ${fmt(bs.netWorth)}; saves about ${fmt(Math.max(0, takeHome - spend))} a month`,
     };
     if (debts.length) s.debts = debts.join('; ');
     s.home = h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`;
@@ -109,7 +109,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     person: `${sim.name}, ${age}, ${workLine(sim, world)}`,
     personality: sim.persona,
     traits,
-    money: `cash ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} as a cushion), index fund ${fmt(sim.index)}, stocks ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
+    money: `cash ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} as a cushion)${sim.savings ? `, savings account ${fmt(sim.savings)}` : ''}, index fund ${fmt(sim.index)}, stocks ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
     debts: debts.length ? debts.join('; ') : 'no debt',
     monthly: `takes home ${fmt(takeHome)}, spends about ${fmt(spend)}, auto-invests ${Math.round(effectiveAutoInvest(sim) * 100)}% of what is left`,
     housing: h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`,

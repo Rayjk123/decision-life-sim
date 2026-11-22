@@ -94,6 +94,7 @@ export interface Sim {
   retired: boolean;
 
   autoInvestPct: number;     // standing order: share of monthly surplus into investments (0..0.6)
+  savings?: Cents;           // high-yield savings account: safe, ~+0.5%/yr after inflation (checking cash loses ~2.5%/yr)
   saveHabit?: number;        // lasting saving habit: scales the share of income saved (undefined = typical, 1); < 0.5 = rarely invests
   memory: string[];          // last six notable outcomes, newest first
   lastDecisionMonth: number;

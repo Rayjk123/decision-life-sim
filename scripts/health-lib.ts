@@ -11,6 +11,8 @@ export interface HealthMetrics {
   medianRetirementAge: number;      // from 'retired' events; NaN when nobody retired
   creditMedian: number;             // median credit score, living adults
   creditSpread: number;             // p90 - p10 credit score: 0 means every sim has the same score (iteration 8 bug)
+  noStocksShare: number;            // share of living adults with < $1k in the index or stocks (US: ~40% own none)
+  savingsHolders: number;           // share of living adults with a savings account balance
 }
 
 const median = (xs: number[]) => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -41,6 +43,8 @@ export function healthMetrics(world: World, events: SimEvent[], simMonths: numbe
     medianNetWorth: median(adults.map((s) => balanceSheet(s).netWorth / 100)),
     gini: gini(adults.map((s) => balanceSheet(s).netWorth)),
     medianRetirementAge: median(retireAges),
+    noStocksShare: adults.length ? adults.filter((s) => s.index + s.stocks < 100_000).length / adults.length : 0,
+    savingsHolders: adults.length ? adults.filter((s) => (s.savings ?? 0) > 0).length / adults.length : 0,
     creditMedian: median(adults.map((s) => s.creditScore)),
     creditSpread: (() => { const xs = adults.map((s) => s.creditScore).sort((a, b) => a - b); return xs.length ? xs[Math.floor(0.9 * (xs.length - 1))] - xs[Math.floor(0.1 * (xs.length - 1))] : 0; })(),
   };
@@ -60,6 +64,7 @@ export function integrityViolations(world: World): string[] {
     for (const l of s.loans) if (l.balance < 0 || !Number.isInteger(l.balance)) out.push(`${s.id} ${l.kind} loan balance ${l.balance}`);
     for (const a of s.assets) if (a.value < 0) out.push(`${s.id} ${a.kind} value ${a.value}`);
     if (s.index < 0 || s.stocks < 0) out.push(`${s.id} negative holdings index ${s.index} stocks ${s.stocks}`);
+    if (s.savings !== undefined && (s.savings < 0 || !Number.isInteger(s.savings))) out.push(`${s.id}.savings ${s.savings} is negative or not whole cents`);
   }
   return out.slice(0, 20);
 }

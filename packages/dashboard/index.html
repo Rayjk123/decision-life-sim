@@ -181,7 +181,7 @@ async function openPerson(id) {
     <h2 style="margin:0 0 2px">${esc(p.name)}</h2>
     <div class="mute">${p.age} · ${esc(p.career)} · ${esc(p.archetype)}${p.retired ? ' · retired' : p.selfEmployed ? ' · runs a business' : p.employed ? '' : ' · out of work'}</div>
     <p class="small">${esc(p.persona)}</p>
-    <div class="grid2 small"><div>Net worth <b>${money(b.netWorth)}</b></div><div>Cash <b>${money(b.cash)}</b></div><div>Investments <b>${money(b.investments)}</b></div><div>Property <b>${money(b.property)}</b></div><div>Debt <b>${money(b.debt)}</b></div><div>Credit <b>${p.creditScore}</b></div></div>
+    <div class="grid2 small"><div>Net worth <b>${money(b.netWorth)}</b></div><div>Cash <b>${money(b.cash)}</b></div>${b.savings ? `<div>Savings <b>${money(b.savings)}</b></div>` : ''}<div>Investments <b>${money(b.investments)}</b></div><div>Property <b>${money(b.property)}</b></div><div>Debt <b>${money(b.debt)}</b></div><div>Credit <b>${p.creditScore}</b></div></div>
     <h3 style="font-size:13px;margin:14px 0 4px">Net worth by year</h3>${spark}
     <h3 style="font-size:13px;margin:14px 0 4px">Money in and out this month</h3>
     <table>${flows.map(([k, v]) => `<tr><td>${esc(k.replace(/_/g, ' '))}</td><td class="num" style="color:${v < 0 ? '#9a3a2a' : '#2f7d4f'}">${money(v)}</td></tr>`).join('') || '<tr><td class="mute">None recorded</td></tr>'}</table>
