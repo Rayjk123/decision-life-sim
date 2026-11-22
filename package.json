@@ -23,10 +23,12 @@
     "verify": "tsx scripts/verify.ts",
     "health": "tsx scripts/health.ts",
     "eval:compare": "tsx packages/evals/src/compare.ts",
-    "eval:fingerprint": "tsx packages/evals/src/fingerprint.ts"
+    "eval:fingerprint": "tsx packages/evals/src/fingerprint.ts",
+    "ux": "tsx scripts/ux-smoke.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "playwright-core": "^1.49.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2"
   }

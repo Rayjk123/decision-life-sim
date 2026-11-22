@@ -11,6 +11,7 @@ A town of sims living out their financial lives month by month. The rules engine
 ```bash
 npm install && npm test                                   # 51 tests, all must pass
 npm run verify                                            # the quality gate: types, tests, eval regression, sim health, docs sync, leak scan
+npm run ux                                                # real Chrome drives the dashboard over a fresh world (20 checks + screenshots)
 npm run health [-- --record]                              # 50-year worlds x 3 seeds: integrity, realism bands, time budget
 npm run sim -- --months 600 --pop 200                     # heuristic mode, ~10 s
 npm run dashboard                                         # http://localhost:5173 over ./world (PORT=... to change; use 127.0.0.1 if another app holds localhost)

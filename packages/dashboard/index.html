@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>decision-life-sim</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22 width=%22128%22 height=%22128%22 shape-rendering=%22crispEdges%22>  <%21-- sky tile --> <rect width=%2216%22 height=%2216%22 rx=%222%22 fill=%22%231e2a44%22/> <%21-- roof --> <rect x=%226%22 y=%222%22 width=%222%22 height=%221%22 fill=%22%23e2574c%22/> <rect x=%225%22 y=%223%22 width=%224%22 height=%221%22 fill=%22%23e2574c%22/> <rect x=%224%22 y=%224%22 width=%226%22 height=%221%22 fill=%22%23e2574c%22/> <rect x=%223%22 y=%225%22 width=%228%22 height=%221%22 fill=%22%23c2403a%22/> <%21-- walls --> <rect x=%224%22 y=%226%22 width=%226%22 height=%226%22 fill=%22%23f3e3c3%22/> <%21-- window and door --> <rect x=%225%22 y=%227%22 width=%222%22 height=%222%22 fill=%22%237fc8f8%22/> <rect x=%228%22 y=%229%22 width=%221%22 height=%223%22 fill=%22%238a5a3b%22/> <%21-- ground --> <rect x=%221%22 y=%2212%22 width=%2214%22 height=%222%22 fill=%22%234caf6a%22/> <%21-- coin --> <rect x=%2211%22 y=%227%22 width=%223%22 height=%221%22 fill=%22%23f5c542%22/> <rect x=%2210%22 y=%228%22 width=%225%22 height=%223%22 fill=%22%23f5c542%22/> <rect x=%2211%22 y=%2211%22 width=%223%22 height=%221%22 fill=%22%23f5c542%22/> <rect x=%2212%22 y=%228%22 width=%221%22 height=%223%22 fill=%22%23c99a1e%22/></svg>">
 <style>
 :root{--bg:#f5f3ee;--card:#fff;--ink:#1d1f27;--mute:#5b5f6b;--line:#e4e1da;--accent:#2f5fd0}
 *{box-sizing:border-box;min-width:0}
@@ -68,6 +69,11 @@ svg text{font-size:11px;fill:var(--mute)}
 <script>
 {
 const COLORS = { saver:'#3b82c4', index:'#2ba39a', picker:'#7a5af8', re:'#e8833a', biz:'#d9455f', spender:'#ec6fb4', status:'#9b6b43', fire:'#4f9d45', balanced:'#8a919b' };
+// Plain-English move names for viewers (ids stay in the data and in "What the model saw")
+const MOVE_NAMES = { nothing: 'Change nothing', invest_index: 'Invest in the index', trade_stocks: 'Buy individual stocks', pay_debt: 'Pay down debt',
+  buy_home: 'Buy a home', buy_home_big: 'Buy a bigger home', buy_rental: 'Buy a rental', sell_rental: 'Sell a rental', buy_car: 'Buy a car', save_cash: 'Move cash to savings' };
+const moveLabel = (id) => MOVE_NAMES[id] ?? (id.startsWith('start_') ? `Start a ${id.slice(6).replace(/_/g, ' ')}` : id.replace(/_/g, ' '));
+const SHARE_TEXT = ['10%', '25%', 'half', '75%', 'all'];
 const LABELS = { saver:'Saver', index:'Index investor', picker:'Stock picker', re:'Real estate', biz:'Business owner', spender:'Spender', status:'Status seeker', fire:'Early retiree', balanced:'Balanced' };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -141,7 +147,7 @@ async function loadMonth(m) {
   $('filters').querySelectorAll('button').forEach((b) => b.onclick = () => { filter = b.dataset.f; loadMonth(m); });
   const list = decisions.filter(FILTERS[filter][1]);
   $('decnote').textContent = `${decisions.length} decisions · ${decisions[0]?.model ?? decisions[0]?.provider ?? ''}`;
-  $('decisions').innerHTML = list.length ? `<table>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(d.picked)}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : '<p class="empty">No decisions match.</p>';
+  $('decisions').innerHTML = list.length ? `<table><tr class="small mute"><th style="text-align:left">Sim</th><th style="text-align:left">Chose</th><th class="num" title="How likely the model thought this choice was">Odds</th><th style="text-align:left">Why now</th></tr>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(moveLabel(d.picked))}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : '<p class="empty">No decisions match.</p>';
   $('decisions').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => showDecision(decisions[+tr.dataset.i]));
   $('card').innerHTML = '';
   if (list[0]) showDecision(list[0]);
@@ -152,17 +158,17 @@ function showDecision(d) {
   const opts = top(d);
   const color = COLORS[d.arch] ?? '#2f5fd0';
   let acc = 0;
-  const segs = opts.map(([id, p], i) => `<div title="${esc(id)} ${pct(p)}" style="width:${p*100}%;background:${id === d.picked ? color : ['#cfcac0','#ddd9d0','#e8e5de','#f0eee8'][Math.min(3,i)]}"></div>`).join('');
-  const options = opts.map(([id, p]) => `<div class="opt"><div><b style="font-weight:${id === d.picked ? 700 : 500}">${esc(id)}</b>${id === d.heuristicPick ? ' <span class="small mute">(heuristic pick)</span>' : ''}<div class="d">${esc(d.descriptions?.[id] ?? '')}</div></div><div class="bar"><i style="width:${p*100}%;background:${id === d.picked ? color : '#b9b4a9'}"></i></div><div class="num small">${pct(p)}</div></div>`).join('');
-  const share = d.answers.investShare ? ` · invest share level ${d.investLevel}` : '';
+  const segs = opts.map(([id, p], i) => `<div title="${esc(moveLabel(id))} ${pct(p)}" style="width:${p*100}%;background:${id === d.picked ? color : ['#cfcac0','#ddd9d0','#e8e5de','#f0eee8'][Math.min(3,i)]}"></div>`).join('');
+  const options = opts.map(([id, p]) => `<div class="opt"><div><b style="font-weight:${id === d.picked ? 700 : 500}">${esc(moveLabel(id))}</b>${id === d.heuristicPick ? ' <span class="small mute">(heuristic pick)</span>' : ''}<div class="d">${esc(d.descriptions?.[id] ?? '')}</div></div><div class="bar"><i style="width:${p*100}%;background:${id === d.picked ? color : '#b9b4a9'}"></i></div><div class="num small">${pct(p)}</div></div>`).join('');
+  const share = d.answers.investShare && d.investLevel !== undefined ? ` · putting in ${SHARE_TEXT[d.investLevel] ?? d.investLevel} of spare cash` : '';
   const retire = d.answers.retire !== undefined ? ` · retire p=${d.answers.retire.toFixed(2)}${d.retired ? ' (retired)' : ''}` : '';
   $('card').innerHTML = `<div class="card" style="border-color:${color}">
-    <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.model ?? d.provider)} · ${d.latencyMs} ms · ${d.tokens} tokens${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>
+    <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.model ?? d.provider)}${d.latencyMs || d.tokens ? ` · ${d.latencyMs} ms · ${d.tokens} tokens` : ''}${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>
     <div class="small mute" style="margin-bottom:6px">Why asked: ${esc(d.reason ?? '')}${share}${retire}</div>
     ${options}
     <div class="small" style="margin:10px 0 4px"><b>The dice roll</b> <span class="mute">(after sharpening by discipline)</span></div>
     <div class="dice">${segs}<div class="marker" style="left:calc(${d.draw*100}% - 1px)"></div></div>
-    <div class="small mute" style="margin-top:4px">draw ${d.draw.toFixed(2)} → ${esc(d.picked)}</div>
+    <div class="small mute" style="margin-top:4px">draw ${d.draw.toFixed(2)} → ${esc(moveLabel(d.picked))}</div>
     ${d.state ? `<details style="margin-top:8px"><summary class="small">What the model saw</summary><pre>${esc(Object.entries(d.state).map(([k, v]) => `${k}: ${v}`).join('\n'))}</pre></details>` : ''}
   </div>`;
   $('who').onclick = (e) => { e.preventDefault(); openPerson(d.simId); };
