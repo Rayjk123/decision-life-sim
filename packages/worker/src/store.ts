@@ -12,7 +12,7 @@ import {
 
 /** Which building a sim walks to for each kind of move. */
 export const ERRAND: Record<MoveKind, string | null> = {
-  nothing: null, invest_index: 'brokerage', trade_stocks: 'brokerage', pay_debt: 'bank',
+  nothing: null, invest_index: 'brokerage', trade_stocks: 'brokerage', pay_debt: 'bank', save_cash: 'bank',
   buy_home: 'realtor', buy_rental: 'realtor', sell_rental: 'realtor', buy_car: 'car_lot', start_business: 'city_hall',
 };
 

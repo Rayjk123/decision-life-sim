@@ -26,6 +26,15 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
     case 'nothing':
       return { valid: true, events: [] };
 
+    case 'save_cash': {
+      if (spare <= 0) return invalid;
+      const amt = Math.round(spare * share);
+      post(sim, 'to_savings', -amt);
+      sim.savings = (sim.savings ?? 0) + amt;
+      remember(sim, `Put ${fmt(amt)} into savings`);
+      return { valid: true, events: [ev('saved', `Put ${fmt(amt)} into a savings account`, { amount: amt })] };
+    }
+
     case 'invest_index':
     case 'trade_stocks': {
       if (spare <= 0) return invalid;

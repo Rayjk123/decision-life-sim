@@ -109,7 +109,7 @@ export type StateStyle = 'words' | 'numbers' | 'terse' | 'focused';
 
 export type MoveKind =
   | 'nothing' | 'invest_index' | 'trade_stocks' | 'pay_debt'
-  | 'buy_home' | 'buy_rental' | 'sell_rental' | 'buy_car' | 'start_business';
+  | 'buy_home' | 'buy_rental' | 'sell_rental' | 'buy_car' | 'start_business' | 'save_cash';
 
 export interface Move {
   id: string;               // option name shown to the model, e.g. "buy_rental"
@@ -155,7 +155,7 @@ export type EventType =
   | 'arrived' | 'started_career' | 'raise' | 'laid_off' | 'hired' | 'retired' | 'died'
   | 'decision' | 'bought_home' | 'bought_rental' | 'sold_rental' | 'bought_car' | 'started_business'
   | 'business_failed' | 'invested' | 'paid_debt' | 'repair' | 'vacancy' | 'tenant_found'
-  | 'missed_payment' | 'bankrupt' | 'regime_change' | 'inherited' | 'moved_in' | 'moved_out' | 'rent_cut' | 'business_exit' | 'splurge';
+  | 'missed_payment' | 'bankrupt' | 'regime_change' | 'inherited' | 'moved_in' | 'moved_out' | 'rent_cut' | 'business_exit' | 'splurge' | 'saved';
 
 export interface SimEvent {
   month: number;

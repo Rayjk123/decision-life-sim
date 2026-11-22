@@ -1,9 +1,9 @@
 {
-  "_note": "Floors for npm run verify. Raise when quality improves; never lower to make a change pass. Heuristic eval is deterministic. 2026-11-22 golden v2 (spend levels): heuristic floors raised to its v2 scores (78.6% / 60% / 91.0%); the new spend content was written alongside the heuristic rules, so part of the gain is circular.",
-  "minTests": 81,
+  "_note": "Floors for npm run verify. Raise when quality improves; never lower to make a change pass. Heuristic eval is deterministic. 2026-11-22 golden v2 (spend levels): heuristic floors raised to its v2 scores (78.6% / 60% / 91.0%); the new spend content was written alongside the heuristic rules, so part of the gain is circular. golden v4 (save_cash): heuristic floors raised to its v4 scores.",
+  "minTests": 83,
   "heuristic": {
-    "overall": 0.786,
-    "pairPass": 0.6,
-    "scenarioScore": 0.91
+    "overall": 0.826,
+    "pairPass": 0.666,
+    "scenarioScore": 0.933
   }
 }

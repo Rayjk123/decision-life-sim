@@ -60,7 +60,7 @@ The aim is a tech demo where you can see what the model weighed. Every decision 
 - **Audited money.** All amounts are integer cents in today's dollars. A test runs 20 years and proves that no cash appears or vanishes.
 - **Connected economy.** Renters live in rentals owned by other sims, business profits come from residents' spending (shared out with crowding by business type), and estates pass to newcomers.
 - **Realistic money mechanics.** 21 careers and 9 personality archetypes, plus market regimes (expansion, boom, recession, crash), 30-year mortgages with debt-to-income limits, credit cards, past-due bills, bankruptcy, 25 business types, and early retirement.
-- **Golden eval suite.** 30 scenarios and 20 counterfactual pairs, graded automatically, check whether a model acts in character *and* reads each part of the state.
+- **Golden eval suite.** 30 scenarios and 21 counterfactual pairs, graded automatically, check whether a model acts in character *and* reads each part of the state.
 - **Zero-dependency dashboard.** Leaderboard, archetype chart, a decision explorer with filters for close calls, surprises and disagreements with the heuristic, plus each sim's life story.
 - **Laptop-friendly.** 50 years × 200 sims takes about 10 s in heuristic mode. Kev answers are cached on disk, so replays never call the model again.
 
@@ -122,7 +122,7 @@ Claude Opus wrote the golden dataset in `packages/evals/golden/` as a reference 
 | | |
 |---|---|
 | **30 scenarios** | personality (16), situation (6), memory (3), lifecycle (5). Each lists in-character picks, out-of-character picks with a probability budget, and ordering constraints. |
-| **20 counterfactual pairs** | Each pair changes one thing (archetype, persona text, a trait, rates, a crash, a memory, debt, unemployment, vacancies, age) and requires the probability to move the right way by at least 0.03. |
+| **21 counterfactual pairs** | Each pair changes one thing (archetype, persona text, a trait, rates, a crash, a memory, debt, unemployment, vacancies, age) and requires the probability to move the right way by at least 0.03. |
 | **Score** | 60% scenario score + 40% pair pass rate. A scenario passes at 0.7. |
 
 **Results** (full tables, per-pair and per-scenario breakdowns in [`docs/results.md`](docs/results.md))

@@ -58,6 +58,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   if (spare > dollars(2000)) {
     moves.push({ id: 'invest_index', kind: 'invest_index', description: `Put spare cash in a broad index fund (up to ${fmt(spare)} available)` });
     moves.push({ id: 'trade_stocks', kind: 'trade_stocks', description: `Buy individual stocks: bigger swings than the index (up to ${fmt(spare)})` });
+    moves.push({ id: 'save_cash', kind: 'save_cash', description: `Put spare cash in a high-yield savings account: safe, about +0.5%/yr after inflation (up to ${fmt(spare)})` });
   }
 
   const nonMortgage = sim.loans.filter((l) => l.kind !== 'mortgage' && l.balance > 0 && !(l.deferredUntil !== undefined && m < l.deferredUntil));

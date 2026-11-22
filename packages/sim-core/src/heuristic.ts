@@ -3,7 +3,7 @@
 import { heuristicSpendLevel } from './spend.ts';
 import type { Answers, Decider, DecisionRequest, DecisionResult, Move, Sim, World } from './types.ts';
 import { ARCHETYPE } from './data.ts';
-import { ageYears, balanceSheet, livingCost } from './finance.ts';
+import { ageYears, balanceSheet, livingCost, riskyShare } from './finance.ts';
 
 export function heuristicAnswers(sim: Sim, world: World, moves: Move[], askRetire: boolean): Answers {
   const arch = ARCHETYPE[sim.archetype];
@@ -15,6 +15,8 @@ export function heuristicAnswers(sim: Sim, world: World, moves: Move[], askRetir
     let w = arch.heuristic[mv.kind] ?? 0.5;
     const big = mv.kind === 'buy_home' || mv.kind === 'buy_rental' || mv.kind === 'start_business' || mv.kind === 'buy_car';
     if (mv.kind === 'invest_index' || mv.kind === 'trade_stocks') {
+      // Many people never invest: the very cautious keep to savings, and low savers never open a brokerage account
+      w *= Math.min(1, 0.1 + riskyShare(sim) * 2) * ((sim.saveHabit ?? 1) < 0.5 ? 0.2 : 1);
       if (mk.lastIndexReturn < -0.05) w *= 1 - t.herding * 0.7;      // panic
       if (mk.lastIndexReturn > 0.03) w *= 1 + t.herding * 0.6;       // chase
     }
@@ -25,6 +27,10 @@ export function heuristicAnswers(sim: Sim, world: World, moves: Move[], askRetir
     if (big && mk.jobsSignal === 'weak') w *= 1 - t.lossAversion * 0.4;
     if (big && recentBad) w *= 0.6;
     if (mv.kind === 'buy_car') w *= 0.5 + t.status;
+    if (mv.kind === 'save_cash') {
+      w *= 0.5 + (t.lossAversion ?? 0.5) * (1.5 - t.risk);                       // the cautious prefer safety
+      if (mk.lastIndexReturn < -0.05) w *= 1 + (t.lossAversion ?? 0.5) * 0.8;     // and more so after a drop
+    }
     if (mv.kind === 'start_business') w *= Math.max(0.15, Math.min(1.5, world.economy.demandIndex));   // crowded town, fewer new shops
     if (mv.kind === 'buy_rental' && world.economy.rentalUnits > 4) w *= Math.max(0.2, 1 - (2 * world.economy.vacantUnits) / world.economy.rentalUnits); // empty rentals put buyers off
     weights[mv.id] = Math.max(0.01, w);

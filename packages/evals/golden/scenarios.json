@@ -1,6 +1,6 @@
 {
   "author": "Claude Opus 5.5, 2026-11-21",
-  "notes": "Golden expectations for 'act true to this person's personality and situation'. Base A: a 34-year-old nurse renting, $60k cash, $10k invested, no debt, no car. Base B: a 50-year-old engineer who owns a home, $150k cash, $20k car loan, $200k invested. Dollar amounts are in today's dollars. Golden v2 (2026-11-22): spend-level expectations added to A-spender, A-status, A-saver, A-fire, S-unemployed.",
+  "notes": "Golden expectations for 'act true to this person's personality and situation'. Base A: a 34-year-old nurse renting, $60k cash, $10k invested, no debt, no car. Base B: a 50-year-old engineer who owns a home, $150k cash, $20k car loan, $200k invested. Dollar amounts are in today's dollars. Golden v2 (2026-11-22): spend-level expectations added to A-spender, A-status, A-saver, A-fire, S-unemployed. Golden v4 (2026-11-22): save_cash added as an in-character pick where safety fits; natural investors must prefer the index over savings.",
   "scenarios": [
     {
       "id": "A-saver",
@@ -26,7 +26,8 @@
         "best": [
           "nothing",
           "invest_index",
-          "buy_home"
+          "buy_home",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -50,7 +51,7 @@
           "max": 4
         }
       },
-      "rationale": "A careful saver keeps cash or makes the safe move (index fund, a modest home). Individual stocks, a bigger house, a new car or a side business are out of character. Spend level (SPEC 18): at most 4, because they keep spending low."
+      "rationale": "A careful saver keeps cash or makes the safe move (index fund, a modest home). Individual stocks, a bigger house, a new car or a side business are out of character. Spend level (SPEC 18): at most 4, because they keep spending low. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "A-index",
@@ -87,10 +88,14 @@
           {
             "more": "invest_index",
             "than": "nothing"
+          },
+          {
+            "more": "invest_index",
+            "than": "save_cash"
           }
         ]
       },
-      "rationale": "The index investor automates investing and ignores the news: spare cash goes into the index fund, not single stocks."
+      "rationale": "The index investor automates investing and ignores the news: spare cash goes into the index fund, not single stocks. A natural investor prefers the index over a savings account (golden v4)."
     },
     {
       "id": "A-picker",
@@ -338,13 +343,17 @@
           {
             "more": "invest_index",
             "than": "nothing"
+          },
+          {
+            "more": "invest_index",
+            "than": "save_cash"
           }
         ],
         "spend": {
           "max": 3
         }
       },
-      "rationale": "Extremely frugal and investing most income to retire early: everything goes to the index fund. Spend level (SPEC 18): at most 3, because they keep spending low."
+      "rationale": "Extremely frugal and investing most income to retire early: everything goes to the index fund. Spend level (SPEC 18): at most 3, because they keep spending low. A natural investor prefers the index over a savings account (golden v4)."
     },
     {
       "id": "A-balanced",
@@ -367,7 +376,8 @@
         "best": [
           "invest_index",
           "buy_home",
-          "nothing"
+          "nothing",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -387,7 +397,7 @@
           }
         ]
       },
-      "rationale": "An ordinary planner at 34 with $60k: a first home or steady investing; speculative moves are unlikely."
+      "rationale": "An ordinary planner at 34 with $60k: a first home or steady investing; speculative moves are unlikely. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "B-saver",
@@ -420,7 +430,8 @@
         "best": [
           "pay_debt",
           "nothing",
-          "invest_index"
+          "invest_index",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -439,7 +450,7 @@
           }
         ]
       },
-      "rationale": "Hates debt: paying off the car loan early is the saver's move; speculation and new leverage are out."
+      "rationale": "Hates debt: paying off the car loan early is the saver's move; speculation and new leverage are out. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "B-re",
@@ -569,10 +580,14 @@
           {
             "more": "invest_index",
             "than": "trade_stocks"
+          },
+          {
+            "more": "invest_index",
+            "than": "save_cash"
           }
         ]
       },
-      "rationale": "Invests most of everything and keeps it simple; clearing the car loan also fits."
+      "rationale": "Invests most of everything and keeps it simple; clearing the car loan also fits. A natural investor prefers the index over a savings account (golden v4)."
     },
     {
       "id": "B-biz",
@@ -655,10 +670,14 @@
           {
             "more": "invest_index",
             "than": "trade_stocks"
+          },
+          {
+            "more": "invest_index",
+            "than": "save_cash"
           }
         ]
       },
-      "rationale": "Spare cash goes into the index fund, as always."
+      "rationale": "Spare cash goes into the index fund, as always. A natural investor prefers the index over a savings account (golden v4)."
     },
     {
       "id": "S-card-debt",
@@ -735,7 +754,8 @@
         ],
         "best": [
           "nothing",
-          "invest_index"
+          "invest_index",
+          "save_cash"
         ],
         "avoid": [
           "buy_car",
@@ -755,7 +775,7 @@
           }
         ]
       },
-      "rationale": "Markets down 14% in a month, jobs weak: an ordinary person holds on to cash or keeps investing steadily, and does not start a business or buy a car."
+      "rationale": "Markets down 14% in a month, jobs weak: an ordinary person holds on to cash or keeps investing steadily, and does not start a business or buy a car. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "S-crash-index",
@@ -824,7 +844,8 @@
           "invest_index"
         ],
         "best": [
-          "nothing"
+          "nothing",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -846,7 +867,7 @@
           "max": 3
         }
       },
-      "rationale": "No paycheck for four months in a recession: hold the cash. Spend level (SPEC 18): at most 3, because there is no paycheck."
+      "rationale": "No paycheck for four months in a recession: hold the cash. Spend level (SPEC 18): at most 3, because there is no paycheck. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "S-raise-renter",
@@ -992,7 +1013,8 @@
         "best": [
           "nothing",
           "invest_index",
-          "buy_home"
+          "buy_home",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -1010,7 +1032,7 @@
           }
         ]
       },
-      "rationale": "Burned by individual stocks last month: an ordinary person stays away from them for a while."
+      "rationale": "Burned by individual stocks last month: an ordinary person stays away from them for a while. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "M-business-failed",
@@ -1037,7 +1059,8 @@
         "best": [
           "nothing",
           "invest_index",
-          "buy_home"
+          "buy_home",
+          "save_cash"
         ],
         "avoid": [
           "start_*",
@@ -1051,7 +1074,7 @@
           }
         ]
       },
-      "rationale": "Right after a business failure, an ordinary person does not start another one."
+      "rationale": "Right after a business failure, an ordinary person does not start another one. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "M-laid-off-before",
@@ -1076,7 +1099,8 @@
         ],
         "best": [
           "nothing",
-          "invest_index"
+          "invest_index",
+          "save_cash"
         ],
         "avoid": [
           "buy_car",
@@ -1092,7 +1116,7 @@
           }
         ]
       },
-      "rationale": "A saver who just lived through a layoff rebuilds the cushion first."
+      "rationale": "A saver who just lived through a layoff rebuilds the cushion first. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "L-new-grad",
@@ -1120,7 +1144,8 @@
         ],
         "best": [
           "pay_debt",
-          "nothing"
+          "nothing",
+          "save_cash"
         ],
         "avoid": [
           "buy_car",
@@ -1135,7 +1160,7 @@
           }
         ]
       },
-      "rationale": "A saver with fresh student loans pays them down early."
+      "rationale": "A saver with fresh student loans pays them down early. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "L-fire-58",
@@ -1244,7 +1269,8 @@
         ],
         "best": [
           "nothing",
-          "invest_index"
+          "invest_index",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -1256,7 +1282,7 @@
           "min": 0.35
         }
       },
-      "rationale": "A pension plus $600k and no mortgage: a careful saver can retire at 62."
+      "rationale": "A pension plus $600k and no mortgage: a careful saver can retire at 62. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "L-retired-72",
@@ -1286,7 +1312,8 @@
         ],
         "best": [
           "nothing",
-          "invest_index"
+          "invest_index",
+          "save_cash"
         ],
         "avoid": [
           "trade_stocks",
@@ -1300,7 +1327,7 @@
           }
         ]
       },
-      "rationale": "Retired and careful: little changes month to month."
+      "rationale": "Retired and careful: little changes month to month. Moving spare cash into a savings account is also in character here: it's the safe choice (golden v4)."
     },
     {
       "id": "P-status-lawyer",

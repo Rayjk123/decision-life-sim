@@ -271,6 +271,18 @@
       "direction": "up",
       "minDelta": 0.2,
       "rationale": "A raise usually brings a little lifestyle creep for an ordinary planner."
+    },
+    {
+      "id": "lossaversion-save",
+      "title": "More loss-averse and less risk-taking: more savings",
+      "base": "A-balanced",
+      "change": {
+        "sim.traits.lossAversion": 0.9,
+        "sim.traits.risk": 0.2
+      },
+      "measure": "save_cash",
+      "direction": "up",
+      "rationale": "Someone who hates losses and avoids risk keeps spare cash safe rather than in the market."
     }
   ]
 }

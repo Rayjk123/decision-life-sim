@@ -22,7 +22,7 @@ const { values: a } = parseArgs({
   },
 });
 
-const KINDS = ['nothing', 'invest_index', 'trade_stocks', 'pay_debt', 'buy_home', 'buy_rental', 'sell_rental', 'buy_car', 'start'];
+const KINDS = ['nothing', 'invest_index', 'save_cash', 'trade_stocks', 'pay_debt', 'buy_home', 'buy_rental', 'sell_rental', 'buy_car', 'start'];
 const kindOf = (id: string) => (id.startsWith('start_') ? 'start' : id.startsWith('buy_home') ? 'buy_home' : id);
 
 /** Signature behaviour per archetype: the share of its decisions that went to its "own" move. */
