@@ -18,7 +18,8 @@
     "eval": "tsx packages/evals/src/run.ts",
     "experiment": "tsx packages/worker/src/experiment.ts",
     "dashboard": "node packages/dashboard/serve.mjs",
-    "eval:permute": "tsx packages/evals/src/permute.ts"
+    "eval:permute": "tsx packages/evals/src/permute.ts",
+    "docs:results": "tsx scripts/results-page.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

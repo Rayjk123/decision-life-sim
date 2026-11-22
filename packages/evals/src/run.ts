@@ -44,9 +44,10 @@ for (const d of deciders) for (const style of d.name === 'kev' ? styles : ['word
 
 mkdirSync(a.out!, { recursive: true });
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
-const file = join(a.out!, `eval-${a.decider}-${a.style}-${stamp}.json`);
+const tag = a.decider === "kev" ? `kev-${a.model!.replace(/[^\w.-]+/g, "_")}` : a.decider;
+const file = join(a.out!, `eval-${tag}-${a.style}-${stamp}.json`);
 writeFileSync(file, JSON.stringify(results.map((r) => ({
-  decider: r.decider, style: r.style, summary: r.summary,
+  decider: r.decider, model: r.decider === "kev" ? a.model : undefined, style: r.style, summary: r.summary,
   scenarios: r.scenarios.map((s) => ({ id: s.scenario.id, grade: s.grade, answers: s.answers })),
   pairs: r.pairs.map((p) => ({ id: p.pair.id, grade: p.grade })),
 })), null, 2));

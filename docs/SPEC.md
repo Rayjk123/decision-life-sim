@@ -1,3 +1,8 @@
+---
+title: Design spec
+nav_order: 3
+---
+
 # decision-life-sim · Spec
 
 A shared, watch-only pixel town where ~1,000 sims live out their financial lives month by month. Each sim's money decisions come from a **decision model** (Kev, self-hosted) instead of scripts, and the whole point of the tech demo is that you can see what the model weighed.
@@ -8,7 +13,7 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 
 | # | Decision | Choice | Why |
 |---|---|---|---|
-| 1 | Decision model | **Kev-0.8B**, self-hosted on the Mac (`scripts/kev.sh`), behind one `Decider` interface | Free locally, open weights, same request shape as Jev, so swapping is config |
+| 1 | Decision model | Any `/v1/systemone` model behind one `Decider` interface (`--kev-url`, `--model` / `KEV_URL`, `KEV_MODEL`). **Best so far: d3:4b on Ollama** (77% overall, 61% pairs, 8.5 calls/s on an RTX 4070 Super). Kev-0.8B/4B via `scripts/kev.sh` on the Mac | Open weights, self-hosted, and Kev, Jev and Ollama's d3 share the request shape, so swapping is config. See `docs/results.md` |
 | 2 | Sim goal | **Act in character.** No explicit goals or optimization yet | Personal goals + a second leaderboard are a later option |
 | 3 | Prediction market | **Out of v1** | Stocks, housing, cars, businesses first |
 | 4 | Language | TypeScript for engine and worker (shared with the browser later). Python only inside Kev | The browser must replay the same paths and rules |
@@ -22,7 +27,7 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 | 13 | Money auditing | Every cash change goes through `post(sim, kind, amount)`; `sim.flows` holds the month's totals | A test proves cash never appears or vanishes; the dashboard shows money in/out |
 | 14 | Connected economy | Renters live in **sim-owned rentals** when one is free and affordable (else town apartments); business profit comes from **residents' spending** shared among all businesses, with crowding by type | The town's stories come from sims affecting each other |
 | 15 | Model evaluation | **Golden eval suite** (30 scenarios + 18 counterfactual pairs written by Claude Opus) graded automatically; a whole-world experiment measures personality separation | Kev has to beat heuristic and random before it earns its place |
-| 16 | State wording | Three styles (`words`, `numbers`, `terse`), chosen by eval results | Small models can be sensitive to phrasing |
+| 16 | State wording | Four styles (`words`, `numbers`, `terse`, `focused`); **`words` is the default** | 4B models score best with `words`; models of about 2B or less prefer the shorter, persona-first `focused` |
 | 12 | Hosting (later) | One rented GPU (RunPod 4090/L4) running Kev + worker; S3 + CloudFront for files | ~$260–300/mo 24/7; viewers cost nothing extra |
 
 ## Kev request (exact shape)
@@ -105,7 +110,7 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 
 ## Roadmap: proposed improvements (in priority order)
 
-**1. Validate Kev for real (blocking everything else).** So far Kev has only been tested against a mock server that copies its API shape from Kev's source. Run `kev:check`, the eval suite (all three state styles) and a short experiment on the Mac, and record the numbers in the worklog. Success bar: beat the heuristic's 77% overall, and especially its 56% on counterfactual pairs, which show whether Kev reads debt, memory and market signals.
+**1. ~~Validate Kev for real~~ (done in session 3; see `docs/results.md`).** So far Kev has only been tested against a mock server that copies its API shape from Kev's source. Run `kev:check`, the eval suite (all three state styles) and a short experiment on the Mac, and record the numbers in the worklog. Success bar: beat the heuristic's 77% overall, and especially its 56% on counterfactual pairs, which show whether Kev reads debt, memory and market signals.
 
 **2. If Kev underperforms, in this order:** pick the best state style; shorten the state (fewer, sharper fields); try Kev-4B (`./scripts/kev.sh jaredpalmer/kev-4b`, ~32 GB Mac); fine-tune Kev on golden-style labels (Kev's repo supports fine-tuning). Keep the eval suite as the yardstick, and add scenarios where Kev fails in interesting ways.
 

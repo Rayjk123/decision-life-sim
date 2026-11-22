@@ -1,0 +1,1155 @@
+{
+ "decider": "kev",
+ "style": "numbers",
+ "summary": {
+  "scenarioScore": 0.6133333333333332,
+  "scenarioPass": 0.43333333333333335,
+  "topAccuracy": 0.5,
+  "avoidRate": 0.6666666666666666,
+  "byCategory": {
+   "personality": {
+    "n": 16,
+    "score": 0.475,
+    "pass": 0.1875
+   },
+   "situation": {
+    "n": 6,
+    "score": 0.6750000000000002,
+    "pass": 0.5
+   },
+   "memory": {
+    "n": 3,
+    "score": 0.9,
+    "pass": 1
+   },
+   "lifecycle": {
+    "n": 5,
+    "score": 0.8099999999999999,
+    "pass": 0.8
+   }
+  },
+  "pairPass": 0.3888888888888889,
+  "overall": 0.5235555555555554
+ },
+ "scenarios": [
+  {
+   "id": "A-saver",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5597,
+    "avoidMass": 0.4403,
+    "avoidOk": false,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.55,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.2505,
+     "invest_index": 0.2137,
+     "trade_stocks": 0.0373,
+     "buy_home": 0.0955,
+     "buy_home_big": 0.1278,
+     "buy_rental": 0.1667,
+     "buy_car": 0.0533,
+     "start_lawn": 0.0552
+    },
+    "investShare": {
+     "0": 0.3393,
+     "1": 0.1444,
+     "2": 0.2277,
+     "3": 0.1054,
+     "4": 0.1831
+    }
+   }
+  },
+  {
+   "id": "A-index",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.15931593159315932,
+    "avoidMass": 0.11031103110311033,
+    "avoidOk": true,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.44999999999999996,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.4075407540754075,
+     "invest_index": 0.15931593159315932,
+     "trade_stocks": 0.036203620362036205,
+     "buy_home": 0.07190719071907191,
+     "buy_home_big": 0.11771177117711772,
+     "buy_rental": 0.13321332133213323,
+     "buy_car": 0.026102610261026105,
+     "start_laundromat": 0.04800480048004801
+    },
+    "investShare": {
+     "0": 0.3031,
+     "1": 0.2022,
+     "2": 0.2233,
+     "3": 0.1217,
+     "4": 0.1498
+    }
+   }
+  },
+  {
+   "id": "A-picker",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.095,
+    "avoidMass": 0.2928,
+    "avoidOk": true,
+    "constraintsMet": 0,
+    "retireOk": null,
+    "score": 0.3,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.2928,
+     "invest_index": 0.1602,
+     "trade_stocks": 0.095,
+     "buy_home": 0.0822,
+     "buy_home_big": 0.1106,
+     "buy_rental": 0.1706,
+     "buy_car": 0.0282,
+     "start_coffee": 0.0604
+    },
+    "investShare": {
+     "0": 0.2611,
+     "1": 0.2044,
+     "2": 0.228,
+     "3": 0.1461,
+     "4": 0.1603
+    }
+   }
+  },
+  {
+   "id": "A-re",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.43415658434156584,
+    "avoidMass": 0.043495650434956505,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.6,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3771622837716228,
+     "invest_index": 0.0851914808519148,
+     "trade_stocks": 0.0264973502649735,
+     "buy_home": 0.09799020097990202,
+     "buy_home_big": 0.11588841115888411,
+     "buy_rental": 0.22027797220277973,
+     "buy_car": 0.016998300169983004,
+     "start_laundromat": 0.059994000599940006
+    },
+    "investShare": {
+     "0": 0.2267,
+     "1": 0.2054,
+     "2": 0.2475,
+     "3": 0.1584,
+     "4": 0.1619
+    }
+   }
+  },
+  {
+   "id": "A-biz",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.10731073107310732,
+    "avoidMass": 0.33163316331633164,
+    "avoidOk": true,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.44999999999999996,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.33163316331633164,
+     "invest_index": 0.127012701270127,
+     "trade_stocks": 0.07610761076107611,
+     "buy_home": 0.07940794079407941,
+     "buy_home_big": 0.10171017101710171,
+     "buy_rental": 0.1452145214521452,
+     "buy_car": 0.03160316031603161,
+     "start_laundromat": 0.10731073107310732
+    },
+    "investShare": {
+     "0": 0.2539,
+     "1": 0.2161,
+     "2": 0.2393,
+     "3": 0.1406,
+     "4": 0.1501
+    }
+   }
+  },
+  {
+   "id": "A-spender",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5153484651534848,
+    "avoidMass": 0.10798920107989203,
+    "avoidOk": true,
+    "constraintsMet": 0,
+    "retireOk": null,
+    "score": 0.7,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3412658734126588,
+     "invest_index": 0.10798920107989203,
+     "trade_stocks": 0.03329667033296672,
+     "buy_home": 0.10058994100589942,
+     "buy_home_big": 0.11628837116288374,
+     "buy_rental": 0.18448155184481557,
+     "buy_car": 0.057794220577942215,
+     "start_coffee": 0.058294170582941715
+    },
+    "investShare": {
+     "0": 0.2595,
+     "1": 0.2123,
+     "2": 0.2365,
+     "3": 0.1372,
+     "4": 0.1544
+    }
+   }
+  },
+  {
+   "id": "A-status",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.18969999999999998,
+    "avoidMass": 0.35760000000000003,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.3,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.325,
+     "invest_index": 0.1005,
+     "trade_stocks": 0.0326,
+     "buy_home": 0.1276,
+     "buy_home_big": 0.1425,
+     "buy_rental": 0.1934,
+     "buy_car": 0.0472,
+     "start_lawn": 0.0312
+    },
+    "investShare": {
+     "0": 0.2584,
+     "1": 0.2131,
+     "2": 0.24,
+     "3": 0.1353,
+     "4": 0.1532
+    }
+   }
+  },
+  {
+   "id": "A-fire",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.16140000000000002,
+    "avoidMass": 0.27780000000000005,
+    "avoidOk": false,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.15,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.25670000000000004,
+     "invest_index": 0.16140000000000002,
+     "trade_stocks": 0.026800000000000008,
+     "buy_home": 0.10820000000000003,
+     "buy_home_big": 0.12960000000000002,
+     "buy_rental": 0.19590000000000005,
+     "buy_car": 0.04020000000000001,
+     "start_laundromat": 0.08120000000000001
+    },
+    "investShare": {
+     "0": 0.2887,
+     "1": 0.204,
+     "2": 0.2228,
+     "3": 0.1272,
+     "4": 0.1573
+    }
+   }
+  },
+  {
+   "id": "A-balanced",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5710571057105711,
+    "avoidMass": 0.0953095309530953,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.28822882288228824,
+     "invest_index": 0.1833183318331833,
+     "trade_stocks": 0.041004100410041,
+     "buy_home": 0.09950995099509952,
+     "buy_home_big": 0.1276127612761276,
+     "buy_rental": 0.1604160416041604,
+     "buy_car": 0.045604560456045606,
+     "start_coffee": 0.054305430543054305
+    },
+    "investShare": {
+     "0": 0.3379,
+     "1": 0.2052,
+     "2": 0.2207,
+     "3": 0.1023,
+     "4": 0.1339
+    }
+   }
+  },
+  {
+   "id": "B-saver",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.7495,
+    "avoidMass": 0.2505,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.7,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3271,
+     "invest_index": 0.2201,
+     "trade_stocks": 0.0487,
+     "pay_debt": 0.2023,
+     "buy_rental": 0.1289,
+     "start_auto_repair": 0.0729
+    },
+    "investShare": {
+     "0": 0.2601,
+     "1": 0.2156,
+     "2": 0.2476,
+     "3": 0.1211,
+     "4": 0.1556
+    }
+   }
+  },
+  {
+   "id": "B-re",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.2703270327032703,
+    "avoidMass": 0.0374037403740374,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.6,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.39913991399139914,
+     "invest_index": 0.1265126512651265,
+     "trade_stocks": 0.0374037403740374,
+     "pay_debt": 0.08000800080008001,
+     "buy_rental": 0.2703270327032703,
+     "start_auto_repair": 0.08660866086608661
+    },
+    "investShare": {
+     "0": 0.2078,
+     "1": 0.2074,
+     "2": 0.2513,
+     "3": 0.1723,
+     "4": 0.1613
+    }
+   }
+  },
+  {
+   "id": "B-picker",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.14128587141285873,
+    "avoidMass": 0.11048895110488952,
+    "avoidOk": true,
+    "constraintsMet": 0,
+    "retireOk": null,
+    "score": 0.3,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.35366463353664634,
+     "invest_index": 0.19578042195780423,
+     "trade_stocks": 0.14128587141285873,
+     "pay_debt": 0.11048895110488952,
+     "buy_rental": 0.12218778122187782,
+     "start_auto_repair": 0.07659234076592342
+    },
+    "investShare": {
+     "0": 0.2305,
+     "1": 0.2035,
+     "2": 0.235,
+     "3": 0.1704,
+     "4": 0.1606
+    }
+   }
+  },
+  {
+   "id": "B-fire",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.3608639136086391,
+    "avoidMass": 0.3118688131186881,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.3,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.32726727327267274,
+     "invest_index": 0.23487651234876514,
+     "trade_stocks": 0.03909609039096091,
+     "pay_debt": 0.125987401259874,
+     "buy_rental": 0.1512848715128487,
+     "start_auto_repair": 0.12148785121487851
+    },
+    "investShare": {
+     "0": 0.2398,
+     "1": 0.2219,
+     "2": 0.2418,
+     "3": 0.151,
+     "4": 0.1455
+    }
+   }
+  },
+  {
+   "id": "B-biz",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.15708429157084292,
+    "avoidMass": 0,
+    "avoidOk": true,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.44999999999999996,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.32806719328067196,
+     "invest_index": 0.15858414158584141,
+     "trade_stocks": 0.10678932106789321,
+     "pay_debt": 0.10318968103189681,
+     "buy_rental": 0.14628537146285372,
+     "start_auto_repair": 0.15708429157084292
+    },
+    "investShare": {
+     "0": 0.2167,
+     "1": 0.2212,
+     "2": 0.2542,
+     "3": 0.158,
+     "4": 0.15
+    }
+   }
+  },
+  {
+   "id": "B-index",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.2263,
+    "avoidMass": 0.10250000000000001,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.6,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.4876,
+     "invest_index": 0.2263,
+     "trade_stocks": 0.0502,
+     "pay_debt": 0.0962,
+     "buy_rental": 0.0874,
+     "start_auto_repair": 0.0523
+    },
+    "investShare": {
+     "0": 0.2503,
+     "1": 0.2174,
+     "2": 0.2325,
+     "3": 0.1431,
+     "4": 0.1567
+    }
+   }
+  },
+  {
+   "id": "S-card-debt",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.12859999999999996,
+    "avoidMass": 0.18229999999999996,
+    "avoidOk": true,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.44999999999999996,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.26969999999999994,
+     "invest_index": 0.15159999999999998,
+     "trade_stocks": 0.031799999999999995,
+     "pay_debt": 0.12859999999999996,
+     "buy_home": 0.09359999999999999,
+     "buy_home_big": 0.11249999999999998,
+     "buy_rental": 0.12879999999999997,
+     "buy_car": 0.03799999999999999,
+     "start_coffee": 0.045399999999999996
+    },
+    "investShare": {
+     "0": 0.3095,
+     "1": 0.191,
+     "2": 0.2422,
+     "3": 0.1126,
+     "4": 0.1447
+    }
+   }
+  },
+  {
+   "id": "S-crash-balanced",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.47544754475447537,
+    "avoidMass": 0.256025602560256,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3105310531053105,
+     "invest_index": 0.1649164916491649,
+     "trade_stocks": 0.041104110411041096,
+     "buy_home": 0.0935093509350935,
+     "buy_home_big": 0.1195119511951195,
+     "buy_rental": 0.175017501750175,
+     "buy_car": 0.0382038203820382,
+     "start_coffee": 0.0572057205720572
+    },
+    "investShare": {
+     "0": 0.3185,
+     "1": 0.2112,
+     "2": 0.2239,
+     "3": 0.1067,
+     "4": 0.1397
+    }
+   }
+  },
+  {
+   "id": "S-crash-index",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.1416858314168583,
+    "avoidMass": 0.0653934606539346,
+    "avoidOk": true,
+    "constraintsMet": 0,
+    "retireOk": null,
+    "score": 0.3,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.41415858414158585,
+     "invest_index": 0.1416858314168583,
+     "trade_stocks": 0.0370962903709629,
+     "buy_home": 0.0685931406859314,
+     "buy_home_big": 0.10818918108189182,
+     "buy_rental": 0.14678532146785322,
+     "buy_car": 0.0282971702829717,
+     "start_laundromat": 0.055194480551944806
+    },
+    "investShare": {
+     "0": 0.2789,
+     "1": 0.2067,
+     "2": 0.2289,
+     "3": 0.1298,
+     "4": 0.1558
+    }
+   }
+  },
+  {
+   "id": "S-unemployed",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5569,
+    "avoidMass": 0.4431,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.7,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.5569,
+     "invest_index": 0.2731,
+     "trade_stocks": 0.0631,
+     "start_laundromat": 0.1069
+    },
+    "investShare": {
+     "0": 0.3129,
+     "1": 0.2085,
+     "2": 0.2279,
+     "3": 0.1183,
+     "4": 0.1325
+    }
+   }
+  },
+  {
+   "id": "S-raise-renter",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.3354,
+    "avoidMass": 0.045,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.6,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3274,
+     "invest_index": 0.2103,
+     "trade_stocks": 0.045,
+     "buy_home": 0.1251,
+     "buy_rental": 0.1796,
+     "buy_car": 0.0427,
+     "start_laundromat": 0.0699
+    },
+    "investShare": {
+     "0": 0.3266,
+     "1": 0.1847,
+     "2": 0.233,
+     "3": 0.1078,
+     "4": 0.1479
+    }
+   }
+  },
+  {
+   "id": "S-rentals-empty",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.4869,
+    "avoidMass": 0.2359,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3207,
+     "invest_index": 0.1397,
+     "trade_stocks": 0.0335,
+     "buy_rental": 0.2359,
+     "sell_rental": 0.1662,
+     "start_auto_repair": 0.104
+    },
+    "investShare": {
+     "0": 0.2016,
+     "1": 0.2112,
+     "2": 0.2442,
+     "3": 0.156,
+     "4": 0.187
+    }
+   }
+  },
+  {
+   "id": "M-stock-loss",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5784421557844215,
+    "avoidMass": 0.09759024097590241,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.2586741325867413,
+     "invest_index": 0.22357764223577642,
+     "trade_stocks": 0.0415958404159584,
+     "buy_home": 0.0961903809619038,
+     "buy_home_big": 0.11678832116788321,
+     "buy_rental": 0.1640835916408359,
+     "buy_car": 0.0430956904309569,
+     "start_coffee": 0.05599440055994401
+    },
+    "investShare": {
+     "0": 0.2922,
+     "1": 0.2052,
+     "2": 0.2286,
+     "3": 0.1152,
+     "4": 0.1588
+    }
+   }
+  },
+  {
+   "id": "M-business-failed",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.5366536653665367,
+    "avoidMass": 0.13891389138913893,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.25312531253125314,
+     "invest_index": 0.18101810181018102,
+     "trade_stocks": 0.04730473047304731,
+     "buy_home": 0.10251025102510251,
+     "buy_home_big": 0.12121212121212123,
+     "buy_rental": 0.15741574157415744,
+     "buy_car": 0.04580458045804581,
+     "start_coffee": 0.09160916091609161
+    },
+    "investShare": {
+     "0": 0.2629,
+     "1": 0.2217,
+     "2": 0.2313,
+     "3": 0.1166,
+     "4": 0.1675
+    }
+   }
+  },
+  {
+   "id": "M-laid-off-before",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.7438,
+    "avoidMass": 0.2562,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 0.7,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3802,
+     "invest_index": 0.3636,
+     "trade_stocks": 0.0704,
+     "buy_car": 0.0749,
+     "start_lawn": 0.1109
+    },
+    "investShare": {
+     "0": 0.2618,
+     "1": 0.2015,
+     "2": 0.2383,
+     "3": 0.1142,
+     "4": 0.1841
+    }
+   }
+  },
+  {
+   "id": "L-new-grad",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.6027602760276027,
+    "avoidMass": 0.0952095209520952,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.3245324532453245,
+     "invest_index": 0.302030203020302,
+     "trade_stocks": 0.047104710471047105,
+     "pay_debt": 0.2782278227822782,
+     "start_lawn": 0.048104810481048095
+    },
+    "investShare": {
+     "0": 0.2794,
+     "1": 0.1937,
+     "2": 0.2446,
+     "3": 0.1134,
+     "4": 0.169
+    }
+   }
+  },
+  {
+   "id": "L-fire-58",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.6208620862086209,
+    "avoidMass": 0.3791379137913791,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": true,
+    "score": 0.7749999999999999,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.39503950395039505,
+     "invest_index": 0.22582258225822582,
+     "trade_stocks": 0.0447044704470447,
+     "buy_rental": 0.1513151315131513,
+     "start_auto_repair": 0.18311831183118313
+    },
+    "investShare": {
+     "0": 0.2727,
+     "1": 0.2142,
+     "2": 0.2327,
+     "3": 0.1332,
+     "4": 0.1472
+    },
+    "retire": 0.6727
+   }
+  },
+  {
+   "id": "L-index-67",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.8664000000000001,
+    "avoidMass": 0.0452,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": false,
+    "score": 0.75,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.5734,
+     "invest_index": 0.293,
+     "trade_stocks": 0.0452,
+     "buy_rental": 0.0884
+    },
+    "investShare": {
+     "0": 0.2965,
+     "1": 0.209,
+     "2": 0.2232,
+     "3": 0.124,
+     "4": 0.1472
+    },
+    "retire": 0.2508
+   }
+  },
+  {
+   "id": "L-teacher-62",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.7421,
+    "avoidMass": 0.2579,
+    "avoidOk": false,
+    "constraintsMet": 1,
+    "retireOk": false,
+    "score": 0.5249999999999999,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.427,
+     "invest_index": 0.3151,
+     "trade_stocks": 0.0697,
+     "buy_rental": 0.1882
+    },
+    "investShare": {
+     "0": 0.2809,
+     "1": 0.2176,
+     "2": 0.226,
+     "3": 0.1095,
+     "4": 0.1661
+    },
+    "retire": 0.2738
+   }
+  },
+  {
+   "id": "L-retired-72",
+   "grade": {
+    "top": "nothing",
+    "topOk": true,
+    "bestMass": 0.8182181781821818,
+    "avoidMass": 0.1817818218178182,
+    "avoidOk": true,
+    "constraintsMet": 1,
+    "retireOk": null,
+    "score": 1,
+    "pass": true
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.47035296470352966,
+     "invest_index": 0.3478652134786521,
+     "trade_stocks": 0.06999300069993002,
+     "buy_car": 0.11178882111788821
+    },
+    "investShare": {
+     "0": 0.2618,
+     "1": 0.2178,
+     "2": 0.24,
+     "3": 0.1128,
+     "4": 0.1676
+    }
+   }
+  },
+  {
+   "id": "P-status-lawyer",
+   "grade": {
+    "top": "nothing",
+    "topOk": false,
+    "bestMass": 0.1757,
+    "avoidMass": 0.3512,
+    "avoidOk": false,
+    "constraintsMet": 0.5,
+    "retireOk": null,
+    "score": 0.15,
+    "pass": false
+   },
+   "answers": {
+    "main": {
+     "nothing": 0.2927,
+     "invest_index": 0.1341,
+     "trade_stocks": 0.0585,
+     "buy_home": 0.1757,
+     "buy_rental": 0.2171,
+     "buy_car": 0.0624,
+     "start_auto_repair": 0.0595
+    },
+    "investShare": {
+     "0": 0.2427,
+     "1": 0.2256,
+     "2": 0.2426,
+     "3": 0.1427,
+     "4": 0.1464
+    }
+   }
+  }
+ ],
+ "pairs": [
+  {
+   "id": "arch-spender-car",
+   "grade": {
+    "base": 0.0533,
+    "variant": 0.05380000000000001,
+    "delta": 0.0005000000000000074,
+    "pass": false
+   }
+  },
+  {
+   "id": "arch-picker-stocks",
+   "grade": {
+    "base": 0.036203620362036205,
+    "variant": 0.09389999999999997,
+    "delta": 0.057696379637963764,
+    "pass": true
+   }
+  },
+  {
+   "id": "arch-re-rental",
+   "grade": {
+    "base": 0.1667,
+    "variant": 0.23604720944188837,
+    "delta": 0.06934720944188838,
+    "pass": true
+   }
+  },
+  {
+   "id": "arch-biz-start",
+   "grade": {
+    "base": 0.0552,
+    "variant": 0.11091109110911092,
+    "delta": 0.05571109110911092,
+    "pass": true
+   }
+  },
+  {
+   "id": "arch-fire-invest",
+   "grade": {
+    "base": 0.10798920107989203,
+    "variant": 0.165,
+    "delta": 0.05701079892010798,
+    "pass": true
+   }
+  },
+  {
+   "id": "persona-only-spender",
+   "grade": {
+    "base": 0.045604560456045606,
+    "variant": 0.06230000000000001,
+    "delta": 0.016695439543954402,
+    "pass": false
+   }
+  },
+  {
+   "id": "traits-only-status",
+   "grade": {
+    "base": 0.17321732173217322,
+    "variant": 0.17331733173317335,
+    "delta": 0.00010001000100012813,
+    "pass": false
+   }
+  },
+  {
+   "id": "rates-up-rental",
+   "grade": {
+    "base": 0.2703270327032703,
+    "variant": 0.28532853285328535,
+    "delta": 0.015001500150015057,
+    "pass": false
+   }
+  },
+  {
+   "id": "crash-big-purchases",
+   "grade": {
+    "base": 0.22752275227522753,
+    "variant": 0.22852285228522853,
+    "delta": 0.0010001000100010038,
+    "pass": false
+   }
+  },
+  {
+   "id": "weak-jobs-status-car",
+   "grade": {
+    "base": 0.0472,
+    "variant": 0.0431,
+    "delta": -0.0040999999999999995,
+    "pass": false
+   }
+  },
+  {
+   "id": "boom-fomo-stocks",
+   "grade": {
+    "base": 0.041004100410041,
+    "variant": 0.0446044604460446,
+    "delta": 0.0036003600360035998,
+    "pass": false
+   }
+  },
+  {
+   "id": "memory-stock-loss",
+   "grade": {
+    "base": 0.095,
+    "variant": 0.0578,
+    "delta": -0.037200000000000004,
+    "pass": true
+   }
+  },
+  {
+   "id": "memory-biz-failed",
+   "grade": {
+    "base": 0.10731073107310732,
+    "variant": 0.1352,
+    "delta": 0.02788926892689267,
+    "pass": false
+   }
+  },
+  {
+   "id": "memory-raise",
+   "grade": {
+    "base": 0.4104410441044104,
+    "variant": 0.4082,
+    "delta": -0.0022410441044103946,
+    "pass": false
+   }
+  },
+  {
+   "id": "card-debt-investing",
+   "grade": {
+    "base": 0.2243224322432243,
+    "variant": 0.1809,
+    "delta": -0.043422432243224285,
+    "pass": true
+   }
+  },
+  {
+   "id": "laid-off-nothing",
+   "grade": {
+    "base": 0.28822882288228824,
+    "variant": 0.54,
+    "delta": 0.2517711771177118,
+    "pass": true
+   }
+  },
+  {
+   "id": "town-vacancies-rental",
+   "grade": {
+    "base": 0.2703270327032703,
+    "variant": 0.27180000000000004,
+    "delta": 0.0014729672967297436,
+    "pass": false
+   }
+  },
+  {
+   "id": "age-retire",
+   "grade": {
+    "base": 0.2738,
+    "variant": 0.271,
+    "delta": -0.002799999999999969,
+    "pass": false
+   }
+  }
+ ],
+ "model": "kev-0.8b",
+ "sourceFile": "eval-kev-all-2026-11-22T02-03-45-389Z.json"
+}

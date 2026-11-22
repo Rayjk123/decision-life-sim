@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white" alt="Node 20+">
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/tests-37%20passing-brightgreen" alt="37 tests passing">
+  <a href="docs/results.md"><img src="https://img.shields.io/badge/best%20model-d3%3A4b%2077%25-8a2be2" alt="Best model: d3:4b, 77%"></a>
   <img src="https://img.shields.io/badge/runtime%20deps-0-lightgrey" alt="Zero runtime dependencies">
 </p>
 
@@ -25,7 +26,7 @@
 - [Quick start](#quick-start)
 - [Run with Kev](#run-with-kev-macos-apple-silicon)
 - [How a month works](#how-a-month-works)
-- [Evaluating the decision model](#evaluating-the-decision-model)
+- [Evaluating the decision model](#evaluating-the-decision-model) · [full results](docs/results.md)
 - [Interesting learnings](#interesting-learnings)
 - [CLI options](#cli-options)
 - [Output](#output)
@@ -119,15 +120,24 @@ Claude Opus wrote the golden dataset in `packages/evals/golden/` as a reference 
 | **18 counterfactual pairs** | Each pair changes one thing (archetype, persona text, a trait, rates, a crash, a memory, debt, unemployment, vacancies, age) and requires the probability to move the right way by at least 0.03. |
 | **Score** | 60% scenario score + 40% pair pass rate. A scenario passes at 0.7. |
 
-**Baselines**
+**Results** (full tables, per-pair and per-scenario breakdowns in [`docs/results.md`](docs/results.md))
 
-| Decider | Overall | Counterfactual pairs | World separation |
-|---|---|---|---|
-| Random | 15% | n/a | 8% |
-| Heuristic | 77% | 56% | 32% |
-| Kev-0.8B | *pending first real run* | | |
+| Decider | Ran on | Overall | Counterfactual pairs | Speed |
+|---|---|---|---|---|
+| **d3:4b** (4.8B, Ollama) | RTX 4070 Super | **77%** | **61%** | 8.5 decisions/s |
+| Kev-4B (MLX) | Mac M3 Pro | 72% | 56% | 1.1 decisions/s |
+| d3:2b (2.4B, Ollama) | RTX 4070 Super | 66% | 44% | 16.5 decisions/s |
+| Kev-0.8B (MLX) | Mac M3 Pro | 55% | 33% | 0.5 decisions/s |
+| Heuristic | CPU | 77% | 56% | instant |
+| Random | CPU | 15% | 6% | instant |
 
-"World separation" is the average distance between archetypes' decision mixes over 30-year runs (3 seeds), so it measures whether personalities actually behave differently.
+Any model that speaks the `/v1/systemone` decision API can be swapped in with `--kev-url` and `--model` (or `KEV_URL` / `KEV_MODEL`). Ollama serves d3 on that endpoint, so it works unchanged:
+
+```bash
+npm run eval -- --decider kev --kev-url http://<ollama-host>:11434 --model d3
+```
+
+The world experiment also measures "world separation", the average distance between archetypes' decision mixes over 30-year runs: random 8%, heuristic 32% (3 seeds).
 
 ## Interesting learnings
 
@@ -170,13 +180,15 @@ packages/worker     Kev gateway, storage, resume, CLI, experiment
 packages/evals      golden dataset, grader, eval runner
 packages/dashboard  zero-dependency local dashboard
 scripts/kev.sh      starts a local Kev server
+docs/               GitHub Pages site: results, spec, work log (npm run docs:results regenerates tables)
 docs/SPEC.md        every design decision and the roadmap
 docs/WORKLOG.md     progress, current numbers, next steps
 ```
 
 ## Roadmap
 
-1. Validate Kev-0.8B on real hardware against the heuristic baseline
+1. ~~Validate a decision model on real hardware~~ (done: d3:4b ties the heuristic overall and beats it on pairs)
+1. Make models read market signals: no model reacts to crashes, booms or weak jobs reports yet
 2. "Why?" for every decision card: counterfactual probes, side gauges, an option-order bias check
 3. Employment links: sims working for sim-owned businesses
 4. A watch-only pixel town (Phaser 3 + React) that replays the same month files

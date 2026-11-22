@@ -1,0 +1,15 @@
+title: decision-life-sim
+description: A town of sims living out their financial lives, with every money decision made by a small open-weights decision model.
+remote_theme: just-the-docs/just-the-docs@v0.10.1
+plugins:
+  - jekyll-remote-theme
+  - jekyll-optional-front-matter
+  - jekyll-relative-links
+logo: assets/icon.svg
+search_enabled: true
+color_scheme: light
+footer_content: "MIT licensed. Every result is reproducible with the commands on the results page."
+relative_links:
+  enabled: true
+  collections: false
+# Raw result files under results/data/ are served as-is for download.

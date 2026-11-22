@@ -1,3 +1,8 @@
+---
+title: Work log
+nav_order: 4
+---
+
 # Work log
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
@@ -107,12 +112,24 @@ Newest session first. Each entry: what was done, the current state, and the next
 - **Situation blind spots:** the unemployed sim still invests (90% avoid; laid-off pair -0.01), and an investor buys another rental while rentals sit empty (93% avoid). Personality overrides red-flag situations.
 - **Very sharp distributions** (often > 0.9 on one move, e.g. 0.99 in a probe). With discipline-scaled sampling this means less variety than Kev; check archetype mixes in the experiment.
 
+**d3:2b** (2.4B, Q8_0, 3.2 GB)
+- 16.5 calls/s (p50 69 ms at concurrency 1), about 2× d3:4b. 300 calls take ~18 s.
+- 66% overall with `focused` (61% with `words`), pairs 44%. Like Kev-0.8B, the small model prefers `focused`. It defaults to `invest_index` (the top pick in 12 of 30 scenarios with `words`), the way Kev-0.8B defaults to `nothing`. Not good enough to trade quality for speed.
+
+**Ollama parallelism**
+- Even with `OLLAMA_NUM_PARALLEL=4` confirmed on the desktop, d3 serves one request at a time. Throughput is flat at ~8.5/s from concurrency 2 to 16 while latency doubles, and the model loads at a byte-identical 6,337,593,343 bytes, so no extra slots were allocated. The cause isn't verified: it may be forced single-slot for vision or recurrent models, or the decision endpoint may not batch. vLLM (d3's home project) would batch, but needs WSL or Linux.
+
+**Docs site** (GitHub Pages from `/docs`, theme `just-the-docs` as a remote theme)
+- `docs/index.md` (home), `docs/results.md` (leaderboard, speed, pair and scenario matrices, findings, method), plus SPEC and WORKLOG with nav front matter.
+- Raw results in `docs/results/data/<model>-<style>.json`. `npm run docs:results` regenerates the tables between the `<!-- generated:* -->` markers. To add a run, copy its JSON there (with a `model` field) and add the model to `MODELS` in `scripts/results-page.ts`.
+- `npm run eval` now records `model` in its JSON and file name (`eval-kev-d3-words-...`). Host URLs are deliberately left out so LAN addresses don't get published.
+- Not verified: the Jekyll build (no Jekyll on the Mac). Check the first GitHub Pages build.
+
 **Next**
-1. Profile one request (state pass, question rows, PointerHead readout) before writing cross-request batching for `.kev/kev/mlx_model.py` `probs_batch`. mlx-lm 0.31.3 already supports left-padded batches, including the qwen3_5 DeltaNet layers.
-2. Close the remaining 5 points: add market and age context the model can act on (for example "a crash just hit: index -14%"), and target the over-investing cases. Then consider fine-tuning on golden-style labels with held-out scenarios.
-3. Experiment and a 24-month run with Kev-4B (it's now close to the heuristic, so the world-level comparison is worth the time).: `./scripts/kev.sh jaredpalmer/kev-4b`. This Mac is an M3 Pro with 36 GB, so it should fit, but expect it to be several times slower.
-4. Fine-tune on golden-style labels (keep held-out scenarios for honest grading).
-5. Hold the experiment and the 24-month Kev run until a variant beats the heuristic; at 0.5 calls/s they cost real time.
+1. **Publish the docs**: create the GitHub repo, push, and enable Pages from `main` `/docs`.
+2. **Market signals**: no model reacts to crash, boom or weak-jobs pairs, not even the heuristic. Rewrite the market line so it states consequences ("the index just fell 14%, a crash"), or check whether the pairs measure the right move. Then target the red-flag cases (an unemployed sim investing, buying rentals into vacancies).
+3. **Experiment and a 24-month run with d3:4b** (fast enough now). Watch whether its sharp distributions reduce variety within an archetype.
+4. Fine-tuning on golden-style labels with held-out scenarios, and profiling Kev's MLX per-call overhead, are both lower priority now that d3 on the desktop covers speed.
 
 ## Session 2 · 2026-11-21 (evening)
 

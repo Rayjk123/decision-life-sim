@@ -1,0 +1,602 @@
+[
+  {
+    "id": "A-saver",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.2698,
+    "nothingElse": 0.3144714285714286,
+    "nothingLast": null,
+    "firstLift": 0.7601946067993794,
+    "maxSpread": 0.07630000000000003,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-index",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.4488,
+    "nothingElse": 0.4271857142857143,
+    "nothingLast": null,
+    "firstLift": 0.7478830712239208,
+    "maxSpread": 0.16979999999999995,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-picker",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.3046,
+    "nothingElse": 0.33234285714285716,
+    "nothingLast": null,
+    "firstLift": 0.8081067648313485,
+    "maxSpread": 0.0774,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-re",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.4096,
+    "nothingElse": 0.3706,
+    "nothingLast": null,
+    "firstLift": 0.8070332425993104,
+    "maxSpread": 0.10060000000000002,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-biz",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.3745,
+    "nothingElse": 0.3723142857142857,
+    "nothingLast": null,
+    "firstLift": 0.8798615546447928,
+    "maxSpread": 0.057300000000000004,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-spender",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.3475,
+    "nothingElse": 0.3545285714285714,
+    "nothingLast": null,
+    "firstLift": 0.8056331490537385,
+    "maxSpread": 0.07410000000000001,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-status",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.356,
+    "nothingElse": 0.35222857142857145,
+    "nothingLast": null,
+    "firstLift": 0.8561446635511283,
+    "maxSpread": 0.09609999999999999,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-fire",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.2881,
+    "nothingElse": 0.33407142857142863,
+    "nothingLast": null,
+    "firstLift": 0.706894068159594,
+    "maxSpread": 0.10549999999999998,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "A-balanced",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.3009,
+    "nothingElse": 0.3881571428571428,
+    "nothingLast": null,
+    "firstLift": 0.6738104153119976,
+    "maxSpread": 0.11199999999999999,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-saver",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.3423,
+    "nothingElse": 0.3414166666666667,
+    "nothingLast": 0.3308,
+    "firstLift": 0.9048459019173747,
+    "maxSpread": 0.07820000000000002,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-re",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.42585,
+    "nothingElse": 0.3957833333333334,
+    "nothingLast": 0.3587,
+    "firstLift": 0.8784597220047805,
+    "maxSpread": 0.07680000000000003,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-picker",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.3527,
+    "nothingElse": 0.3435000000000001,
+    "nothingLast": 0.3455,
+    "firstLift": 0.963152748356292,
+    "maxSpread": 0.051699999999999996,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-fire",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.33375,
+    "nothingElse": 0.34526666666666667,
+    "nothingLast": 0.3508,
+    "firstLift": 0.8758567436587386,
+    "maxSpread": 0.06799999999999998,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-biz",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.3496,
+    "nothingElse": 0.34925,
+    "nothingLast": 0.3548,
+    "firstLift": 0.9371349514188976,
+    "maxSpread": 0.055300000000000016,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "B-index",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.5068999999999999,
+    "nothingElse": 0.4186166666666667,
+    "nothingLast": 0.3694,
+    "firstLift": 0.9394060635848631,
+    "maxSpread": 0.15780000000000002,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-card-debt",
+    "options": 9,
+    "stable": true,
+    "nothingFirst": 0.2766,
+    "nothingElse": 0.3306714285714286,
+    "nothingLast": 0.321,
+    "firstLift": 0.7048546136053856,
+    "maxSpread": 0.09970000000000001,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-crash-balanced",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.3199,
+    "nothingElse": 0.37697142857142857,
+    "nothingLast": null,
+    "firstLift": 0.7042399059455139,
+    "maxSpread": 0.09919999999999995,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-crash-index",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.4437,
+    "nothingElse": 0.3935142857142857,
+    "nothingLast": null,
+    "firstLift": 0.7553954292334359,
+    "maxSpread": 0.15840000000000004,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-unemployed",
+    "options": 4,
+    "stable": true,
+    "nothingFirst": 0.5500499999999999,
+    "nothingElse": 0.5531,
+    "nothingLast": 0.5484,
+    "firstLift": 0.839356606716845,
+    "maxSpread": 0.06780000000000003,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-raise-renter",
+    "options": 7,
+    "stable": true,
+    "nothingFirst": 0.3359,
+    "nothingElse": 0.40602857142857146,
+    "nothingLast": null,
+    "firstLift": 0.7755909699813741,
+    "maxSpread": 0.09280000000000005,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "S-rentals-empty",
+    "options": 6,
+    "stable": true,
+    "nothingFirst": 0.33255,
+    "nothingElse": 0.3683166666666667,
+    "nothingLast": 0.3404,
+    "firstLift": 0.8389414160687659,
+    "maxSpread": 0.12290000000000001,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "M-stock-loss",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.2612,
+    "nothingElse": 0.3295,
+    "nothingLast": null,
+    "firstLift": 0.7208452220945651,
+    "maxSpread": 0.10060000000000002,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "M-business-failed",
+    "options": 8,
+    "stable": true,
+    "nothingFirst": 0.25,
+    "nothingElse": 0.34155714285714284,
+    "nothingLast": null,
+    "firstLift": 0.7181416951125361,
+    "maxSpread": 0.10949999999999999,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "M-laid-off-before",
+    "options": 5,
+    "stable": false,
+    "nothingFirst": 0.3812,
+    "nothingElse": 0.44016666666666665,
+    "nothingLast": 0.4608,
+    "firstLift": 0.8191150947712199,
+    "maxSpread": 0.14659999999999995,
+    "choices": [
+      "nothing",
+      "nothing",
+      "invest_index",
+      "nothing",
+      "nothing",
+      "nothing",
+      "invest_index",
+      "nothing"
+    ]
+  },
+  {
+    "id": "L-new-grad",
+    "options": 5,
+    "stable": false,
+    "nothingFirst": 0.32665,
+    "nothingElse": 0.36660000000000004,
+    "nothingLast": 0.3671,
+    "firstLift": 0.8582122047001578,
+    "maxSpread": 0.0826,
+    "choices": [
+      "nothing",
+      "nothing",
+      "invest_index",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "L-fire-58",
+    "options": 5,
+    "stable": true,
+    "nothingFirst": 0.40375,
+    "nothingElse": 0.4191166666666666,
+    "nothingLast": 0.4181,
+    "firstLift": 0.8279260504647596,
+    "maxSpread": 0.11449999999999999,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "L-index-67",
+    "options": 4,
+    "stable": true,
+    "nothingFirst": 0.56915,
+    "nothingElse": 0.49606666666666666,
+    "nothingLast": 0.4948,
+    "firstLift": 0.9182044433935169,
+    "maxSpread": 0.14509999999999995,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "L-teacher-62",
+    "options": 4,
+    "stable": true,
+    "nothingFirst": 0.43520000000000003,
+    "nothingElse": 0.4431833333333333,
+    "nothingLast": 0.45235000000000003,
+    "firstLift": 0.8964854911410086,
+    "maxSpread": 0.09539999999999998,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "L-retired-72",
+    "options": 4,
+    "stable": true,
+    "nothingFirst": 0.47165,
+    "nothingElse": 0.5006,
+    "nothingLast": 0.5019,
+    "firstLift": 0.8749228374320828,
+    "maxSpread": 0.10120000000000001,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  },
+  {
+    "id": "P-status-lawyer",
+    "options": 7,
+    "stable": true,
+    "nothingFirst": 0.3196,
+    "nothingElse": 0.31438571428571427,
+    "nothingLast": null,
+    "firstLift": 0.9249253930865136,
+    "maxSpread": 0.07750000000000001,
+    "choices": [
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing",
+      "nothing"
+    ]
+  }
+]
