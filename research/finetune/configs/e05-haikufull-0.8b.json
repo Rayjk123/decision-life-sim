@@ -1,0 +1,17 @@
+{
+  "_why": "E05: E04's recipe on ALL 3,687 train states with Haiku labels (rubric v1.4-1.8, every label rule-checked), the same states and count as E01's heuristic labels. E01 vs E05 is a clean labels-only comparison; E04 (2,680) vs E05 (3,687) is a data-size point.",
+  "base": "unsloth/Qwen3.5-0.8B",
+  "train": "data/sets/haiku-full-hard/train.jsonl",
+  "val": "data/sets/haiku-full-hard/val.jsonl",
+  "test": "data/sets/claude-hard/test.jsonl",
+  "max_seq_length": 2048,
+  "load_in_4bit": true,
+  "r": 16,
+  "lora_alpha": 16,
+  "lr": 0.0002,
+  "epochs": 2,
+  "batch": 2,
+  "grad_accum": 4,
+  "warmup_steps": 10,
+  "eval_every": 50
+}

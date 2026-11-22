@@ -13,7 +13,7 @@ function facts(s) {
   const sav = usd(/savings account (\$[\d.]+[kM]?)/.exec(money)?.[1]);
   const take = usd(/takes home (\$[\d.]+[kM]?)/.exec(monthly)?.[1]), spend = usd(/spends about (\$[\d.]+[kM]?)/.exec(monthly)?.[1]);
   const rates = [...debts.matchAll(/(\$[\d.]+[kM]?) at ([\d.]+)%/g)].map((m) => ({ bal: usd(m[1]), rate: Number(m[2]) }));
-  return { cash, cushion, sav, take, spend, rates, unemployed: /unemployed/.test(st.person || ""), expensive: rates.some((d) => d.rate >= 20 && d.bal >= 500), maxRate: Math.max(0, ...rates.map((d) => d.rate)) };
+  return { cash, cushion, sav, take, spend, rates, unemployed: /unemployed/.test(st.person || ""), expensive: rates.some((d) => d.rate >= 20 && d.bal >= 500), maxRate: Math.max(0, ...rates.filter((d) => d.bal >= 500).map((d) => d.rate)) };
 }
 function cost(move) { const d = move.description || ""; return usd(/(\$[\d.]+[kM]?) down/.exec(d)?.[1] || /: (\$[\d.]+[kM]?) cash/.exec(d)?.[1]); }
 const out = {}; let n = 0;
@@ -30,7 +30,12 @@ for (const l of L) {
   const idx = Number(/index fund ([+-][\d.]+)%/.exec(s.state.market || "")?.[1] ?? 0), weak = /jobs report weak/.test(s.state.market || "");
   const studentOffered = s.moves.some((m) => m.id === "pay_debt") && /student/.test(s.state.debts || "");
   if (s.archetype === "balanced" && s.age < 25 && studentOffered && idx > -1 && !weak && covered && !f.expensive && !f.unemployed && main !== "pay_debt" && main !== "sell_rental") flag("R8 under-25 balanced skipped the student loan", l, main);
+  if (s.archetype === "re" && s.age < 25 && main === "pay_debt" && s.moves.some((m) => m.id === "save_cash") && covered && !f.expensive) flag("R9 under-25 real estate paid debt instead of saving", l, main);
+  const RANGE = { saver: [2, 3], index: [3, 4], fire: [2, 3], picker: [4, 5], re: [4, 5], biz: [4, 5], spender: [6, 8], status: [5, 7], balanced: [4, 5] };
   const crunchA = !covered && (f.cash < 1000 || f.spend > f.take || f.maxRate >= 8), crunchB = f.cash < 1000 && f.spend > f.take && f.sav < 2 * f.cushion;
+  const redFlag = f.expensive || !covered || weak || idx <= -5 || /failed|bankrupt|missing payments/i.test(s.state.recent || "");
+  const sp = l.labels.spend_level + 1, [lo, hi] = RANGE[s.archetype], floor = lo - ((crunchA || crunchB) ? 2 : redFlag ? 1 : 0);
+  if (!f.unemployed && (sp < floor || sp > hi)) flag("R10 spend outside the archetype range", l, `level ${sp} not in ${floor}-${hi}`);
   if (main === "sell_rental" && !(crunchA || crunchB)) flag("R5 rental sold without a crunch", l, "");
   if (main !== "sell_rental" && (crunchA || crunchB) && s.moves.some((m) => m.id === "sell_rental")) flag("R6 crunch but no sale", l, main);
 }
