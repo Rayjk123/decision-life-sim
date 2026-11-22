@@ -28,6 +28,15 @@ const AUTO_INVEST: Record<ArchetypeKey, number> = {
   saver: 0.2, index: 0.3, picker: 0.2, re: 0.1, biz: 0.1, spender: 0, status: 0.05, fire: 0.5, balanced: 0.1,
 };
 
+/**
+ * A lasting saving habit, from its own keyed stream so no other spawn draw shifts. About a third of people
+ * barely save (0.1-0.4 of their type's usual saving, and no standing investment order); the rest vary around 1.
+ */
+export function saveHabitFor(seed: number, n: number): number {
+  const r = rngFor(seed, 'save-habit', n);
+  return r.chance(0.35) ? Math.round(r.range(0.1, 0.4) * 100) / 100 : Math.round(Math.min(1.5, Math.max(0.6, Math.exp(r.normal(0, 0.25)))) * 100) / 100;
+}
+
 function weighted<T extends string>(rng: Rng, w: Record<T, number>): T {
   const entries = Object.entries(w) as [T, number][];
   const total = entries.reduce((s, [, v]) => s + v, 0);
@@ -81,6 +90,7 @@ export function spawnSim(world: World, month: number): Sim {
     monthsUnemployed: 0,
     retired: false,
     autoInvestPct: AUTO_INVEST[archetype],
+    saveHabit: saveHabitFor(world.seed, n),
     memory: [],
     lastDecisionMonth: -99,
     peakNetWorth: 0,

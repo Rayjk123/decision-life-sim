@@ -9,7 +9,7 @@ import { flowTotal, post } from './ledger.ts';
 import { remember } from './memory.ts';
 import { businessProfit } from './economy.ts';
 import {
-  ageInt, ageYears, balanceSheet, career, careerSalary, emergencyFloor, grossMonthlyIncome, home, incomeBasis, inSchool,
+  ageInt, ageYears, balanceSheet, career, careerSalary, effectiveAutoInvest, emergencyFloor, grossMonthlyIncome, home, incomeBasis, inSchool,
   livingCost, propertyCarry, rentPaid, rentals, taxRate,
 } from './finance.ts';
 
@@ -193,8 +193,8 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
 
   // 7. Standing order and retiree drawdown
   const surplus = flowTotal(sim) - flowsBefore;
-  if (surplus > 0 && !sim.retired && sim.cash > emergencyFloor(sim, m) && sim.autoInvestPct > 0) {
-    const amt = Math.round(surplus * sim.autoInvestPct);
+  if (surplus > 0 && !sim.retired && sim.cash > emergencyFloor(sim, m) && effectiveAutoInvest(sim) > 0) {
+    const amt = Math.round(surplus * effectiveAutoInvest(sim));
     post(sim, 'auto_invest', -amt);
     if (sim.archetype === 'picker') sim.stocks += amt; else sim.index += amt;
   }

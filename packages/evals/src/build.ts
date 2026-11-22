@@ -53,6 +53,7 @@ export function buildScenario(sc: Scenario): { world: World; sim: Sim } {
   sim.memory = [...(s.memory ?? [])];
   sim.flows = {};
   sim.creditScore = 740;
+  sim.saveHabit = undefined;   // golden scenarios describe a typical member of the archetype
   const rate = mk.mortgageRate;
   if (s.home) {
     sim.assets.push({ id: 'home', kind: 'home', value: c(s.home.value), boughtMonth: MONTH - 60 });

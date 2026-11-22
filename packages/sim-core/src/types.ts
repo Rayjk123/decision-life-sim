@@ -94,6 +94,7 @@ export interface Sim {
   retired: boolean;
 
   autoInvestPct: number;     // standing order: share of monthly surplus into investments (0..0.6)
+  saveHabit?: number;        // lasting saving habit: scales the share of income saved (undefined = typical, 1); < 0.5 = rarely invests
   memory: string[];          // last six notable outcomes, newest first
   lastDecisionMonth: number;
   peakNetWorth: Cents;

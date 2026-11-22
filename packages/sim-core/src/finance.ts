@@ -101,6 +101,15 @@ export function preMedicareHealth(sim: Sim, month: number): Cents {
   return ageYears(sim, month) < 65 ? dollars(650) : 0;
 }
 
+/** Share of after-housing income spent: the archetype's share, with the saved part scaled by the sim's own habit. */
+export function consumptionShare(sim: Sim): number {
+  const base = ARCHETYPE[sim.archetype].consumption;
+  return Math.min(0.99, Math.max(0.3, 1 - (1 - base) * (sim.saveHabit ?? 1)));
+}
+
+/** The auto-invest standing order actually in effect: sims who rarely save don't keep one. */
+export const effectiveAutoInvest = (sim: Sim): number => ((sim.saveHabit ?? 1) < 0.5 ? 0 : sim.autoInvestPct);
+
 /** Living costs excluding housing and loans. */
 export function livingCost(sim: Sim, month: number): Cents {
   const arch = ARCHETYPE[sim.archetype];
@@ -116,7 +125,7 @@ export function livingCost(sim: Sim, month: number): Cents {
   const net = gross * (1 - taxRate(gross * 12));
   const afterHousing = Math.max(0, net - housingCost(sim, month) - scheduledLoanPayments(sim, month));
   const floor = sim.employed || sim.selfEmployed ? dollars(1100) : dollars(800); // out of work: bare-bones budget
-  return Math.round(Math.max(floor, afterHousing * arch.consumption));
+  return Math.round(Math.max(floor, afterHousing * consumptionShare(sim)));
 }
 
 /** Rent collected minus carrying costs, before mortgage. */

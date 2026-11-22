@@ -9,7 +9,7 @@ import { ARCHETYPE } from './data.ts';
 import { fmt } from './money.ts';
 import { SHARE_LABELS } from './executor.ts';
 import {
-  ageInt, balanceSheet, businessIncomeMonthly, career, emergencyFloor, grossMonthlyIncome, home, housingCost, inSchool,
+  ageInt, balanceSheet, businessIncomeMonthly, career, effectiveAutoInvest, emergencyFloor, grossMonthlyIncome, home, housingCost, inSchool,
   livingCost, rentals, scheduledLoanPayments, taxRate,
 } from './finance.ts';
 
@@ -111,7 +111,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     traits,
     money: `cash ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} as a cushion), index fund ${fmt(sim.index)}, stocks ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
     debts: debts.length ? debts.join('; ') : 'no debt',
-    monthly: `takes home ${fmt(takeHome)}, spends about ${fmt(spend)}, auto-invests ${Math.round(sim.autoInvestPct * 100)}% of what is left`,
+    monthly: `takes home ${fmt(takeHome)}, spends about ${fmt(spend)}, auto-invests ${Math.round(effectiveAutoInvest(sim) * 100)}% of what is left`,
     housing: h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`,
     property: rs.length ? `${rs.length} rental${rs.length > 1 ? 's' : ''} worth ${fmt(rs.reduce((s, a) => s + a.value, 0))}${empty ? `, ${empty} empty` : ''}` : 'no rentals',
     business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'no business',
