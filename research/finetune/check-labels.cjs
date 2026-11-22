@@ -26,7 +26,8 @@ for (const l of L) {
   if (PURCHASE.test(main) && !covered) flag("R2 purchase below the cushion", l, main);
   if (PURCHASE.test(main) && covered && mv && f.cash + f.sav - cost(mv) < f.cushion) flag("R3 down payment breaks the cushion", l, `${main} cost ${cost(mv)}`);
   if (["invest_index", "trade_stocks"].includes(main) && f.unemployed) flag("R4 investing with no paycheck", l, main);
-  const crunchA = !covered && (f.cash < 1000 || f.spend > f.take || f.maxRate >= 8), crunchB = f.cash < 1000 && f.spend > f.take;
+  if (f.unemployed && l.labels.invest_share > 0) flag("R7 invest share with no paycheck", l, String(l.labels.invest_share));
+  const crunchA = !covered && (f.cash < 1000 || f.spend > f.take || f.maxRate >= 8), crunchB = f.cash < 1000 && f.spend > f.take && f.sav < 2 * f.cushion;
   if (main === "sell_rental" && !(crunchA || crunchB)) flag("R5 rental sold without a crunch", l, "");
   if (main !== "sell_rental" && (crunchA || crunchB) && s.moves.some((m) => m.id === "sell_rental")) flag("R6 crunch but no sale", l, main);
 }
