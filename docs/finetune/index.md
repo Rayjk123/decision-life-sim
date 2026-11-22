@@ -61,6 +61,17 @@ One change per run against a fixed baseline.
 | Calibration | on / off |
 | Augmentation | option-order shuffling (position bias) |
 
+## Deliverable: a learning track (user request)
+
+After the experiments, write `docs/finetune/learn/`: a from-the-basics course built on *this* study's runs, so every concept has a real number from the desktop attached:
+1. What a model is: tokens, embeddings, transformers; decision model vs chatbot.
+2. How training works: loss, gradients, learning rate, batch and epochs, overfitting, train/val/test (with our loss curves).
+3. Efficient fine-tuning: LoRA, 4-bit quantization, VRAM (what limited the 4070 SUPER).
+4. Labels and teachers: hard vs soft labels, distillation from d3, label noise (Opus vs Haiku), circular evaluation.
+5. Is it any good: accuracy vs record accuracy, calibration (ECE, Brier, reliability diagrams), counterfactual pairs, reading our charts.
+6. What we did, step by step: every command and config, explained.
+Plus a **glossary**, a **study guide** (reading order, self-check questions with answers, hands-on exercises) and a short **reading list**. *While experimenting: note every surprise, number and gotcha in the lab notebook so the course can tell the real story.*
+
 ## Lab notebook
 
 | # | Date | Run | Result | Notes |
