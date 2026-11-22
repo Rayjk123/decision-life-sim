@@ -9,6 +9,9 @@ nav_order: 2
 Which decision model best plays a sim "in character"? Every model here is graded on the same golden suite: 30 scenarios and 18 counterfactual pairs, written by Claude Opus as the reference for acting true to a person's personality and situation.
 {: .fs-5 .fw-300 }
 
+{: .warning }
+> **Model results are stale (golden v1).** The d3 and Kev numbers on this page were measured on the v1 golden requests. Since then, the golden-change run (progressive taxes, spend levels, essentials floor, golden fixes) has changed what the model sees in most scenarios. The heuristic and random baselines are current. A d3 re-run is pending (the desktop GPU is offline); this banner goes when it lands.
+
 <details open markdown="block">
 <summary>Contents</summary>
 {: .text-delta }

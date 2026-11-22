@@ -18,12 +18,28 @@ export function careerSalary(sim: Sim, month: number): Cents {
 }
 
 /** Effective income tax rate (federal + state, flattened). */
+/**
+ * SPEC decision 17: one crude progressive schedule, marginal (payroll tax folded in, no state tax).
+ * Each rate applies only to the slice of income above its threshold, so a raise never lowers take-home pay.
+ */
+export const TAX_BRACKETS: ReadonlyArray<readonly [fromDollars: number, rate: number]> = [
+  [0, 0], [12_000, 0.18], [50_000, 0.28], [100_000, 0.33], [200_000, 0.37],
+];
+
+/** Annual tax in cents on an annual gross income in cents. */
+export function annualTax(grossAnnual: Cents): Cents {
+  let tax = 0;
+  for (let i = 0; i < TAX_BRACKETS.length; i++) {
+    const lo = TAX_BRACKETS[i][0] * 100;
+    const hi = i + 1 < TAX_BRACKETS.length ? TAX_BRACKETS[i + 1][0] * 100 : Infinity;
+    if (grossAnnual > lo) tax += (Math.min(grossAnnual, hi) - lo) * TAX_BRACKETS[i][1];
+  }
+  return Math.round(tax);
+}
+
+/** Effective (average) tax rate on an annual gross income: what callers multiply gross pay by. */
 export function taxRate(grossAnnual: Cents): number {
-  const d = grossAnnual / 100;
-  if (d < 50_000) return 0.12;
-  if (d < 100_000) return 0.18;
-  if (d < 200_000) return 0.24;
-  return 0.3;
+  return grossAnnual > 0 ? annualTax(grossAnnual) / grossAnnual : 0;
 }
 
 export const home = (sim: Sim) => sim.assets.find((a) => a.kind === 'home');
