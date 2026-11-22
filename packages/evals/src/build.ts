@@ -1,7 +1,7 @@
 // Turns a golden scenario spec into a real world + sim, so the eval uses the exact same rules,
 // legal moves and state text as the live simulation.
 import {
-  ARCHETYPE, CAREER, amortizedPayment, buildRequest, careerSalary, createWorld, dollars, spawnSim,
+  ARCHETYPE, AUTO_INVEST, CAREER, amortizedPayment, buildRequest, careerSalary, createWorld, dollars, spawnSim,
   type DecisionRequest, type Sim, type StateStyle, type World,
 } from '@dls/sim-core';
 import type { MovePattern, Pair, Scenario } from './types.ts';
@@ -54,6 +54,9 @@ export function buildScenario(sc: Scenario): { world: World; sim: Sim } {
   sim.flows = {};
   sim.creditScore = 740;
   sim.saveHabit = undefined;   // golden scenarios describe a typical member of the archetype
+  // The scenario's archetype sets the standing order (it used to keep whatever archetype spawnSim drew at random,
+  // so e.g. the early retiree showed "auto-invests 10%" instead of 50%)
+  sim.autoInvestPct = AUTO_INVEST[s.archetype];
   const rate = mk.mortgageRate;
   if (s.home) {
     sim.assets.push({ id: 'home', kind: 'home', value: c(s.home.value), boughtMonth: MONTH - 60 });

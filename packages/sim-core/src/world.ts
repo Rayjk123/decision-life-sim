@@ -24,7 +24,8 @@ const CAREER_WEIGHTS: Record<string, number> = {
 const ARCHETYPE_WEIGHTS: Record<ArchetypeKey, number> = {
   saver: 1, index: 1, picker: 1, re: 1, biz: 1, spender: 1, status: 1, fire: 0.7, balanced: 2,
 };
-const AUTO_INVEST: Record<ArchetypeKey, number> = {
+/** Standing-order share of monthly surplus by archetype (a sim's starting autoInvestPct). */
+export const AUTO_INVEST: Record<ArchetypeKey, number> = {
   saver: 0.2, index: 0.3, picker: 0.2, re: 0.1, biz: 0.1, spender: 0, status: 0.05, fire: 0.5, balanced: 0.1,
 };
 

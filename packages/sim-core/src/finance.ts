@@ -140,9 +140,11 @@ export function livingCost(sim: Sim, month: number): Cents {
   const gross = sim.employed ? sim.salary / 12 : sim.selfEmployed ? businessIncomeMonthly(sim) : (careerSalary(sim, month) / 12) * 0.5;
   const net = gross * (1 - taxRate(gross * 12));
   const afterHousing = Math.max(0, net - housingCost(sim, month) - scheduledLoanPayments(sim, month));
-  // TODO(golden-change run): essentials for one person cost ~$1,800/mo (out of work ~$1,300); raising this changes
-  // what the model sees in 10 golden requests, so it ships with the d3 re-eval (docs/LOOP.md B-TOP budgets a).
-  const floor = sim.employed || sim.selfEmployed ? dollars(1100) : dollars(800); // out of work: bare-bones budget
+  // Essentials (food, transport, utilities, phone, healthcare) for one person: about 35% of take-home, between
+  // $1,100 and $1,800 a month ($800-1,300 out of work). A flat $1,800 pushed low earners into permanent deficits
+  // (bankruptcy 3-4%/yr in health); real low-income households get by with cheaper housing, roommates and benefits.
+  const working = sim.employed || sim.selfEmployed;
+  const floor = Math.round(Math.min(dollars(working ? 1800 : 1300), Math.max(dollars(working ? 1100 : 800), net * 0.35)));
   // A sim's spend level (SPEC 18) sets the share; with no level set (golden scenarios) it's the personality-and-habit share
   const share = sim.spendLevel === undefined ? consumptionShare(sim) : SPEND_LEVELS[Math.max(1, Math.min(10, sim.spendLevel)) - 1].share;
   return Math.round(Math.max(floor, afterHousing * share));
