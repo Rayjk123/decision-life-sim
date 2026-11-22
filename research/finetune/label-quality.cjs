@@ -1,7 +1,7 @@
 // Score a labeller against Opus gold, overall and per archetype.
 //   node research/finetune/label-quality.cjs <labels-dir-or-jsonl> [gold=research/finetune/data/labels/claude.jsonl]
 const fs = require("fs"), path = require("path");
-const src = process.argv[2], goldP = process.argv[3] || "research/finetune/data/labels/claude.jsonl";
+const pos = process.argv.slice(2).filter((a) => !a.startsWith("--")); const src = pos[0], goldP = pos[1] || "research/finetune/data/labels/claude.jsonl";
 const read = (p) => fs.readFileSync(p, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
 const L = fs.statSync(src).isDirectory() ? fs.readdirSync(src).filter((f) => f.endsWith(".jsonl")).flatMap((f) => read(path.join(src, f))) : read(src);
 const gold = new Map(read(goldP).map((g) => [g.id, g]));
