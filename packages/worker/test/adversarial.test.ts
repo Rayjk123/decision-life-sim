@@ -7,23 +7,30 @@ import { createWorld, flowTotal, home, runMonth, type Decider, type World } from
 import { integrityViolations } from '../../../scripts/health-lib.ts';
 import { randomDecider } from '../src/random.ts';
 
-// Always grab the biggest, most leveraged move available, invest everything, retire whenever offered.
-const PRIORITY = ['start_business', 'buy_rental', 'buy_home', 'buy_car', 'trade_stocks', 'invest_index', 'pay_debt', 'sell_rental', 'nothing'];
-const maxLeverage: Decider = {
-  name: 'max-leverage',
-  async decide(req) {
-    const ranked = [...req.moves].sort((a, b) =>
-      PRIORITY.indexOf(a.kind) - PRIORITY.indexOf(b.kind) || Number(b.id.includes('big')) - Number(a.id.includes('big')));
-    return {
-      answers: {
-        main: Object.fromEntries(req.moves.map((m) => [m.id, m.id === ranked[0].id ? 1 : 0])),
-        investShare: { '0': 0, '1': 0, '2': 0, '3': 0, '4': 1 },
-        retire: req.askRetire ? 1 : undefined,
-      },
-      provider: 'max-leverage', latencyMs: 0, tokens: 0,
-    };
-  },
-};
+// Hostile deciders: each always picks the first available move kind in its preference order.
+function prefers(name: string, order: string[], share: number, retire: number): Decider {
+  return {
+    name,
+    async decide(req) {
+      const rank = (k: string) => { const i = order.indexOf(k); return i < 0 ? order.length : i; };
+      const ranked = [...req.moves].sort((a, b) => rank(a.kind) - rank(b.kind) || Number(b.id.includes('big')) - Number(a.id.includes('big')));
+      return {
+        answers: {
+          main: Object.fromEntries(req.moves.map((m) => [m.id, m.id === ranked[0].id ? 1 : 0])),
+          investShare: Object.fromEntries([0, 1, 2, 3, 4].map((l) => [String(l), l === share ? 1 : 0])),
+          retire: req.askRetire ? retire : undefined,
+        },
+        provider: name, latencyMs: 0, tokens: 0,
+      };
+    },
+  };
+}
+// Biggest, most leveraged move available; invest everything; retire whenever offered.
+const maxLeverage = prefers('max-leverage', ['start_business', 'buy_rental', 'buy_home', 'buy_car', 'trade_stocks', 'invest_index', 'pay_debt', 'sell_rental', 'nothing'], 4, 1);
+// Buy and sell over and over: sell any rental, otherwise buy one, start businesses, buy cars; never retire.
+const churner = prefers('churner', ['sell_rental', 'buy_rental', 'start_business', 'buy_car', 'trade_stocks', 'buy_home', 'invest_index', 'pay_debt', 'nothing'], 4, 0);
+// Never pay anything off and never invest: spend on cars and homes, keep cash idle, never retire voluntarily.
+const neverPays = prefers('never-pays', ['buy_car', 'buy_home', 'nothing', 'start_business', 'buy_rental', 'trade_stocks', 'invest_index', 'sell_rental', 'pay_debt'], 0, 0);
 
 function violations(world: World, before: Map<string, { cash: number; loans: Set<string> }>): string[] {
   const out: string[] = [];
@@ -60,17 +67,33 @@ function violations(world: World, before: Map<string, { cash: number; loans: Set
   return [...out, ...integrityViolations(world).map((v) => `integrity: ${v}`)];
 }
 
-for (const decider of [randomDecider, maxLeverage]) {
-  test(`adversarial: ${decider.name} decider, every sim every month, 3 seeds x 30 years: no invariant breaks`, async () => {
+// Each adversary must actually reach the paths it targets, or passing proves nothing.
+const MUST_SEE: Record<string, string[]> = {
+  random: ['bought_home', 'bought_rental', 'tenant_found'],
+  'max-leverage': ['bought_rental', 'started_business', 'bankrupt'],
+  churner: ['bought_rental', 'sold_rental', 'started_business'],
+  'never-pays': ['bought_car', 'missed_payment', 'bankrupt'],
+};
+
+const RUNS: Array<{ decider: Decider; seeds: number[]; years: number; pop: number; mustSee: string[] }> = [
+  ...[randomDecider, maxLeverage, churner, neverPays].map((decider) => ({ decider, seeds: [11, 12, 13], years: 30, pop: 80, mustSee: MUST_SEE[decider.name] })),
+  // A whole lifetime: the first arrivals reach 72 (forced retirement), die, and leave estates to newcomers.
+  { decider: randomDecider, seeds: [14], years: 65, pop: 40, mustSee: ['retired', 'died', 'inherited'] },
+];
+
+for (const { decider, seeds, years, pop, mustSee } of RUNS) {
+  test(`adversarial: ${decider.name} decider, every sim every month, ${seeds.length} seed(s) x ${years} years: no invariant breaks`, async () => {
     const found: string[] = [];
-    for (const seed of [11, 12, 13]) {
-      const world = createWorld(seed, 80);
+    const seen = new Map<string, number>();
+    for (const seed of seeds) {
+      const world = createWorld(seed, pop);
       const estatesLeft: number[] = [];      // every positive estate, in the order it was queued
       let inherited = 0;                     // every inheritance actually paid to a newcomer
-      while (world.month < 360 && found.length < 10) {
+      while (world.month < years * 12 && found.length < 10) {
         const before = new Map(world.sims.map((s) => [s.id, { cash: s.cash, loans: new Set(s.loans.map((l) => l.id)) }]));
         const hof = world.hallOfFame.length;
-        await runMonth(world, decider, { policy: 'monthly' });
+        const r = await runMonth(world, decider, { policy: 'monthly' });
+        for (const e of r.events) seen.set(e.type, (seen.get(e.type) ?? 0) + 1);
         for (const v of violations(world, before)) found.push(`seed ${seed} month ${world.month}: ${v}`);
         // Cross-sim money: rent can't be received that wasn't paid (town apartments make paid >= received)
         const received = world.sims.reduce((t, s) => t + (s.flows.rent_received ?? 0), 0);
@@ -88,5 +111,7 @@ for (const decider of [randomDecider, maxLeverage]) {
       if (!paidOut.length) found.push(`seed ${seed}: no estate was ever distributed, so the estate check proved nothing`);
     }
     assert.deepEqual(found.slice(0, 10), []);
+    const missing = mustSee.filter((t) => !seen.get(t));
+    assert.deepEqual(missing, [], `${decider.name} never reached: ${missing.join(', ')} (saw ${[...seen].map(([k, v]) => `${k} ${v}`).join(', ')})`);
   });
 }

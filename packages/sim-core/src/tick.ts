@@ -14,7 +14,7 @@ import { drawFor } from './rng.ts';
 import { ARCHETYPE } from './data.ts';
 import { fmt } from './money.ts';
 import { resetFlows } from './ledger.ts';
-import { settleBusinessDemand, settleRentals } from './economy.ts';
+import { releaseTenancies, settleBusinessDemand, settleRentals } from './economy.ts';
 
 export interface TickOptions {
   policy?: CallPolicy;
@@ -90,6 +90,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
       world.hallOfFame.push({ simId: sim.id, name: sim.name, archetype: sim.archetype, career: sim.career, ageAtDeath: ageInt(sim, m), finalNetWorth: bs.netWorth, peakNetWorth: sim.peakNetWorth, diedMonth: m });
       if (bs.netWorth > 0) world.pendingEstates.push({ fromId: sim.id, fromName: sim.name, amount: bs.netWorth });
       events.push({ month: m, simId: sim.id, type: 'died', text: `${sim.name} died at ${ageInt(sim, m)} with a net worth of ${fmt(bs.netWorth)}` });
+      events.push(...releaseTenancies(world, sim, m));
     } else survivors.push(sim);
   }
   world.sims = survivors;

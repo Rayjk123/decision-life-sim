@@ -54,6 +54,36 @@ export function businessProfit(world: World, sameTypeCount: number, lo: number, 
 }
 
 /** Move tenants in and out of sim-owned rentals. Returns events. */
+/**
+ * A sim died: end its tenancies on the spot, both ways, so no snapshot shows a sim renting from (or to) the dead.
+ * (Found by the adversarial long-life test; settleRentals used to clean this up a month later.)
+ */
+export function releaseTenancies(world: World, dead: Sim, m: number): SimEvent[] {
+  const out: SimEvent[] = [];
+  const byId = new Map(world.sims.map((s) => [s.id, s]));
+  for (const unit of rentals(dead)) {
+    const tenant = unit.tenantId ? byId.get(unit.tenantId) : undefined;
+    unit.tenantId = undefined;
+    if (tenant && tenant.rentsUnit === unit.id) {
+      tenant.rentsUnit = undefined; tenant.landlordId = undefined; tenant.unitRent = undefined;
+      remember(tenant, 'Had to move out: the landlord passed away');
+      out.push({ month: m, simId: tenant.id, type: 'moved_out', text: 'Had to move out: the landlord passed away' });
+    }
+  }
+  if (dead.rentsUnit) {
+    const landlord = dead.landlordId ? byId.get(dead.landlordId) : undefined;
+    const unit = landlord?.assets.find((a) => a.id === dead.rentsUnit);
+    if (landlord && unit && unit.tenantId === dead.id) {
+      unit.tenantId = undefined;
+      unit.vacantMonths = 0;
+      remember(landlord, 'A rental went vacant');
+      out.push({ month: m, simId: landlord.id, type: 'vacancy', text: 'A rental went vacant (the tenant passed away)' });
+    }
+    dead.rentsUnit = undefined; dead.landlordId = undefined; dead.unitRent = undefined;
+  }
+  return out;
+}
+
 export function settleRentals(world: World): SimEvent[] {
   const m = world.month;
   const out: SimEvent[] = [];
