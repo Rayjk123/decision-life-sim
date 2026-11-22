@@ -3,7 +3,7 @@ import type { Decider, DecisionRecord, DecisionRequest, DecisionResult, Sim, Sim
 import { stepMarket } from './market.ts';
 import { arrivalsDue, spawnSim } from './world.ts';
 import { retire, upkeep } from './lifecycle.ts';
-import { ageInt, balanceSheet, inSchool, livingCost, pensionMonthly } from './finance.ts';
+import { ageInt, balanceSheet, housingCost, inSchool, pensionMonthly, preMedicareHealth, retiredLifestyle, scheduledLoanPayments } from './finance.ts';
 import { legalMoves } from './rules.ts';
 import { buildQuestions, buildState } from './prompt.ts';
 import { argmax, pick } from './policy.ts';
@@ -34,7 +34,12 @@ export interface MonthResult {
 /** Retirement is only offered at 67+, or earlier when pension + a 4% drawdown covers living costs. */
 export function canAffordRetirement(sim: Sim, m: number): boolean {
   if (ageInt(sim, m) >= 67) return true;
-  return pensionMonthly(sim, m) + ((sim.index + sim.stocks) * 0.04) / 12 >= livingCost(sim, m);
+  // Income must cover a realistic retired budget: most of the retiree lifestyle, housing, loan payments and,
+  // before 65, health insurance. (It used to compare against a working sim's spending money only, ignoring
+  // housing and loans, so a sim with a mortgage could "afford" to retire at 55: median retirement age was 56-57.)
+  const income = pensionMonthly(sim, m) + ((sim.index + sim.stocks) * 0.04) / 12;
+  const needs = retiredLifestyle(sim) * 0.85 + housingCost(sim, m) + scheduledLoanPayments(sim, m) + preMedicareHealth(sim, m);
+  return income >= needs;
 }
 
 async function pool<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>): Promise<R[]> {

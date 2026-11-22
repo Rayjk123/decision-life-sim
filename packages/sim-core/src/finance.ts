@@ -91,15 +91,26 @@ export function pensionMonthly(sim: Sim, month: number): Cents {
   return p;
 }
 
+/** The monthly lifestyle a retiree spends toward (excluding housing, loans and health insurance). */
+export function retiredLifestyle(sim: Sim): Cents {
+  return Math.round((career(sim).peakSalary / 12) * 0.42 * (ARCHETYPE[sim.archetype].consumption / 0.7));
+}
+
+/** Health insurance a retiree pays before Medicare at 65. */
+export function preMedicareHealth(sim: Sim, month: number): Cents {
+  return ageYears(sim, month) < 65 ? dollars(650) : 0;
+}
+
 /** Living costs excluding housing and loans. */
 export function livingCost(sim: Sim, month: number): Cents {
   const arch = ARCHETYPE[sim.archetype];
   if (inSchool(sim, month)) return dollars(330); // school months roughly break even; tuition goes on the student loan
   if (sim.retired) {
     // Retirees spend toward their old lifestyle, but adjust to what pension + a 4% drawdown can support.
-    const lifestyle = (career(sim).peakSalary / 12) * 0.42 * (arch.consumption / 0.7);
+    // Before Medicare (65) they also buy their own health insurance.
+    const health = preMedicareHealth(sim, month);
     const budget = pensionMonthly(sim, month) + ((sim.index + sim.stocks) * 0.04) / 12 - housingCost(sim, month) - scheduledLoanPayments(sim, month);
-    return Math.round(Math.max(dollars(900), Math.min(lifestyle, budget)));
+    return Math.round(Math.max(dollars(900), Math.min(retiredLifestyle(sim), budget - health)) + health);
   }
   const gross = sim.employed ? sim.salary / 12 : sim.selfEmployed ? businessIncomeMonthly(sim) : (careerSalary(sim, month) / 12) * 0.5;
   const net = gross * (1 - taxRate(gross * 12));
