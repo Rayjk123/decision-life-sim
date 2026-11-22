@@ -34,6 +34,8 @@ if (a.pool === 'extra') {
   for (let i = extra.length - 1; i > 0; i--) { const j = Math.floor(rng.next() * (i + 1)); [extra[i], extra[j]] = [extra[j], extra[i]]; }
   chosen.length = 0; chosen.push(...extra);
 }
+// --pool deals: the targeted deal states (research/finetune/data/deal-pick.jsonl, from sample-states.ts --deals), in file order.
+if (a.pool === 'deals') { chosen.length = 0; chosen.push(...readFileSync('research/finetune/data/deal-pick.jsonl', 'utf8').trim().split('\n').map((l) => JSON.parse(l))); }
 const size = Number(a.size);
 const batches = Math.ceil(chosen.length / size);
 if (a.list) { console.log(`${chosen.length} states in ${batches} batches of ${size}`); process.exit(0); }
@@ -51,4 +53,4 @@ for (const r of chosen.slice(b * size, (b + 1) * size)) {
   console.log(`MOVES: ${moves}`);
   console.log(`ASK: main ${asks}`);
 }
-console.log(`\n(${a.pool === 'extra' ? 'extra ' : ''}batch ${b} of ${batches - 1})`);
+console.log(`\n(${a.pool === 'core' ? '' : a.pool + ' '}batch ${b} of ${batches - 1})`);

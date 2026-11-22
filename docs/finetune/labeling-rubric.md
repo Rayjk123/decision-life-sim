@@ -4,7 +4,7 @@ parent: Training our own decision model
 nav_order: 1
 ---
 
-# Labelling rubric (Claude labels) · v1.8
+# Labelling rubric (Claude labels) · v1.9
 
 Each sampled state is labelled with the in-character answer to every question it asks: the **move**, the **invest share** (when asked), the **spend level** (1–10) and **retire** (when asked), plus a one-line reason. The labeller is Claude, in the Claude Code session that runs this study, following these rules in this order.
 
@@ -79,7 +79,7 @@ The legal moves change every month. When a sim's typical move is missing, these 
 
 ### When the signature move *is* on offer: the bar it must clear (v1.3)
 
-Being offered a move doesn't make it a good month for it. Real estate investors and business owners take their deal only when **all** of these hold; otherwise use the fallback above (save toward the next one):
+Being offered a move doesn't make it a good month for it. Real estate investors and business owners take their deal only when **all** of these hold; otherwise use the fallback above (save toward the next one). **And the reverse (v1.9): when all of them hold, the deal *is* the answer.** Saving toward "the next one" when this one clears the bar is out of character. The same goes for a status seeker offered a home or car, and a spender offered a car, when no red flag applies and the purchase check passes.
 
 | Archetype | Takes the deal only if |
 |---|---|
@@ -150,3 +150,4 @@ Start from the default, apply **every** adjustment that holds (**each counts sep
 - **v1.6** (2026-11-22): wave 2 (960 more states). Rule B sold a rental for a sim with $0 cash but **$254k** of savings; the one gold state behind rule B had savings barely over the cushion, so **B now needs savings under 2× the cushion**. Spend adjustments are explicitly **cumulative** (labellers split between "−1 per cause" and "−1 total"; as code, the two readings match gold spend on 61% vs 59% of states, so either is defensible, but one must be chosen). No savings line means $0; no paycheck means invest share 0.
 - **v1.7** (2026-11-22): wave 3 (960 extra states). Labellers split on **under-25 balanced sims with a 5.5% student loan** (one invested, two paid it down): the rule now says outright that a student loan counts at any rate under 25. Also: boundaries are inclusive; fallback lists take the first offered move; the no-paycheck spend cap beats the archetype range; the thin-cushion invest exception is for index investors only; a crowd-following picker's crash cut isn't doubled.
 - **v1.8** (2026-11-22): wave 4 (1,047 extra states). Crunch rule A's 8%+ debt gets the same **$500 balance floor** as expensive debt (a $125 card forced a sale); a failed business in memories counts as the sim's own; spend stays in the archetype range except under the no-paycheck cap or a red flag (1 below; 2 in a cash crunch), because the first strict version of the check flagged 8 *gold* labels, all crisis states. Checker rules R9 (under-25 real estate investors keep saving; the under-25 rule excludes them) and R10 (spend outside the range) added.
+- **v1.9** (2026-11-22): the first independent test (golden suite) showed the fine-tuned student never takes a signature deal: across 3,887 Haiku labels a rental was bought 4 times in 40 offers, a business started 2 in 30, a home 0 in 5, because the sampled towns rarely offer an affordable deal. 734 targeted deal states were sampled; this line makes explicit that a deal clearing the bar is taken.

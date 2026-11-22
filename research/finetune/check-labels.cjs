@@ -4,7 +4,7 @@ const fs = require("fs"), path = require("path");
 const pos = process.argv.slice(2).filter((a) => !a.startsWith("--")); const src = pos[0];
 const read = (p) => fs.readFileSync(p, "utf8").trim().split("\n").filter(Boolean).map(JSON.parse);
 const L = fs.statSync(src).isDirectory() ? fs.readdirSync(src).filter((f) => f.endsWith(".jsonl")).flatMap((f) => read(path.join(src, f))) : read(src);
-const S = new Map(read("research/finetune/data/states.jsonl").map((s) => [s.id, s]));
+const S = new Map([...read("research/finetune/data/states.jsonl"), ...(fs.existsSync("research/finetune/data/deal-pick.jsonl") ? read("research/finetune/data/deal-pick.jsonl") : [])].map((s) => [s.id, s]));
 const usd = (t) => { if (!t) return 0; const m = /(-?)\$([\d.]+)([kM]?)/.exec(t); return m ? (m[1] ? -1 : 1) * Number(m[2]) * (m[3] === "M" ? 1e6 : m[3] === "k" ? 1e3 : 1) : 0; };
 const PURCHASE = /^(buy_|start_)/;
 function facts(s) {

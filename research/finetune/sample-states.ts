@@ -11,6 +11,9 @@ import { ageInt, createWorld, heuristicDecider, rngFor, runMonth, type Decider, 
 const { values: a } = parseArgs({ options: {
   'per-seed': { type: 'string', default: '90' },
   out: { type: 'string', default: 'research/finetune/data/states.jsonl' },
+  // --deals: only train/val states where the archetype's signature deal is on offer (the main set almost never has one
+  // the rubric would take, so a student never learns to take it). Keyed separately, so these are new states.
+  deals: { type: 'boolean', default: false },
 } });
 const perSeed = Number(a['per-seed']);
 const SPLITS: Array<[string, number[]]> = [
@@ -27,7 +30,9 @@ export interface StateRow {
 }
 
 const rows: StateRow[] = [];
+const DEAL: Record<string, RegExp> = { re: /^buy_rental$/, biz: /^start_/, status: /^(buy_home|buy_car)/, spender: /^buy_car$/ };
 for (const [split, seeds] of SPLITS) {
+  if (a.deals && split === 'test') continue;
   for (const seed of seeds) {
     const world = createWorld(seed, 150);
     const captured: Array<{ req: DecisionRequest; reason: string }> = [];
@@ -43,7 +48,11 @@ for (const [split, seeds] of SPLITS) {
       for (const { req, reason } of captured) {
         if (req.moves.length < 2) continue;
         // keep roughly perSeed of the ~15,000 decisions a 150-sim town makes in 40 years (keyed, so reproducible)
-        if (!rngFor(seed, 'sample', world.month, req.sim.id).chance(perSeed / 15000)) continue;
+        if (a.deals) {
+          const deal = DEAL[req.sim.archetype];
+          if (!deal || !req.moves.some((mv) => deal.test(mv.id))) continue;
+          if (!rngFor(seed, 'sample-deals', world.month, req.sim.id).chance(perSeed / 1000)) continue;
+        } else if (!rngFor(seed, 'sample', world.month, req.sim.id).chance(perSeed / 15000)) continue;
         const h = await heuristicDecider.decide(req);
         rows.push({
           id: `${seed}-${world.month}-${req.sim.id}`, split, seed, month: world.month, simId: req.sim.id,
