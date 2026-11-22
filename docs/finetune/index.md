@@ -28,9 +28,10 @@ Both recipes read the same request (`state` + `questions`) and serve the same `P
 
 - **States:** sampled from real simulated worlds (many seeds and years, every archetype, life stage and economy), exactly as the sim builds them for a decision: the legal moves with their real costs, the invest-share and spend-level questions, and retirement when offered.
 - **Labels:** per state, the in-character answer to every question.
-  - **Claude labels** (primary): Claude, in this Claude Code session, labels each state against a written rubric (act true to this person's personality and situation), with a one-line rationale.
-  - **d3 distilled** (control): d3:4b's top pick (hard) and full probabilities (soft), from the desktop's Ollama.
-  - **Heuristic** (control): the rules-based heuristic's pick.
+  - **Claude Opus labels** (primary, "gold"): Claude Opus, in this Claude Code session, labels each state against a written [rubric](labeling-rubric.md) (act true to this person's personality and situation), with a one-line rationale. Highest care, slower: the test and validation sets plus part of training.
+  - **Claude Haiku labels** (scale, user suggestion): Haiku sub-agents label with the same rubric, independently and in parallel, so training can scale to thousands of labels. **Opus–Haiku agreement** on overlapping states measures label noise, and where they disagree marks genuinely ambiguous decisions.
+  - **d3 distilled** (control): d3:4b's top pick (hard) and full probabilities (soft), from the desktop's Ollama. Tests learning from another decision model rather than from in-character judgment.
+  - **Heuristic** (control): the rules-based heuristic's pick. Opus batch 0 agreed with it on only 57% of top picks (business owners 0/5: the rubric saves toward a business the heuristic never chooses), so it's a genuinely different teacher.
 - **Splits:** train / validation / held-out test by *world seed*, so no test state comes from a world seen in training. The golden suite (30 scenarios + 21 pairs) is **never** trained on.
 
 ## Evaluation (identical for every run)
@@ -54,7 +55,7 @@ One change per run against a fixed baseline.
 |---|---|
 | Recipe | Unsloth (Clef-style head) vs Kev's recipe (pointer head) |
 | Base size | Qwen3.5 0.8B → 2B → 4B |
-| Label source | Claude · d3 hard · d3 soft · heuristic · blends |
+| Label source | Opus · Haiku · Opus + Haiku · d3 hard · d3 soft · heuristic · blends; **quantity vs quality**: few Opus labels vs many Haiku labels |
 | Data volume | 500 / 2,000 / 8,000 states |
 | Hyperparameters | learning rate 2e-5 vs 2e-4 (the guide is inconsistent), LoRA rank 16 vs 64, epochs 1–4 |
 | Calibration | on / off |
