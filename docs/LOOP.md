@@ -71,6 +71,12 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 4. (M) Randomized property test: random legal-move sequences over many seeds, checking money conservation, no negative cash after shortfall handling, loans ≥ 0, asset and owner consistency, tenant and landlord symmetry.
 5. (S) Eval regression check that compares a new d3 run to the recorded best and prints the pairs that flipped.
 
+**B0. Found in the first 20-year d3:4b world** (seed 1, 200 sims, 9,386 decisions, 0 fallbacks, 17.5 min)
+- (M, high) **Business owners pick `trade_stocks` 75% of the time** and start a business only 5%. Spenders also trade stocks 41%. d3 seems to read "business/entrepreneur" as "active investing". Probe with `/permute` and counterfactuals, then fix the move descriptions or the persona text, and add a golden scenario that pins it.
+- (M) **Real estate investors buy rentals only 8%**, but invest in the index 48%. Check whether rentals are rarely legal (cash and DTI), or legal but rejected; measure legality rate vs pick rate per archetype.
+- (S) Agreement with the heuristic ranges from 6% (business owner) to 99% (index investor). Add this per-archetype table to the dashboard and the results page as a behaviour fingerprint.
+- Healthy signs to keep: early retirees lead (median $319k), spenders trail ($55k), and bankruptcies are rare (6 in 20 years).
+
 **B. Simulation realism and impressiveness**
 6. (M) Market signals the model can read: describe crashes, booms and rates as consequences ("the index fell 14% last month, the worst drop in years"), then rerun the market pairs. Target: d3 passes ≥ 2 of crash, weak-jobs, boom.
 7. (M) Red-flag situations: make unemployment, card debt and vacancies salient in the state; add golden scenarios for them. Target: S-unemployed and S-rentals-empty pass with d3.
