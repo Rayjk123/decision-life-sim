@@ -1,0 +1,10 @@
+{
+  "_why": "E01 baseline: 0.8B on heuristic labels, full 2 epochs at 2,048 tokens (the smoke run truncated 68% of states at 1,024, cutting the memories). Every later run changes one thing against this.",
+  "base": "unsloth/Qwen3.5-0.8B",
+  "train": "data/sets/heuristic-hard/train.jsonl",
+  "val": "data/sets/heuristic-hard/val.jsonl",
+  "test": "data/sets/heuristic-hard/test.jsonl",
+  "max_seq_length": 2048, "load_in_4bit": true,
+  "r": 16, "lora_alpha": 16, "lr": 2e-4,
+  "epochs": 2, "batch": 2, "grad_accum": 4, "warmup_steps": 10, "eval_every": 100
+}
