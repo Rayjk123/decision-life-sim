@@ -14,6 +14,7 @@ import { drawFor } from './rng.ts';
 import { ARCHETYPE } from './data.ts';
 import { fmt } from './money.ts';
 import { resetFlows } from './ledger.ts';
+import { rngFor } from './rng.ts';
 import { releaseTenancies, settleBusinessDemand, settleRentals } from './economy.ts';
 
 export interface TickOptions {
@@ -32,6 +33,9 @@ export interface MonthResult {
 }
 
 /** Retirement is only offered at 67+, or earlier when pension + a 4% drawdown covers living costs. */
+/** How many heirs an estate is split among (uniform pick: mean 2.5). */
+export const ESTATE_HEIRS = [1, 2, 2, 3, 3, 4] as const;
+
 export function canAffordRetirement(sim: Sim, m: number): boolean {
   if (ageInt(sim, m) >= 67) return true;
   // Income must cover a realistic retired budget: most of the retiree lifestyle, housing, loan payments and,
@@ -92,8 +96,11 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     eventsBySim.set(sim.id, evs);
     if (m >= sim.deathMonth) {
       const bs = balanceSheet(sim);
-      world.hallOfFame.push({ simId: sim.id, name: sim.name, archetype: sim.archetype, career: sim.career, ageAtDeath: ageInt(sim, m), finalNetWorth: bs.netWorth, peakNetWorth: sim.peakNetWorth, diedMonth: m });
-      if (bs.netWorth > 0) world.pendingEstates.push({ fromId: sim.id, fromName: sim.name, amount: bs.netWorth });
+      // A positive estate is split among 1-4 heirs (mean 2.5); one of them moves to town, the rest live elsewhere.
+      // (It used to go whole to one 18-year-old, which made the median 18-29-year-old a near-millionaire.)
+      const heirs = bs.netWorth > 0 ? rngFor(world.seed, 'heirs', m, sim.id).pick(ESTATE_HEIRS) : undefined;
+      world.hallOfFame.push({ simId: sim.id, name: sim.name, archetype: sim.archetype, career: sim.career, ageAtDeath: ageInt(sim, m), finalNetWorth: bs.netWorth, peakNetWorth: sim.peakNetWorth, diedMonth: m, heirs });
+      if (bs.netWorth > 0) world.pendingEstates.push({ fromId: sim.id, fromName: sim.name, amount: bs.netWorth, heirs });
       events.push({ month: m, simId: sim.id, type: 'died', text: `${sim.name} died at ${ageInt(sim, m)} with a net worth of ${fmt(bs.netWorth)}` });
       events.push(...releaseTenancies(world, sim, m));
     } else survivors.push(sim);

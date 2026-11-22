@@ -1,5 +1,5 @@
 {
-  "_note": "G7/G8 bands. Wide on purpose: they catch a broken economy, not tuning. Measured 2026-11-22 (heuristic, seeds 1-3, 50y, 200 sims): bankruptcy 0.006-0.009/sim-year, homeownership 35+ 0.66-0.87, unemployment 0.01-0.11, median NW $0.39M-$1.52M, gini 0.47-0.54, median retirement age 56-57, ~1 s per run. Tighten toward real-world figures as realism work lands (see docs/LOOP.md backlog B). Credit (derived score, iteration 8): median ~815, p90-p10 ~145; US median ~715, so the median band is generous until wealth realism lands.",
+  "_note": "G7/G8 bands. Wide on purpose: they catch a broken economy, not tuning. Measured 2026-11-22 (heuristic, seeds 1-3, 50y, 200 sims): bankruptcy 0.006-0.009/sim-year, homeownership 35+ 0.66-0.87, unemployment 0.01-0.11, median NW $0.39M-$1.52M, gini 0.47-0.54, median retirement age 56-57, ~1 s per run. Tighten toward real-world figures as realism work lands (see docs/LOOP.md backlog B). Credit (derived score, iteration 8): median ~815, p90-p10 ~145; US median ~715, so the median band is generous until wealth realism lands. Iteration 13 (estates split among heirs): median NW $0.29M-1.27M, gini 0.53-0.58; floors raised to lock the gain.",
   "seeds": [
     1,
     2,
@@ -27,10 +27,10 @@
     ],
     "medianNetWorth": [
       100000,
-      4000000
+      2500000
     ],
     "gini": [
-      0.3,
+      0.45,
       0.95
     ],
     "medianRetirementAge": [

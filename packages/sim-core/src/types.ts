@@ -163,6 +163,7 @@ export interface SimEvent {
 export interface HallOfFameEntry {
   simId: SimId; name: string; archetype: ArchetypeKey; career: string;
   ageAtDeath: number; finalNetWorth: Cents; peakNetWorth: Cents; diedMonth: number;
+  heirs?: number;           // how many heirs split a positive estate; only one of them moves to town
 }
 
 export interface Economy {
@@ -183,7 +184,7 @@ export interface World {
   economy: Economy;
   sims: Sim[];
   hallOfFame: HallOfFameEntry[];
-  pendingEstates: Array<{ fromId: SimId; fromName: string; amount: Cents }>;
+  pendingEstates: Array<{ fromId: SimId; fromName: string; amount: Cents; heirs?: number }>;
 }
 
 /** Anything that turns (state, questions) into probabilities: Kev, Jev or the heuristic. */

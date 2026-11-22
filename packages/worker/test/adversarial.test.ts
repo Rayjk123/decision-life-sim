@@ -3,7 +3,7 @@
 // bookkeeping bug, never a model problem: the model can only pick among moves the rules call legal.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createWorld, flowTotal, home, runMonth, type Decider, type World } from '@dls/sim-core';
+import { createWorld, estateShare, flowTotal, home, runMonth, type Decider, type World } from '@dls/sim-core';
 import { integrityViolations } from '../../../scripts/health-lib.ts';
 import { randomDecider } from '../src/random.ts';
 
@@ -87,7 +87,7 @@ for (const { decider, seeds, years, pop, mustSee } of RUNS) {
     const seen = new Map<string, number>();
     for (const seed of seeds) {
       const world = createWorld(seed, pop);
-      const estatesLeft: number[] = [];      // every positive estate, in the order it was queued
+      const estatesLeft: Array<{ amount: number; heirs: number }> = [];   // every positive estate, in queue order
       let inherited = 0;                     // every inheritance actually paid to a newcomer
       while (world.month < years * 12 && found.length < 10) {
         const before = new Map(world.sims.map((s) => [s.id, { cash: s.cash, loans: new Set(s.loans.map((l) => l.id)) }]));
@@ -99,15 +99,17 @@ for (const { decider, seeds, years, pop, mustSee } of RUNS) {
         const received = world.sims.reduce((t, s) => t + (s.flows.rent_received ?? 0), 0);
         const paid = -world.sims.reduce((t, s) => t + (s.flows.rent_paid ?? 0), 0);
         if (received > paid) found.push(`seed ${seed} month ${world.month}: rent minted: received ${received} > paid ${paid}`);
-        estatesLeft.push(...world.hallOfFame.slice(hof).filter((h) => h.finalNetWorth > 0).map((h) => h.finalNetWorth));
+        estatesLeft.push(...world.hallOfFame.slice(hof).filter((h) => h.finalNetWorth > 0).map((h) => ({ amount: h.finalNetWorth, heirs: h.heirs ?? 1 })));
         inherited += world.sims.reduce((t, s) => t + (s.flows.inheritance ?? 0), 0);
       }
-      // Cross-sim money: estates are paid out FIFO at 90% (10% estate costs); the rest are still queued
-      const queued = world.pendingEstates.map((e) => e.amount);
+      // Cross-sim money: estates are paid out FIFO, one heir's share each (90% after costs, split among the heirs;
+      // the other heirs live outside town); the rest are still queued
+      const queued = world.pendingEstates.map((e) => ({ amount: e.amount, heirs: e.heirs ?? 1 }));
       const paidOut = estatesLeft.slice(0, estatesLeft.length - queued.length);
       assert.deepEqual(queued, estatesLeft.slice(paidOut.length), `seed ${seed}: queued estates don't match the estates left`);
-      const expected = paidOut.reduce((t, a) => t + Math.round(a * 0.9), 0);
-      if (inherited !== expected) found.push(`seed ${seed}: inheritances paid ${inherited} != 90% of estates distributed ${expected}`);
+      const expected = paidOut.reduce((t, e) => t + estateShare(e.amount, e.heirs), 0);
+      if (inherited !== expected) found.push(`seed ${seed}: inheritances paid ${inherited} != heirs' shares of estates distributed ${expected}`);
+      if (paidOut.length >= 5 && paidOut.every((e) => e.heirs === 1)) found.push(`seed ${seed}: every estate had one heir: splitting never exercised`);
       if (!paidOut.length) found.push(`seed ${seed}: no estate was ever distributed, so the estate check proved nothing`);
     }
     assert.deepEqual(found.slice(0, 10), []);

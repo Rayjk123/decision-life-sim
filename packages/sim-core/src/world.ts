@@ -91,10 +91,11 @@ export function spawnSim(world: World, month: number): Sim {
   // An heir: a newcomer inherits the estate of someone who died (after 10% estate costs), invested in the index.
   const estate = world.pendingEstates.shift();
   if (estate) {
-    const inheritance = Math.round(estate.amount * 0.9);
+    const heirs = estate.heirs ?? 1;
+    const inheritance = estateShare(estate.amount, heirs);
     post(sim, 'inheritance', inheritance);
     sim.name = `${sim.name.split(' ')[0]} ${estate.fromName.split(' ').slice(1).join(' ') || sim.name.split(' ')[1]}`;
-    remember(sim, `Inherited ${fmt(inheritance)} from ${estate.fromName}`);
+    remember(sim, `Inherited ${fmt(inheritance)} from ${estate.fromName}${heirs > 1 ? ` (a 1/${heirs} share)` : ''}`);
   }
   if (c.debtAtStart > 0) {
     sim.loans.push({ id: `${sim.id}-student`, kind: 'student', balance: 0, annualRate: 0.055, payment: 0, deferredUntil: startMonth });
@@ -103,6 +104,9 @@ export function spawnSim(world: World, month: number): Sim {
 }
 
 /** How many sims should arrive this month during the initial staggered arrival. */
+/** One heir's share of an estate after 10% estate costs. */
+export const estateShare = (amount: number, heirs: number): number => Math.round((amount * 0.9) / heirs);
+
 export function arrivalsDue(world: World): number {
   // During the arrival period the town fills up linearly; afterwards each death is replaced by a new 18-year-old.
   const desired = world.month >= ARRIVAL_MONTHS
