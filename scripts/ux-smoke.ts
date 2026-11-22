@@ -89,6 +89,11 @@ if (decRows) {
   check('decision card shows the dice roll', /dice|draw/i.test(card));
   check('decision card shows the spend level', /spending: .*\/10/.test(card));
   check('decision card names who decided', (await page.locator('#who').count()) > 0);
+  await page.locator('#card details summary').click().catch(() => {});
+  await page.waitForTimeout(200);
+  const saw = (await page.locator('#card details').count()) ? await page.locator('#card details').innerText() : '';
+  check('"What the model saw" is a labelled fact sheet', (await page.locator('#card details table.saw tr').count()) >= 5 && /Personality|Who/.test(saw), `${saw.length} chars`);
+  check('"What the model saw" lists the questions asked in the call', /Questions asked in this one call/.test(saw) && /spend/i.test(saw));
   await page.screenshot({ path: join(shots, '2-decision.png'), fullPage: true });
   if (await page.locator('#who').count()) {
     await page.locator('#who').click();

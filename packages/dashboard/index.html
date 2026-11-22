@@ -154,6 +154,30 @@ function lifeHtml(p) {
     + h3('This year') + (recent ? `<table class="recent">${recent}</table>` : '<p class="empty">A quiet year.</p>');
 }
 
+// "What the model saw": the state as a labelled fact sheet, plus the questions asked in the same call
+const STATE_LABELS = { person: 'Who', who: 'Who', personality: 'Personality', traits: 'Character', character: 'Character', money: 'Money',
+  cash: 'Cash', savings: 'Savings', invested: 'Invested', debt: 'Debt', net_worth: 'Net worth', debts: 'Debts', monthly: 'Each month',
+  housing: 'Home', home: 'Home', property: 'Rentals', rentals: 'Rentals', business: 'Business', market: 'Economy', economy: 'Economy',
+  town: 'Town', work: 'Work', recent: 'Recent memories' };
+function modelSawHtml(d) {
+  const rows = Object.entries(d.state).map(([k, v]) => {
+    const val = k === 'recent' && String(v).includes('; ')
+      ? `<ul style="margin:0;padding-left:16px">${String(v).split('; ').map((x) => `<li>${esc(x)}</li>`).join('')}</ul>`
+      : esc(String(v));
+    return `<tr><th style="width:110px;vertical-align:top" class="small">${esc(STATE_LABELS[k] ?? k.replace(/_/g, ' '))}</th><td class="small">${val}</td></tr>`;
+  }).join('');
+  // Every question asked leaves an answer on the record, so list them from the answers
+  const a = d.answers ?? {};
+  const asked = [
+    a.main && `Which move? (${(d.moves ?? Object.keys(a.main)).length} legal options, shown above with their real costs)`,
+    a.investShare && 'If investing or paying down debt: how much of the spare cash?',
+    a.retire !== undefined && a.retire !== null && 'Retire this month?',
+    a.spendLevel && 'How much to spend this month, from 1 (bare bones) to 10 (a blowout)?',
+  ].filter(Boolean);
+  return `<table class="saw" style="margin-top:6px">${rows}</table>`
+    + (asked.length ? `<div class="small" style="margin-top:8px"><b>Questions asked in this one call</b><ol style="margin:4px 0 0;padding-left:18px">${asked.map((x) => `<li>${esc(x)}</li>`).join('')}</ol></div>` : '')
+    + '<div class="small mute" style="margin-top:6px">This is everything the model is shown. It never sees the hidden economy state, the sim\'s lifespan, or other sims\' finances.</div>';
+}
 async function drawChart() {
   const { years } = await get('stats.json').catch(() => ({ years: [] }));
   const el = $('chart');
@@ -260,7 +284,7 @@ function showDecision(d) {
     <div class="small" style="margin:10px 0 4px"><b>The dice roll</b> <span class="mute">(after sharpening by discipline)</span></div>
     <div class="dice">${segs}<div class="marker" style="left:calc(${d.draw*100}% - 1px)"></div></div>
     <div class="small mute" style="margin-top:4px">draw ${d.draw.toFixed(2)} → ${esc(moveLabel(d.picked))}</div>
-    ${d.state ? `<details style="margin-top:8px"><summary class="small">What the model saw</summary><pre>${esc(Object.entries(d.state).map(([k, v]) => `${k}: ${v}`).join('\n'))}</pre></details>` : ''}
+    ${d.state ? `<details style="margin-top:8px"><summary class="small">What the model saw</summary>${modelSawHtml(d)}</details>` : ''}
   </div>`;
   $('who').onclick = (e) => { e.preventDefault(); openPerson(d.simId); };
 }
