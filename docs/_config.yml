@@ -13,3 +13,9 @@ relative_links:
   enabled: true
   collections: false
 # Raw result files under results/data/ are served as-is for download.
+aux_links:
+  "Source on GitHub": "https://github.com/Rayjk123/decision-life-sim"
+gh_edit_link: true
+gh_edit_repository: "https://github.com/Rayjk123/decision-life-sim"
+gh_edit_branch: "main"
+gh_edit_source: docs

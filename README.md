@@ -9,11 +9,15 @@
 </p>
 
 <p align="center">
+  <a href="https://rayjk123.github.io/decision-life-sim/"><b>Docs &amp; model results</b></a>
+</p>
+
+<p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
   <img src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white" alt="Node 20+">
   <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
   <img src="https://img.shields.io/badge/tests-37%20passing-brightgreen" alt="37 tests passing">
-  <a href="docs/results.md"><img src="https://img.shields.io/badge/best%20model-d3%3A4b%2077%25-8a2be2" alt="Best model: d3:4b, 77%"></a>
+  <a href="https://rayjk123.github.io/decision-life-sim/results.html"><img src="https://img.shields.io/badge/best%20model-d3%3A4b%2077%25-8a2be2" alt="Best model: d3:4b, 77%"></a>
   <img src="https://img.shields.io/badge/runtime%20deps-0-lightgrey" alt="Zero runtime dependencies">
 </p>
 

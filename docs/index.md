@@ -9,7 +9,7 @@ nav_order: 1
 A town of sims living out their financial lives month by month. Every money decision comes from a small, open-weights decision model running on your own hardware.
 {: .fs-6 .fw-300 }
 
-[Model results](results.md){: .btn .btn-primary .mr-2 } [Design spec](SPEC.md){: .btn .mr-2 } [Work log](WORKLOG.md){: .btn }
+[Model results](results.md){: .btn .btn-primary .mr-2 } [Design spec](SPEC.md){: .btn .mr-2 } [Work log](WORKLOG.md){: .btn .mr-2 } [Source on GitHub](https://github.com/Rayjk123/decision-life-sim){: .btn }
 
 ---
 
