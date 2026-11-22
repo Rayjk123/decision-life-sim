@@ -43,6 +43,10 @@ svg text{font-size:11px;fill:var(--mute)}
 #person.open{display:block}
 .close{float:right}
 .empty{color:var(--mute);padding:24px 0;text-align:center}
+.timeline{list-style:none;margin:6px 0 0;padding:0 0 0 2px;border-left:2px solid var(--line)}
+.timeline li{display:grid;grid-template-columns:34px 22px minmax(0,1fr);align-items:baseline;padding:4px 0 4px 8px;font-size:13px}
+.timeline .age{color:var(--mute);font-variant-numeric:tabular-nums;font-size:12px}
+.recent td{font-size:12px}.recent .n{color:var(--mute);white-space:nowrap}
 #intro{grid-column:1/-1;background:#fffdf7;border-color:#e9dfc4;display:none}
 #intro.show{display:block}
 #intro h2{font-size:16px;margin-bottom:6px}
@@ -127,6 +131,27 @@ async function openWorld(name) {
     + ` · <span title="The rate on a new 30-year mortgage">Mortgages <b>${(m.market.mortgageRate*100).toFixed(1)}%</b></span> · <b>${latest.population}</b> residents · <b>${e.businessCount ?? 0}</b> local businesses`
     + ` · <span title="Rentals owned by sims that have no tenant right now"><b>${e.vacantUnits ?? 0}</b> of ${e.rentalUnits ?? 0} rentals empty</span>`;
   drawChart(); drawLeaders(); loadMonth(latest.month);
+}
+
+// Life panel: a timeline of milestones by age, then this year's events with repeats grouped
+const MILESTONE_ICON = { arrived: '🚚', inherited: '🎁', started_career: '💼', bought_home: '🏠', bought_rental: '🏘️', sold_rental: '🔑',
+  started_business: '🏪', business_exit: '💰', business_failed: '📉', laid_off: '⚠️', retired: '🌅', bankrupt: '⛔', splurge: '🛍️' };
+function lifeHtml(p) {
+  const h3 = (t) => `<h3 style="font-size:13px;margin:14px 0 4px">${t}</h3>`;
+  if (!p.milestones) return h3('Life') + `<table>${p.life.slice(0, 40).map((e) => `<tr><td class="mute small">yr ${Math.floor((e.month - 1) / 12) + 1}</td><td class="small">${esc(e.text)}</td></tr>`).join('')}</table>`;
+  const timeline = p.milestones.length
+    ? `<ol class="timeline">${p.milestones.map((e) => `<li><span class="age">${e.age}</span><span>${MILESTONE_ICON[e.type] ?? '•'}</span><span>${esc(e.text)}</span></li>`).join('')}</ol>`
+    : '<p class="empty">No milestones yet.</p>';
+  const latestMonth = p.life[0]?.month ?? 0;
+  const groups = new Map();
+  for (const e of p.life.filter((x) => x.month > latestMonth - 12)) {
+    const key = e.text.replace(/\$[\d.,]+[kM]?/g, '$');
+    const g = groups.get(key) ?? { text: e.text, n: 0 };
+    g.n++; groups.set(key, g);
+  }
+  const recent = [...groups.values()].map((g) => `<tr><td>${esc(g.text)}</td><td class="n num">${g.n > 1 ? `×${g.n}` : ''}</td></tr>`).join('');
+  return h3('Life so far <small class="mute" style="font-weight:400">age · milestone</small>') + timeline
+    + h3('This year') + (recent ? `<table class="recent">${recent}</table>` : '<p class="empty">A quiet year.</p>');
 }
 
 async function drawChart() {
@@ -245,8 +270,7 @@ async function openPerson(id) {
     <table>${flows.map(([k, v]) => `<tr><td>${esc(k.replace(/_/g, ' '))}</td><td class="num" style="color:${v < 0 ? '#9a3a2a' : '#2f7d4f'}">${money(v)}</td></tr>`).join('') || '<tr><td class="mute">None recorded</td></tr>'}</table>
     <h3 style="font-size:13px;margin:14px 0 4px">Owns</h3>
     <div class="small">${p.assets.map((a) => `${esc(a.kind)}${a.businessType ? ` (${esc(a.businessType)})` : ''} ${money(a.value)}${a.kind === 'rental' ? (a.rented ? ` · rented ${money(a.rent)}/mo` : ' · empty') : ''}`).join('<br>') || 'Nothing yet'}</div>
-    <h3 style="font-size:13px;margin:14px 0 4px">Life</h3>
-    <table>${p.life.slice(0, 40).map((e) => `<tr><td class="mute small" style="white-space:nowrap">yr ${Math.floor((e.month-1)/12)+1}</td><td class="small">${esc(e.text)}</td></tr>`).join('')}</table>`;
+    ${lifeHtml(p)}`;
   el.classList.add('open');
   $('x').onclick = () => el.classList.remove('open');
 }

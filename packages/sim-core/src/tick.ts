@@ -11,7 +11,7 @@ import { heuristicAnswers, heuristicDecider } from './heuristic.ts';
 import { applyMove } from './executor.ts';
 import { decisionReason, type CallPolicy } from './triggers.ts';
 import { drawFor } from './rng.ts';
-import { ARCHETYPE } from './data.ts';
+import { ARCHETYPE, CAREER } from './data.ts';
 import { fmt } from './money.ts';
 import { resetFlows } from './ledger.ts';
 import { rngFor } from './rng.ts';
@@ -80,7 +80,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
   for (let n = arrivalsDue(world); n > 0; n--) {
     const s = spawnSim(world, m);
     world.sims.push(s);
-    events.push({ month: m, simId: s.id, type: 'arrived', text: `${s.name} moved to town at 18 (${ARCHETYPE[s.archetype].label.toLowerCase()}, ${s.career})` });
+    events.push({ month: m, simId: s.id, type: 'arrived', text: `${s.name} moved to town at 18 (${ARCHETYPE[s.archetype].label.toLowerCase()}, ${(CAREER[s.career]?.label ?? s.career).toLowerCase()})` });
     if (s.flows.inheritance) events.push({ month: m, simId: s.id, type: 'inherited', text: `${s.name} inherited ${fmt(s.flows.inheritance)}` });
   }
 

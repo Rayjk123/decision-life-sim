@@ -7,10 +7,13 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync, readdirSync, write
 import { join } from 'node:path';
 import {
   ARCHETYPE, ARCHETYPES, CAREER, ageInt, balanceSheet, home, rentals,
-  type DecisionRecord, type MonthResult, type MoveKind, type Sim, type World,
+  type DecisionRecord, type MonthResult, type MoveKind, type Sim, type SimEvent, type World,
 } from '@dls/sim-core';
 
 /** Which building a sim walks to for each kind of move. */
+/** Event types that make up a life's milestones (big splurges, level 9-10, are added too). */
+const MILESTONES = new Set(['arrived', 'inherited', 'started_career', 'bought_home', 'bought_rental', 'sold_rental', 'started_business', 'business_exit', 'business_failed', 'laid_off', 'retired', 'bankrupt']);
+
 export const ERRAND: Record<MoveKind, string | null> = {
   nothing: null, invest_index: 'brokerage', trade_stocks: 'brokerage', pay_debt: 'bank', save_cash: 'bank',
   buy_home: 'realtor', buy_rental: 'realtor', sell_rental: 'realtor', buy_car: 'car_lot', start_business: 'city_hall',
@@ -30,7 +33,8 @@ const median = (xs: number[]) => (xs.length ? [...xs].sort((a, b) => a - b)[Math
 interface YearStat { year: number; population: number; index: number; homeIndex: number; regime: string; byArchetype: Record<string, { n: number; medianNetWorth: number; ownHome: number; rentals: number; business: number }> }
 
 export class WorldStore {
-  private life = new Map<string, Array<{ month: number; text: string }>>();
+  private life = new Map<string, Array<{ month: number; type: string; text: string }>>();
+  private milestones = new Map<string, Array<{ month: number; type: string; text: string }>>();   // never crowded out by routine events
   private nwByYear = new Map<string, number[]>();
   private lastDecision = new Map<string, DecisionRecord>();
   private stats: YearStat[] = [];
@@ -64,10 +68,7 @@ export class WorldStore {
     };
     trim('events.ndjson', (e) => {
       if (!e.simId || e.type === 'decision') return;
-      const list = this.life.get(e.simId) ?? [];
-      list.unshift({ month: e.month, text: e.text });
-      if (list.length > 200) list.length = 200;
-      this.life.set(e.simId, list);
+      this.addLife(e);
     });
     trim('decisions.ndjson', (d) => this.lastDecision.set(d.simId, d));
     const statsPath = join(this.dir, 'public/stats.json');
@@ -95,10 +96,7 @@ export class WorldStore {
     const changed = new Set<string>();
     for (const e of r.events) {
       if (!e.simId || e.type === 'decision') continue;
-      const list = this.life.get(e.simId) ?? [];
-      list.unshift({ month: e.month, text: e.text });
-      if (list.length > 200) list.length = 200;
-      this.life.set(e.simId, list);
+      this.addLife(e);
       changed.add(e.simId);
     }
     for (const d of r.decisions) { const { state, descriptions, ...lean } = d; this.lastDecision.set(d.simId, { ...lean, descriptions } as DecisionRecord); changed.add(d.simId); }
@@ -149,6 +147,21 @@ export class WorldStore {
     writeFileSync(join(this.dir, 'public/latest.json'), JSON.stringify({ month: m, label: monthLabel(m), population: world.sims.length, writtenAt: new Date().toISOString() }));
   }
 
+  /** Recent events (newest first, capped) plus a separate, chronological list of life milestones. */
+  private addLife(e: SimEvent) {
+    const list = this.life.get(e.simId!) ?? [];
+    list.unshift({ month: e.month, type: e.type, text: e.text });
+    if (list.length > 200) list.length = 200;
+    this.life.set(e.simId!, list);
+    const big = e.type === 'splurge' && Number((e.data as { level?: number } | undefined)?.level) >= 9;
+    if (MILESTONES.has(e.type) || big) {
+      const ms = this.milestones.get(e.simId!) ?? [];
+      ms.push({ month: e.month, type: e.type, text: e.text });
+      if (ms.length > 80) ms.splice(1, ms.length - 80);   // keep the arrival, drop the oldest after it
+      this.milestones.set(e.simId!, ms);
+    }
+  }
+
   person(world: World, s: Sim) {
     const m = world.month;
     const d = this.lastDecision.get(s.id);
@@ -162,7 +175,8 @@ export class WorldStore {
       loans: s.loans.filter((l) => l.balance > 0).map((l) => ({ kind: l.kind, balance: l.balance, rate: l.annualRate, payment: l.payment })),
       memory: s.memory,
       netWorthByYear: this.nwByYear.get(s.id) ?? [],
-      life: this.life.get(s.id) ?? [],
+      life: (this.life.get(s.id) ?? []).map((e) => ({ ...e, age: Math.floor((e.month - s.birthMonth) / 12) })),
+      milestones: (this.milestones.get(s.id) ?? []).map((e) => ({ ...e, age: Math.floor((e.month - s.birthMonth) / 12) })),
       lastDecision: d ?? null,
     };
   }

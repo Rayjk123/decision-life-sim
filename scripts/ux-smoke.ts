@@ -94,6 +94,8 @@ if (decRows) {
     check('clicking the sim opens the life panel', open > 0);
     const person = await page.locator('#person').innerText();
     check('life panel shows money and a story', /net worth/i.test(person) && person.length > 200, `${person.length} chars`);
+    check('life panel shows a milestone timeline by age', (await page.locator('#person .timeline li').count()) >= 2 && /Life so far/.test(person));
+    check('life panel groups this year', /This year/.test(person));
     await page.screenshot({ path: join(shots, '3-person.png'), fullPage: true });
     await page.keyboard.press('Escape');
     await page.waitForTimeout(200);
