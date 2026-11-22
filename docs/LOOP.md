@@ -30,7 +30,7 @@ An autonomous loop that keeps making decision-life-sim more realistic, more impr
 5. **Verify:** run `npm run verify` (G1–G9 except d3 evals). Run G6 for d3 by hand when the desktop is reachable. All gates must pass. If quality improved, raise the floors in `scripts/verify.baseline.json`; never lower them.
 6. **Self-review the diff** (`git diff main...`) against the review lenses. Fix what you find.
 7. **Record:** update the iteration log (result, numbers), the backlog, `docs/WORKLOG.md` when numbers changed, and `docs/results.md` via `npm run docs:results` when evals changed.
-8. **Commit and push** with a clear message and the session's attribution trailer, then stop. Don't start a second iteration in the same run.
+8. **Commit and push** with a clear message and the session's attribution trailer. Check CI: `gh run list --branch improve/loop --limit 1`, and if it's red, fixing it is the next iteration's first job. Then stop; don't start a second iteration in the same run.
 
 ## Verification gates (the quality bar)
 
@@ -67,7 +67,7 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 **A. Verification infrastructure (do first)**
 1. ~~(S) `npm run verify`~~ done in iteration 1.
 2. ~~(M) `npm run health`~~ done in iteration 2 (part of `verify`).
-3. (S) GitHub Actions CI on push and PR running `npm run verify` (no model needed).
+3. ~~(S) GitHub Actions CI~~ done in iteration 3 (`.github/workflows/verify.yml`).
 4. (M) Randomized property test: random legal-move sequences over many seeds, checking money conservation, no negative cash after shortfall handling, loans ≥ 0, asset and owner consistency, tenant and landlord symmetry.
 5. (S) Eval regression check that compares a new d3 run to the recorded best and prints the pairs that flipped.
 
@@ -111,3 +111,4 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 | 0 | 2026-11-21 | setup | Loop created; branch `improve/loop`; backlog seeded | G1–G2 green, 37 tests | d3:4b 77% / 61% pairs is the bar |
 | 1 | 2026-11-22 | build (A1) | `npm run verify`: one command for types, tests (with a floor on the count), deterministic heuristic eval regression, docs-in-sync (`docs:results --check`) and a leak scan (LAN IPs, GitHub/API tokens, private keys) over tracked files. Floors in `scripts/verify.baseline.json`; `scripts/` now typechecked; 3 tests for the gate's own logic | verify green in 2.7 s; 40 tests | Proven by planting 4 faults (LAN IP, stale generated table, failing test; prose outside generated blocks is allowed). Also: the 20-year d3:4b world finished, 9,386 decisions, 0 fallbacks, 17.5 min; findings in backlog B0 |
 | 2 | 2026-11-22 | build (A2) | `npm run health` (G7 + G8, now inside `verify`): 3 seeds × 50 years × 200 sims, in memory, heuristic. Integrity scan over the whole world (finite numbers, whole cents, no negative debts, assets or holdings), 7 realism bands, 6 s/run budget. 3 tests incl. planted NaN, fractional cents and negative debt | verify green in 5.8 s; 43 tests | Breach proven by narrowing a band. Health found 3 realism gaps (wealth too high, too equal, retirement at 56–57), now top of backlog B |
+| 3 | 2026-11-22 | build (A3) | GitHub Actions `verify` workflow on every push and PR, Node 20 + 22 matrix, `npm ci && npm run verify -- --all`; CI badge in the README | CI green on both (run 44993509432): 12.6 s / 18.0 s | Identical eval numbers on Node 20, 22 and macOS (cross-platform determinism). CI runners are ~2.5× slower: health ≈ 2.5 s/run against the 6 s budget. Gotcha: `npm ci --dry-run` deleted `node_modules` locally; don't use it as a check |
