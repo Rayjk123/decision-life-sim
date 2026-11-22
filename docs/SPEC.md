@@ -139,6 +139,12 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 
 **7. One shared world in the cloud.** One GPU box (RunPod RTX 4090 or L4, ~$250–290/month 24/7) running Kev + the worker; the read model on S3 + CloudFront; AWS CDK; pause the world after 15 minutes with no viewers; a spending guardrail. Hosted Jev ($0.042/M input tokens) is the no-GPU alternative: ~$0.08 per sim month at 1,000 sims, cheaper only for light viewing.
 
+**7b. Our own decision model (later; user-triggered).** *Trigger:* tuning has plateaued: state wording, golden fixes, spend levels and prompt changes stop moving d3/Kev on the counterfactual pairs and the world-level realism metrics. Kev is Apache-2.0 and ships its recipe (`PLAN.md`, `kev.train`) and its training corpus (`evals/v7/decision-v7`), so in increasing cost:
+1. **Fine-tune Kev** on our decisions (`--init_from jaredpalmer/kev-4b`; ~$1/run on Modal; needs 1,000–5,000 labelled sim states). Labels from a teacher LLM given the persona and our act-in-character rubric. Never train on golden scenarios; judge mainly by counterfactual pairs and world-level metrics, since Claude wrote the golden labels (circularity).
+2. **Rerun Kev's recipe from the Qwen3.5 base** with our sim decisions mixed into decision-v7 (LoRA rank 16, 2 epochs, cross-entropy, temperature fit). 0.8B fits a 4 GB GPU (the 4070 Super under WSL); 4B needs an H100 for a few hours.
+3. **Our own architecture** (pointer head over an LM's hidden states, or other) only if Kev's design blocks us, e.g. memory across decisions or batched serving on Apple Silicon.
+Do level 1 before level 2: it shows whether our data teaches anything at all.
+
 **8. Later / optional.** Personal goals per sim plus a second "life well lived" leaderboard (deferred: sims act in character for now); households and families; prediction market (out of v1); SQLite if the logs need querying; sims' trades moving prices.
 
 ## Open questions
