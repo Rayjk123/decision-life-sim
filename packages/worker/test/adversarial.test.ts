@@ -39,6 +39,8 @@ function violations(world: World, before: Map<string, { cash: number; loans: Set
       const t = byId.get(a.tenantId);
       if (!t) out.push(`tenancy: ${s.id}/${a.id} has missing tenant ${a.tenantId}`);
       else if (t.rentsUnit !== a.id || t.landlordId !== s.id) out.push(`tenancy: ${s.id}/${a.id} tenant ${t.id} points at ${t.landlordId}/${t.rentsUnit}`);
+      // the landlord collects unit.rent and the tenant pays unitRent: if they ever differ, money is created or destroyed
+      else if (t.unitRent !== a.rent) out.push(`rent drift: ${s.id}/${a.id} collects ${a.rent} but tenant ${t.id} pays ${t.unitRent}`);
       if (a.tenantId === s.id) out.push(`tenancy: ${s.id} rents their own unit ${a.id}`);
     }
     if (s.rentsUnit) {
@@ -63,11 +65,27 @@ for (const decider of [randomDecider, maxLeverage]) {
     const found: string[] = [];
     for (const seed of [11, 12, 13]) {
       const world = createWorld(seed, 80);
+      const estatesLeft: number[] = [];      // every positive estate, in the order it was queued
+      let inherited = 0;                     // every inheritance actually paid to a newcomer
       while (world.month < 360 && found.length < 10) {
         const before = new Map(world.sims.map((s) => [s.id, { cash: s.cash, loans: new Set(s.loans.map((l) => l.id)) }]));
+        const hof = world.hallOfFame.length;
         await runMonth(world, decider, { policy: 'monthly' });
         for (const v of violations(world, before)) found.push(`seed ${seed} month ${world.month}: ${v}`);
+        // Cross-sim money: rent can't be received that wasn't paid (town apartments make paid >= received)
+        const received = world.sims.reduce((t, s) => t + (s.flows.rent_received ?? 0), 0);
+        const paid = -world.sims.reduce((t, s) => t + (s.flows.rent_paid ?? 0), 0);
+        if (received > paid) found.push(`seed ${seed} month ${world.month}: rent minted: received ${received} > paid ${paid}`);
+        estatesLeft.push(...world.hallOfFame.slice(hof).filter((h) => h.finalNetWorth > 0).map((h) => h.finalNetWorth));
+        inherited += world.sims.reduce((t, s) => t + (s.flows.inheritance ?? 0), 0);
       }
+      // Cross-sim money: estates are paid out FIFO at 90% (10% estate costs); the rest are still queued
+      const queued = world.pendingEstates.map((e) => e.amount);
+      const paidOut = estatesLeft.slice(0, estatesLeft.length - queued.length);
+      assert.deepEqual(queued, estatesLeft.slice(paidOut.length), `seed ${seed}: queued estates don't match the estates left`);
+      const expected = paidOut.reduce((t, a) => t + Math.round(a * 0.9), 0);
+      if (inherited !== expected) found.push(`seed ${seed}: inheritances paid ${inherited} != 90% of estates distributed ${expected}`);
+      if (!paidOut.length) found.push(`seed ${seed}: no estate was ever distributed, so the estate check proved nothing`);
     }
     assert.deepEqual(found.slice(0, 10), []);
   });
