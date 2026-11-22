@@ -41,9 +41,28 @@ Newest session first. Each entry: what was done, the current state, and the next
 - 300 calls (1,000 sims × ~⅓ a month) take ~570 s against a 90 s month target, so **~6× short**. 200 sims (~65 calls) take ~2 min a month, which is fine for evals and short runs.
 - Levers: shorter states (`terse` style, trimming `recent`), fewer calls (yearly reviews for steady sims), the CUDA box in roadmap item 7 (real batching), or hosted Jev.
 
-**Next**
-1. `npm run eval -- --decider kev --style all --verbose` (speed is fine at this size).
-2. Experiment, a 24-month sim and a dashboard check, as in the handoff steps 6–7.
+**Golden eval, Kev-0.8B** (`evals-results/eval-kev-all-2026-11-22T02-03-45-389Z.*`)
+
+| Style | Overall | Scenario score | Top pick in character | Pairs | Personality pass | Memory | Lifecycle |
+|---|---|---|---|---|---|---|---|
+| words | **53%** | 62% | 50% | **39%** | 19% | 100% | 80% |
+| numbers | 52% | 61% | 50% | 39% | 19% | 100% | 80% |
+| terse | 46% | 61% | 50% | 22% | 19% | 100% | 100% |
+| *heuristic (words)* | *77%* | | | *56%* | *98% score* | | |
+| *random* | *15%* | | | | | | |
+
+- **Kev does not beat the heuristic.** Best style is `words` (keep it as the default), at 53% overall and 39% on pairs, against 77% and 56%.
+- **"Nothing" is Kev's top pick in all 30 scenarios.** It gets 27–45% of the probability, and the rest is spread fairly flat with similar shapes across archetypes (buy_rental is often second, even for savers and spenders). "Top pick in character" is 50% only because `nothing` is an acceptable pick in about half the scenarios.
+- **What it reads:** layoffs (laid-off-nothing +0.25), card debt (-0.04), a stock-loss memory (-0.04), and archetype swaps somewhat (4 of 5 pass in `words`). **What it ignores:** persona text alone and traits alone (+0.00), rates, crashes, a weak jobs report, boom FOMO, town vacancies, age. So it reacts to big situation facts but barely to personality, which is the point of the sim.
+- An untested hypothesis: option-order bias, since `nothing` is always listed first. Check with `/v1/systemone/permute` (roadmap item 3) before concluding it's a pure prior.
+- The eval ran much faster per call (14 s for the `words` run) than `kev:check`'s 1.7 s/decision. Eval states are probably shorter and share prefixes (Kev has a prefix cache). Not investigated.
+
+**Next (roadmap item 2, in order)**
+1. Option-order check with `/permute`: if `nothing` wins because it comes first, shuffling or listing it last is a cheap fix.
+2. Shorter, sharper state: lead with the personality and drop low-signal fields. Re-run the eval.
+3. Kev-4B: `./scripts/kev.sh jaredpalmer/kev-4b`. This Mac is an M3 Pro with 36 GB, so it should fit, but expect it to be several times slower.
+4. Fine-tune on golden-style labels (keep held-out scenarios for honest grading).
+5. Hold the experiment and the 24-month Kev run until a variant beats the heuristic; at 0.5 calls/s they cost real time.
 
 ## Session 2 · 2026-11-21 (evening)
 
