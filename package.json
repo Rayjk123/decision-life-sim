@@ -22,7 +22,8 @@
     "docs:results": "tsx scripts/results-page.ts",
     "verify": "tsx scripts/verify.ts",
     "health": "tsx scripts/health.ts",
-    "eval:compare": "tsx packages/evals/src/compare.ts"
+    "eval:compare": "tsx packages/evals/src/compare.ts",
+    "eval:fingerprint": "tsx packages/evals/src/fingerprint.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
