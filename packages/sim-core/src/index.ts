@@ -5,7 +5,7 @@ export * from './data.ts';
 export * from './market.ts';
 export * from './finance.ts';
 export * from './world.ts';
-export { upkeep, retire, closeBusiness, bankrupt, cardLoan, cardLimit, creditScoreFor, pruneLoans } from './lifecycle.ts';
+export { upkeep, retire, closeBusiness, bankrupt, businessValue, cardLoan, cardLimit, creditScoreFor, pruneLoans } from './lifecycle.ts';
 export * from './rules.ts';
 export * from './executor.ts';
 export * from './prompt.ts';

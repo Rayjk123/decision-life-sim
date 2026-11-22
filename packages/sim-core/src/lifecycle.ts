@@ -1,6 +1,6 @@
 // Monthly upkeep for one sim: school, jobs, income, bills, rentals, businesses, investments, debt, bankruptcy.
 // No decision model is involved here; this is the world's rules. Every cash change goes through post().
-import type { Loan, Sim, SimEvent, World } from './types.ts';
+import type { Cents, Loan, Sim, SimEvent, World } from './types.ts';
 import { BUSINESS, LAYOFF_MONTHLY } from './data.ts';
 import { REGIMES } from './market.ts';
 import { rngFor } from './rng.ts';
@@ -139,7 +139,7 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
   let bizProfit = 0;
   for (const b of sim.assets.filter((a) => a.kind === 'business')) {
     const type = BUSINESS[b.businessType!];
-    const profit = businessProfit(world, world.economy.typeCounts[b.businessType!] ?? 1, b.profitLo!, b.profitHi!, rng.range(0.7, 1.3));
+    const profit = businessProfit(world, world.economy.typeCounts[b.businessType!] ?? 1, b.profitLo!, b.profitHi!, rng.range(0.7, 1.3), b.quality ?? 1);
     bizProfit += profit;
     const yr1 = m - b.boughtMonth < 12;
     const struggling = profit < 0 ? 2 : 1;
@@ -159,7 +159,10 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
       out.push(ev(world, sim, 'business_failed', `Closed the ${type?.label.toLowerCase() ?? 'business'} after six losing months`));
       remember(sim, `Closed the ${type?.label.toLowerCase() ?? 'business'} after it kept losing money`);
     } else {
-      b.value = Math.max(0, Math.round(((b.profitLo! + b.profitHi!) / 2) * 24));
+      // Valued at 2 years of its own trailing profit, so winners and losers show in net worth
+      // (it used to be a fixed multiple of the type's average, identical for every business of a type).
+      b.avgProfit = b.avgProfit === undefined ? profit : Math.round(b.avgProfit * 0.9 + profit * 0.1);
+      b.value = businessValue(b.avgProfit);
     }
   }
   post(sim, 'business_profit', bizProfit);
@@ -272,6 +275,9 @@ export function retire(sim: Sim) {
 }
 
 /** Remove a business; its loan stays (personal guarantee). A full-time owner goes back to job hunting. */
+/** A going concern is worth 24 months of its trailing profit; a business losing money on average is worth nothing. */
+export const businessValue = (avgMonthlyProfit: Cents): Cents => Math.max(0, Math.round(avgMonthlyProfit * 24));
+
 export function closeBusiness(world: World, sim: Sim, assetId: string) {
   sim.assets = sim.assets.filter((a) => a.id !== assetId);
   const loan = sim.loans.find((l) => l.assetId === assetId);

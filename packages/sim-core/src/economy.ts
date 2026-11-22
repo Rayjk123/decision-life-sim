@@ -46,10 +46,10 @@ export function settleBusinessDemand(world: World) {
 
 /** Profit for one business this month: its range, scaled by town demand, crowding of its type and the economy.
  *  A level of 1 (healthy demand, no competitors, normal economy) lands at the midpoint; 2 or more at the top. */
-export function businessProfit(world: World, sameTypeCount: number, lo: number, hi: number, noise: number): number {
+export function businessProfit(world: World, sameTypeCount: number, lo: number, hi: number, noise: number, quality = 1): number {
   const regime = { expansion: 1, boom: 1.15, recession: 0.75, crash: 0.55 }[world.market.regime];
   const crowding = 1 / (1 + 0.25 * Math.max(0, sameTypeCount - 1));
-  const level = Math.max(0, Math.min(2, world.economy.demandIndex * crowding * regime * noise));
+  const level = Math.max(0, Math.min(2, world.economy.demandIndex * crowding * regime * noise * quality));
   return Math.round(lo + (hi - lo) * (level / 2));
 }
 

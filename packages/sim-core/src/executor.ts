@@ -5,6 +5,7 @@ import { amortizedPayment, fmt, k } from './money.ts';
 import { emergencyFloor, liquidAbove, offeredRate, raiseCash } from './finance.ts';
 import { businessCash, isFullTimeBusiness, quoteHome, quoteRental } from './rules.ts';
 import { remember } from './memory.ts';
+import { rngFor } from './rng.ts';
 import { post } from './ledger.ts';
 import { pruneLoans } from './lifecycle.ts';
 
@@ -147,6 +148,8 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets.push({
         id, kind: 'business', value: Math.round(b.startup * 0.5), boughtMonth: m, businessType: b.key,
         profitLo: Math.round(b.profitLo * BUSINESS_PROFIT_SCALE), profitHi: Math.round(b.profitHi * BUSINESS_PROFIT_SCALE), failYr1: b.failYr1,
+        // Some owners run a business far better than others: a lasting quality, from its own keyed stream
+        quality: Math.min(2.2, Math.max(0.4, Math.exp(rngFor(world.seed, 'business-quality', m, sim.id).normal(0, 0.35)))),
       });
       if (b.startup > cash) {
         const rate = offeredRate(sim, world, 'business');

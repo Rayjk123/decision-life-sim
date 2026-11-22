@@ -59,6 +59,8 @@ export interface Asset {
   profitHi?: Cents;
   failYr1?: number;
   lossMonths?: number;     // consecutive losing months
+  avgProfit?: Cents;       // trailing monthly profit (each month weighs 10%), drives the business's value
+  quality?: number;        // how well this business is run, drawn once at start (~lognormal around 1, 0.4-2.2)
 }
 
 export interface Sim {
