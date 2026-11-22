@@ -63,14 +63,14 @@ One change per run against a fixed baseline.
 
 ## Run queue (the research cadence works through this in order)
 
-Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<name>/config.json`), `sync.sh push-run`, train on the desktop, then **evaluate** with `eval_unsloth.py runs/<name> data/sets/heuristic-hard/test.jsonl data/sets/d3-hard/test.jsonl data/sets/claude-hard/test.jsonl`, `sync.sh pull-run`, record a notebook row, commit. **Check run status from the desktop's `train.log` / `eval.log`, not the local `.done` files**: an SSH drop (exit 255) ends the local wait while training carries on. **The GPU should never sit idle**: start the next run as soon as one finishes. Defaults unless stated: 0.8B, r 16, lr 2e-4, 2 epochs, 2,048 tokens.
+Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<name>/config.json`), `sync.sh push-run`, train on the desktop, then **evaluate** with `eval_unsloth.py runs/<name> data/sets/heuristic-hard/test.jsonl data/sets/d3-hard/test.jsonl data/sets/claude-hard/test.jsonl`, `sync.sh pull-run`, record a notebook row, commit. **GPU jobs go through the desktop queue** (`desktop/queue.ps1` reads `queue.txt`: one `train <run>` or `eval <run>` per line, run strictly in order, logged to `queue.log`; started detached with `Start-Process` so SSH drops can't stop it, optionally waiting for a running job's `DONE`). To add work: append lines to `queue.txt` (read once at start, so start a new queue after the current one ends). **Check run status from the desktop's `train.log` / `eval.log`, not the local `.done` files**: an SSH drop (exit 255) ends the local wait while training carries on. **The GPU should never sit idle**: start the next run as soon as one finishes. Defaults unless stated: 0.8B, r 16, lr 2e-4, 2 epochs, 2,048 tokens.
 
 | Run | Changes vs E01 | Question it answers | Status |
 |---|---|---|---|
 | E01 | heuristic labels (baseline) | the baseline | ✅ 77.6% / record 43% |
 | E02 | d3 hard labels | does distilling a decision model beat rules? | ✅ 83.1% / record 61% (own test) |
 | E03 | d3 **soft** labels | do full probabilities teach more than top picks? | running |
-| E04 | Haiku v1.4–1.6 labels, 1,720 train (`haiku-v14-hard`) | in-character labels vs heuristic (3,687) and d3 | ready (after E03) |
+| E04 | Haiku v1.4–1.6 labels, 1,720 train (`haiku-v14-hard`) | in-character labels vs heuristic (3,687) and d3 | queued on desktop (after E03 + evals) |
 | E05 | Haiku v1.1 (noisy) labels, same states as E04 | how much does hidden label noise cost? | needs E04 |
 | E06 | LoRA r 64 | capacity | queued after E02–E03 |
 | E07 | lr 2e-5 | the guide's two learning rates | queued |

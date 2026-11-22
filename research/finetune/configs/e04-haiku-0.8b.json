@@ -1,0 +1,17 @@
+{
+  "_why": "E04: same recipe as E01, trained on Haiku labels (rubric v1.4-1.6, 1,720 train / 200 val) instead of 3,687 heuristic labels. Haiku agrees with gold on ~94-100% of moves vs the heuristic's 61%: if the student copies its teacher, this should lift gold accuracy most for balanced, real estate and business sims, with less than half the data.",
+  "base": "unsloth/Qwen3.5-0.8B",
+  "train": "data/sets/haiku-v14-hard/train.jsonl",
+  "val": "data/sets/haiku-v14-hard/val.jsonl",
+  "test": "data/sets/claude-hard/test.jsonl",
+  "max_seq_length": 2048,
+  "load_in_4bit": true,
+  "r": 16,
+  "lora_alpha": 16,
+  "lr": 0.0002,
+  "epochs": 2,
+  "batch": 2,
+  "grad_accum": 4,
+  "warmup_steps": 10,
+  "eval_every": 50
+}
