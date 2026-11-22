@@ -4,7 +4,7 @@ parent: Training our own decision model
 nav_order: 1
 ---
 
-# Labelling rubric (Claude labels) · v1.1
+# Labelling rubric (Claude labels) · v1.2
 
 Each sampled state is labelled with the in-character answer to every question it asks: the **move**, the **invest share** (when asked), the **spend level** (1–10) and **retire** (when asked), plus a one-line reason. The labeller is Claude, in the Claude Code session that runs this study, following these rules in this order.
 
@@ -14,7 +14,7 @@ A real person, whatever their personality, rarely ignores these:
 
 - **No paycheck** (unemployed, or in school): no investing, no stock trading, no big purchases; spend level ≤ 2 (≤ 3 for spenders and status seekers, who cut less). Keep the cash or pay down expensive debt only if there's a lot of spare cash.
 - **Expensive debt** (credit card or past-due bills around 20%+): paying it down beats investing for every personality except, sometimes, a spender who'd rather buy something; spend level drops by 1–2.
-- **Cash below the cushion**: no new commitments; "change nothing" or saving is in character.
+- **Cash below the cushion** (v1.2: read carefully): the state shows `cash $X (keeps $Y as a cushion), savings account $Z`. The cushion is usually held in the **savings account**, so the red flag applies **only when cash + savings is below the cushion**. When savings cover it, the sim is safe: investing the spare cash that a move offers ("up to $N available") is **not** a new commitment and is fine. When it truly applies: no new purchases, businesses or loans; "change nothing" or saving is in character.
 - **A crash or a recession, with weak jobs:** big purchases and new businesses drop sharply; loss-averse and crowd-following sims cut spending by 1–2 levels and lean toward saving; patient index investors and early retirees keep investing (buying low is in character for them).
 - **Empty rentals in town** (a high vacancy share): buying another rental is a poor choice unless the sim is a real-estate investor with plenty of cash, and even then it's less likely.
 
@@ -74,3 +74,4 @@ Recent memories count: a **failed business** or **big stock loss** makes the sam
 ## Changelog
 
 - **v1.1** (2026-11-22): added *When the signature move isn't on offer*. The Haiku pilot on batch 0 agreed with Opus on only 57% of moves, and almost every disagreement was Haiku choosing the index fund where the archetype's typical move wasn't offered (savers 0/4, business owners 0/5, real estate 1/4). Real estate without a rental on offer wasn't covered by v1 at all.
+- **v1.2** (2026-11-22): clarified the cushion red flag. 83% of sampled states show "cash below the cushion", but in 85% of those the savings account fully covers it. Five Haiku labellers read v1.1's "no new commitments" in opposite ways: batches 10-12 kept investing (18/19 signature moves) while batches 4-9 and 13-15 almost never did (6/66). Same rule, opposite readings. v1.1 Haiku labels are kept as a "noisy labels" experimental arm.
