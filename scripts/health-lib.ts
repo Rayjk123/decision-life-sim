@@ -9,6 +9,8 @@ export interface HealthMetrics {
   medianNetWorth: number;           // dollars, living adults
   gini: number;                     // net worth inequality among living adults (negatives clipped to 0)
   medianRetirementAge: number;      // from 'retired' events; NaN when nobody retired
+  creditMedian: number;             // median credit score, living adults
+  creditSpread: number;             // p90 - p10 credit score: 0 means every sim has the same score (iteration 8 bug)
 }
 
 const median = (xs: number[]) => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -39,6 +41,8 @@ export function healthMetrics(world: World, events: SimEvent[], simMonths: numbe
     medianNetWorth: median(adults.map((s) => balanceSheet(s).netWorth / 100)),
     gini: gini(adults.map((s) => balanceSheet(s).netWorth)),
     medianRetirementAge: median(retireAges),
+    creditMedian: median(adults.map((s) => s.creditScore)),
+    creditSpread: (() => { const xs = adults.map((s) => s.creditScore).sort((a, b) => a - b); return xs.length ? xs[Math.floor(0.9 * (xs.length - 1))] - xs[Math.floor(0.1 * (xs.length - 1))] : 0; })(),
   };
 }
 

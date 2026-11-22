@@ -80,6 +80,7 @@ export interface Sim {
   creditScore: number;
   bankruptUntil?: number;    // no new borrowing before this month
   missedPayments: number;    // consecutive months unable to pay
+  creditHistory?: number;    // payment-history penalty points: +60 per month past due, +150 at bankruptcy, heal 2/clean month
 
   salary: Cents;             // current annual gross salary (0 when unemployed, self-employed or retired)
   employed: boolean;

@@ -9,7 +9,7 @@ import { flowTotal, post } from './ledger.ts';
 import { remember } from './memory.ts';
 import { businessProfit } from './economy.ts';
 import {
-  ageInt, ageYears, balanceSheet, career, careerSalary, emergencyFloor, grossMonthlyIncome, home, inSchool,
+  ageInt, ageYears, balanceSheet, career, careerSalary, emergencyFloor, grossMonthlyIncome, home, incomeBasis, inSchool,
   livingCost, propertyCarry, rentPaid, rentals, taxRate,
 } from './finance.ts';
 
@@ -28,6 +28,27 @@ function loanOfKind(sim: Sim, kind: 'card' | 'past_due'): Loan {
   return l;
 }
 export const cardLoan = (sim: Sim) => loanOfKind(sim, 'card');
+
+/**
+ * Credit score, derived every month from what real scores weigh (no randomness):
+ * payment history (missed payments, bankruptcy), card utilization, non-mortgage debt load vs income, and the length
+ * of credit history. Range 300-850. A thin file starts near 700; a long, clean, low-debt history reaches ~830.
+ */
+export function creditScoreFor(f: {
+  historyPenalty: number; cardBalance: number; cardLimit: number; nonMortgageDebt: number; annualIncome: number;
+  monthsOfHistory: number; pastDueNow: boolean; inBankruptcy: boolean;
+}): number {
+  let score = 830 - Math.min(250, f.historyPenalty);
+  const u = f.cardLimit > 0 ? f.cardBalance / f.cardLimit : 0;
+  score -= u <= 0.1 ? 0 : u <= 0.3 ? 20 : u <= 0.5 ? 45 : u <= 0.75 ? 70 : 100;
+  const load = f.annualIncome > 0 ? f.nonMortgageDebt / f.annualIncome : f.nonMortgageDebt > 0 ? Infinity : 0;
+  score -= load <= 0.2 ? 0 : load <= 0.5 ? 15 : load <= 1 ? 35 : load <= 2 ? 55 : 70;
+  const h = f.monthsOfHistory;
+  score -= h < 24 ? 130 : h < 60 ? 80 : h < 120 ? 40 : h < 240 ? 15 : 0;
+  if (f.pastDueNow) score -= 40;
+  if (f.inBankruptcy) score = Math.min(score, 560);
+  return Math.max(300, Math.min(850, Math.round(score)));
+}
 
 export function cardLimit(sim: Sim, month: number): number {
   return Math.max(dollars(3000), Math.round(careerSalary(sim, month) * 0.3));
@@ -216,13 +237,23 @@ export function upkeep(world: World, sim: Sim): SimEvent[] {
   }
   if (pastDue.balance > 0) {
     sim.missedPayments++;
-    sim.creditScore = Math.max(300, sim.creditScore - 40);
+    sim.creditHistory = (sim.creditHistory ?? 0) + 60;
     out.push(ev(world, sim, 'missed_payment', `Missed payments: ${fmt(pastDue.balance)} past due`));
     if (sim.missedPayments === 1) remember(sim, 'Started missing payments');
   } else {
     sim.missedPayments = 0;
-    if (card.balance === 0 && sim.creditScore < 820) sim.creditScore = Math.min(820, sim.creditScore + 1);
+    sim.creditHistory = Math.max(0, (sim.creditHistory ?? 0) - 2);
   }
+  sim.creditScore = creditScoreFor({
+    historyPenalty: sim.creditHistory ?? 0,
+    cardBalance: card.balance,
+    cardLimit: cardLimit(sim, m),
+    nonMortgageDebt: sim.loans.filter((l) => l.kind !== 'mortgage').reduce((t, l) => t + l.balance, 0),
+    annualIncome: incomeBasis(sim, m) * 12,
+    monthsOfHistory: m - sim.arrivedMonth,
+    pastDueNow: pastDue.balance > 0,
+    inBankruptcy: sim.bankruptUntil !== undefined && m < sim.bankruptUntil,
+  });
   pruneLoans(sim, m);
   if (sim.missedPayments >= 3) out.push(...bankrupt(world, sim));
 
@@ -272,6 +303,7 @@ export function bankrupt(world: World, sim: Sim): SimEvent[] {
   }
   pruneLoans(sim, m);
   sim.missedPayments = 0;
+  sim.creditHistory = (sim.creditHistory ?? 0) + 150;
   sim.creditScore = 520;
   sim.bankruptUntil = m + 84;
   sim.bankruptcies++;
