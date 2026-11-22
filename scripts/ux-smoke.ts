@@ -22,6 +22,9 @@ let url = a.url ?? '';
 if (!url) {
   const sim = spawnSync('npx', ['tsx', 'packages/worker/src/cli.ts', '--months', '360', '--pop', '80', '--out', join(work, 'world'), '--quiet'], { cwd: ROOT, encoding: 'utf8' });
   if (sim.status !== 0) { console.error(sim.stdout + sim.stderr); process.exit(1); }
+  // A young second world (6 months, nobody has finished school) to exercise the empty states
+  const young = spawnSync('npx', ['tsx', 'packages/worker/src/cli.ts', '--seed', '2', '--months', '6', '--pop', '40', '--out', join(work, 'world'), '--quiet'], { cwd: ROOT, encoding: 'utf8' });
+  if (young.status !== 0) { console.error(young.stdout + young.stderr); process.exit(1); }
   const port = 5300 + Math.floor(Math.random() * 600);
   url = `http://127.0.0.1:${port}`;
   server = spawn('node', ['packages/dashboard/serve.mjs'], { cwd: ROOT, env: { ...process.env, PORT: String(port), WORLD_DIR: join(work, 'world') }, stdio: 'ignore' });
@@ -132,10 +135,26 @@ if (hofRows) {
 await page.locator('#lbtabs [data-t="living"]').click();
 await page.waitForTimeout(300);
 if (leaders) {
+  await page.locator('#leaders tr.click').first().focus();
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(400);
+  check('keyboard: Enter on a focused row opens the life panel', (await page.locator('#person.open').count()) > 0);
+  await page.keyboard.press('Escape');
   await page.locator('#leaders tr.click').first().click();
   await page.waitForTimeout(400);
   check('leaderboard row opens the life panel', (await page.locator('#person.open').count()) > 0);
   await page.keyboard.press('Escape');
+}
+
+// ---- a young world: empty states, no 404s ----
+const youngOpt = await page.locator('#world option', { hasText: 'seed-2' }).count();
+if (youngOpt) {
+  await page.selectOption('#world', { label: (await page.locator('#world option', { hasText: 'seed-2' }).first().innerText()) });
+  await page.waitForTimeout(800);
+  check('young world: the chart explains it appears after a year', /after the first full year/.test(await page.locator('#chart').innerText()));
+  check('young world: the decision explorer explains why it is empty', /Nobody faced a money decision|No decisions match this filter/.test(await page.locator('#decisions').innerText()) || (await page.locator('#decisions tr.click').count()) > 0);
+  check('young world: the header has no "0 of 0"', !/0 of 0/.test(await page.locator('#kpis').innerText()));
+  await page.screenshot({ path: join(shots, '5-young-world.png'), fullPage: true });
 }
 
 // ---- phone ----

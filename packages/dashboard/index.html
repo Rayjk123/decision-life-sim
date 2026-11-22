@@ -22,7 +22,7 @@ main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;p
 .card h2 small{font-weight:400;color:var(--mute);font-size:12px}
 table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-top:1px solid var(--line);text-align:left}
 th{color:var(--mute);font-weight:500;border-top:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tr.click{cursor:pointer}tr.click:hover{background:#f7f5f0}
+tr.click{cursor:pointer}tr.click:hover,tr.click:focus-visible{background:#f7f5f0}tr.click:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
 .pill{height:30px;border-radius:15px;font-size:12px}.pill.on{background:var(--ink);color:#f4f1ea;border-color:var(--ink)}
@@ -129,7 +129,7 @@ async function openWorld(name) {
   $('kpis').innerHTML = `<b>${esc(m.label)}</b> · <span title="The state of the economy: expansion, boom, recession or crash"><b>${esc(regime)}</b></span>`
     + (yr === null ? '' : ` · <span title="How the town's stock market index moved over the last 12 months, after inflation">Stocks <b>${yr >= 0 ? '+' : ''}${yr.toFixed(0)}%</b> this year</span>`)
     + ` · <span title="The rate on a new 30-year mortgage">Mortgages <b>${(m.market.mortgageRate*100).toFixed(1)}%</b></span> · <b>${latest.population}</b> residents · <b>${e.businessCount ?? 0}</b> local businesses`
-    + ` · <span title="Rentals owned by sims that have no tenant right now"><b>${e.vacantUnits ?? 0}</b> of ${e.rentalUnits ?? 0} rentals empty</span>`;
+    + (e.rentalUnits ? ` · <span title="Rentals owned by sims that have no tenant right now"><b>${e.vacantUnits ?? 0}</b> of ${e.rentalUnits} rentals empty</span>` : ' · no rentals yet');
   drawChart(); drawLeaders(); loadMonth(latest.month);
 }
 
@@ -235,8 +235,9 @@ async function loadMonth(m) {
   $('filters').innerHTML = Object.entries(FILTERS).map(([k, [label, fn]]) => `<button class="pill ${k === filter ? 'on' : ''}" data-f="${k}">${label} ${decisions.filter(fn).length}</button>`).join('');
   $('filters').querySelectorAll('button').forEach((b) => b.onclick = () => { filter = b.dataset.f; loadMonth(m); });
   const list = decisions.filter(FILTERS[filter][1]);
-  $('decnote').textContent = `${decisions.length} decisions · ${decisions[0]?.model ?? decisions[0]?.provider ?? ''}`;
-  $('decisions').innerHTML = list.length ? `<table><tr class="small mute"><th style="text-align:left">Sim</th><th style="text-align:left">Chose</th><th class="num" title="How likely the model thought this choice was">Odds</th><th style="text-align:left">Why now</th></tr>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(moveLabel(d.picked))}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : '<p class="empty">No decisions match.</p>';
+  const who = decisions[0]?.model ?? decisions[0]?.provider;
+  $('decnote').textContent = `${decisions.length} decision${decisions.length === 1 ? '' : 's'}${who ? ` · ${who}` : ''}`;
+  $('decisions').innerHTML = list.length ? `<table><tr class="small mute"><th style="text-align:left">Sim</th><th style="text-align:left">Chose</th><th class="num" title="How likely the model thought this choice was">Odds</th><th style="text-align:left">Why now</th></tr>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(moveLabel(d.picked))}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : (decisions.length ? '<p class="empty">No decisions match this filter.</p>' : '<p class="empty">Nobody faced a money decision this month. Early on, most sims are still in school or just starting work.</p>');
   $('decisions').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => showDecision(decisions[+tr.dataset.i]));
   $('card').innerHTML = '';
   if (list[0]) showDecision(list[0]);
@@ -289,6 +290,10 @@ async function openPerson(id, died) {
   $('x').onclick = () => el.classList.remove('open');
 }
 addEventListener('keydown', (e) => { if (e.key === 'Escape') $('person').classList.remove('open'); });
+// Keyboard: clickable rows are focusable and open with Enter or Space
+new MutationObserver(() => document.querySelectorAll('tr.click:not([tabindex])').forEach((tr) => { tr.tabIndex = 0; tr.setAttribute('role', 'button'); }))
+  .observe(document.body, { childList: true, subtree: true });
+addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.matches?.('tr.click')) { e.preventDefault(); e.target.click(); } });
 addEventListener('resize', () => world && drawChart());
 loadWorlds();
 }

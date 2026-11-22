@@ -41,6 +41,9 @@ export class WorldStore {
 
   constructor(private dir: string) {
     for (const d of ['log', 'snapshots', 'public/months', 'public/decisions', 'public/people']) mkdirSync(join(dir, d), { recursive: true });
+    // Written from the start so a young world (before its first full year) serves an empty chart, not a 404
+    const stats = join(dir, 'public/stats.json');
+    if (!existsSync(stats)) writeFileSync(stats, JSON.stringify({ years: [] }));
   }
 
   /** Latest snapshot month in this folder, or null. */
