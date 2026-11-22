@@ -4,11 +4,13 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { FINGERPRINT_FILE, fingerprintDrift, goldenFingerprint, STYLES } from '../src/fingerprint.ts';
+import { loadGolden } from '../src/suite.ts';
 
 test('fingerprint covers every scenario and pair variant in every style, deterministically', () => {
   const a = goldenFingerprint(), b = goldenFingerprint();
   assert.deepEqual(a, b);
-  assert.equal(Object.keys(a).length, 48 * STYLES.length);
+  const { scenarios, pairs } = loadGolden();
+  assert.equal(Object.keys(a).length, (scenarios.length + pairs.length) * STYLES.length);
 });
 
 test('drift lists changed, added and removed requests', () => {

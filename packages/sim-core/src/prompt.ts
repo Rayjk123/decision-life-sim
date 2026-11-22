@@ -5,7 +5,7 @@
 //   numbers - exact figures and 0-1 trait scores
 //   terse   - minimal labels, archetype name instead of the persona sentence
 import type { Move, Sim, StateStyle, World } from './types.ts';
-import { ARCHETYPE } from './data.ts';
+import { ARCHETYPE, SPEND_LEVELS } from './data.ts';
 import { fmt } from './money.ts';
 import { SHARE_LABELS } from './executor.ts';
 import {
@@ -140,6 +140,12 @@ export function buildQuestions(sim: Sim, moves: Move[], askRetire: boolean): Rec
   if (askRetire) {
     q.retire = { type: 'noul', instructions: `Does ${first} retire from work this month?` };
   }
+  // SPEC 18: how much they spend, in the same call (levels 1-10; answers come back as positions 0-9)
+  q.spend_level = {
+    type: 'score',
+    instructions: `Acting true to ${first}'s personality and situation, how much does ${first} spend this month beyond essentials?`,
+    criteria: SPEND_LEVELS.map((l) => `${l.level}: ${l.criterion}`),
+  };
   return q;
 }
 

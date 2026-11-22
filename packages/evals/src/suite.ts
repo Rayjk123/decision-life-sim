@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import type { Answers, Decider, StateStyle } from '@dls/sim-core';
 import { applyChange, mass, requestFor } from './build.ts';
-import { gradePair, gradeScenario, type PairGrade, type ScenarioGrade } from './grade.ts';
+import { expectedSpend, gradePair, gradeScenario, type PairGrade, type ScenarioGrade } from './grade.ts';
 import type { Pair, Scenario } from './types.ts';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -32,7 +32,8 @@ export interface SuiteResult {
   };
 }
 
-const measureOf = (answers: Answers, measure: Pair['measure']) => (measure === 'retire' ? answers.retire ?? 0 : mass(answers.main, measure));
+const measureOf = (answers: Answers, measure: Pair['measure']) =>
+  measure === 'retire' ? answers.retire ?? 0 : measure === 'spend' ? expectedSpend(answers) ?? 0 : mass(answers.main, measure);
 
 export async function runSuite(decider: Decider, style: StateStyle, concurrency = 4): Promise<SuiteResult> {
   const { scenarios, pairs } = loadGolden();

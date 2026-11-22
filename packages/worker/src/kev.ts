@@ -80,6 +80,9 @@ function toAnswers(r: KevResponse, req: DecisionRequest): Answers {
   const answers: Answers = { main: Object.fromEntries(Object.entries(legal).map(([key, v]) => [key, v / total])) };
   if (r.answers.invest_share?.probabilities) answers.investShare = r.answers.invest_share.probabilities;
   if (typeof r.answers.retire?.noul === 'number') answers.retire = r.answers.retire.noul;
+  // spend_level is a score question: positions "0".."9" are levels 1..10
+  const spend = r.answers.spend_level?.probabilities;
+  if (spend) answers.spendLevel = Object.fromEntries(Object.entries(spend).map(([pos, p]) => [String(Number(pos) + 1), p]));
   return answers;
 }
 

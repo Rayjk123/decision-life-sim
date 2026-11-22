@@ -33,6 +33,7 @@ test('golden dataset: every pair has a base, and its measured moves are legal in
     for (const sc of [base!, variant]) {
       const req = requestFor(sc, 'words');
       if (p.measure === 'retire') { assert.ok(req.askRetire, `${p.id}: retirement not offered in ${sc.id}`); continue; }
+      if (p.measure === 'spend') { assert.ok((req.questions as Record<string, unknown>).spend_level, `${p.id}: spend level not asked in ${sc.id}`); continue; }
       const patterns = Array.isArray(p.measure) ? p.measure : [p.measure];
       assert.ok(req.moves.some((m) => patterns.some((pt) => matches(pt, m.id))), `${p.id}: none of ${patterns} legal in ${sc.id}`);
     }

@@ -1,6 +1,6 @@
 {
   "author": "Claude Opus 5.5, 2026-11-21",
-  "notes": "Golden expectations for 'act true to this person's personality and situation'. Base A: a 34-year-old nurse renting, $60k cash, $10k invested, no debt, no car. Base B: a 50-year-old engineer who owns a home, $150k cash, $20k car loan, $200k invested. Dollar amounts are in today's dollars.",
+  "notes": "Golden expectations for 'act true to this person's personality and situation'. Base A: a 34-year-old nurse renting, $60k cash, $10k invested, no debt, no car. Base B: a 50-year-old engineer who owns a home, $150k cash, $20k car loan, $200k invested. Dollar amounts are in today's dollars. Golden v2 (2026-11-22): spend-level expectations added to A-spender, A-status, A-saver, A-fire, S-unemployed.",
   "scenarios": [
     {
       "id": "A-saver",
@@ -45,9 +45,12 @@
             "more": "buy_home",
             "than": "buy_home_big"
           }
-        ]
+        ],
+        "spend": {
+          "max": 4
+        }
       },
-      "rationale": "A careful saver keeps cash or makes the safe move (index fund, a modest home). Individual stocks, a bigger house, a new car or a side business are out of character."
+      "rationale": "A careful saver keeps cash or makes the safe move (index fund, a modest home). Individual stocks, a bigger house, a new car or a side business are out of character. Spend level (SPEC 18): at most 4, because they keep spending low."
     },
     {
       "id": "A-index",
@@ -242,9 +245,12 @@
             "more": "buy_car",
             "than": "invest_index"
           }
-        ]
+        ],
+        "spend": {
+          "min": 6
+        }
       },
-      "rationale": "Lives for today and loves new cars: the car (or the bigger house) beats investing."
+      "rationale": "Lives for today and loves new cars: the car (or the bigger house) beats investing. Spend level (SPEC 18): at least 6, because they live for nice things."
     },
     {
       "id": "A-status",
@@ -289,9 +295,12 @@
               "trade_stocks"
             ]
           }
-        ]
+        ],
+        "spend": {
+          "min": 6
+        }
       },
-      "rationale": "Wants the big house in the nice neighborhood and the nice car; investing is a side note."
+      "rationale": "Wants the big house in the nice neighborhood and the nice car; investing is a side note. Spend level (SPEC 18): at least 6, because they live for nice things."
     },
     {
       "id": "A-fire",
@@ -330,9 +339,12 @@
             "more": "invest_index",
             "than": "nothing"
           }
-        ]
+        ],
+        "spend": {
+          "max": 3
+        }
       },
-      "rationale": "Extremely frugal and investing most income to retire early: everything goes to the index fund."
+      "rationale": "Extremely frugal and investing most income to retire early: everything goes to the index fund. Spend level (SPEC 18): at most 3, because they keep spending low."
     },
     {
       "id": "A-balanced",
@@ -829,9 +841,12 @@
             "more": "nothing",
             "than": "trade_stocks"
           }
-        ]
+        ],
+        "spend": {
+          "max": 3
+        }
       },
-      "rationale": "No paycheck for four months in a recession: hold the cash."
+      "rationale": "No paycheck for four months in a recession: hold the cash. Spend level (SPEC 18): at most 3, because there is no paycheck."
     },
     {
       "id": "S-raise-renter",

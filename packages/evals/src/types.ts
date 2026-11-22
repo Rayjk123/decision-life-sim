@@ -49,6 +49,7 @@ export interface Expectation {
   maxAvoidMass?: number;                  // probability allowed on avoid (default 0.3)
   constraints?: Array<{ more: MovePattern | MovePattern[]; than: MovePattern | MovePattern[] }>;
   retire?: { min?: number; max?: number };
+  spend?: { min?: number; max?: number };   // SPEC 18: bounds on the expected spend level (1-10)
 }
 
 export interface Scenario {
@@ -67,7 +68,7 @@ export interface Pair {
   title: string;
   base: string;                              // scenario id
   change: Record<string, unknown>;           // dot paths into the scenario, e.g. {"sim.archetype": "spender"}
-  measure: MovePattern | MovePattern[] | 'retire';
+  measure: MovePattern | MovePattern[] | 'retire' | 'spend';   // 'spend' = expected spend level (1-10)
   direction: 'up' | 'down';
   minDelta?: number;                         // default 0.03
   rationale: string;

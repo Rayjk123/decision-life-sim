@@ -22,6 +22,7 @@ test('the Kev gateway sends the TypeSafe request shape, parses answers and cache
         answers: {
           main: { type: 'choice', choice: ids[0], confidence: 0.4, probabilities: probs },
           ...(lastBody.questions.invest_share ? { invest_share: { type: 'score', score: 2, probabilities: { '0': 0, '1': 0.2, '2': 0.6, '3': 0.2, '4': 0 } } } : {}),
+          ...(lastBody.questions.spend_level ? { spend_level: { type: 'score', score: 6, probabilities: { '0': 0.1, '6': 0.9 } } } : {}),
         },
         usage: { input_tokens: 321 },
         latency_ms: 12,
@@ -50,6 +51,9 @@ test('the Kev gateway sends the TypeSafe request shape, parses answers and cache
   assert.equal(r1.tokens, 321);
   assert.ok(Math.abs(Object.values(r1.answers.main).reduce((a, b) => a + b, 0) - 1) < 1e-9);
   assert.deepEqual(r1, r2);
+  assert.equal(lastBody.questions.spend_level.type, 'score', 'the spend level is asked in the same call');
+  assert.equal(lastBody.questions.spend_level.criteria.length, 10);
+  assert.deepEqual(r1.answers.spendLevel, { '1': 0.1, '7': 0.9 }, 'score positions 0-9 map to spend levels 1-10');
   assert.equal(r1.model, 'kev-latest', 'the result names the model that answered');
   assert.equal(r2.model, 'kev-latest', 'a cache hit names it too');
 });

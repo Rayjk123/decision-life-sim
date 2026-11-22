@@ -11,6 +11,7 @@ export interface ScenarioGrade {
   avoidOk: boolean;
   constraintsMet: number;    // fraction of pairwise constraints satisfied
   retireOk: boolean | null;  // null when not graded
+  spendOk: boolean | null;   // null when not graded
   score: number;             // 0..1
   pass: boolean;
 }
@@ -38,7 +39,21 @@ export function gradeScenario(answers: Answers, expect: Expectation): ScenarioGr
   // When a retirement expectation exists it takes a 25% share and the rest scale down.
   let score = 0.4 * (topOk ? 1 : 0) + 0.3 * (avoidOk ? 1 : 0) + 0.3 * constraintsMet;
   if (retireOk !== null) score = score * 0.75 + 0.25 * (retireOk ? 1 : 0);
-  return { top, topOk, bestMass, avoidMass, avoidOk, constraintsMet, retireOk, score, pass: score >= PASS_SCORE };
+  // A spend expectation (SPEC 18) takes a 20% share the same way
+  let spendOk: boolean | null = null;
+  if (expect.spend) {
+    const lv = expectedSpend(answers);
+    spendOk = lv !== undefined && (expect.spend.min === undefined || lv >= expect.spend.min) && (expect.spend.max === undefined || lv <= expect.spend.max);
+    score = score * 0.8 + 0.2 * (spendOk ? 1 : 0);
+  }
+  return { top, topOk, bestMass, avoidMass, avoidOk, constraintsMet, retireOk, spendOk, score, pass: score >= PASS_SCORE };
+}
+
+/** Expected spend level (1-10) from a decider's spend-level probabilities; undefined when it didn't answer. */
+export function expectedSpend(answers: Answers): number | undefined {
+  const e = Object.entries(answers.spendLevel ?? {});
+  const tot = e.reduce((t, [, p]) => t + p, 0);
+  return tot > 0 ? e.reduce((t, [lv, p]) => t + Number(lv) * p, 0) / tot : undefined;
 }
 
 export interface PairGrade { base: number; variant: number; delta: number; pass: boolean }

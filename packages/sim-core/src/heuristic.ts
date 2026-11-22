@@ -1,5 +1,6 @@
 // Heuristic mode: hand-written weights by archetype plus a few context rules.
 // It is the free offline baseline, the fallback when the model is down, and the comparison for experiments.
+import { heuristicSpendLevel } from './spend.ts';
 import type { Answers, Decider, DecisionRequest, DecisionResult, Move, Sim, World } from './types.ts';
 import { ARCHETYPE } from './data.ts';
 import { ageYears, balanceSheet, livingCost } from './finance.ts';
@@ -43,7 +44,13 @@ export function heuristicAnswers(sim: Sim, world: World, moves: Move[], askRetir
     const enough = nw > livingCost(sim, world.month) * 12 * 25;
     retire = age >= 67 ? 0.35 : age >= 62 ? (enough ? 0.15 : 0.04) : enough ? (sim.archetype === 'fire' ? 0.5 : 0.08) : 0.01;
   }
-  return { main, investShare, retire };
+  // SPEC 18: a spend-level distribution centred on the heuristic's level (60%, with 20% either side)
+  const c = heuristicSpendLevel(sim, world);
+  const raw: Record<string, number> = {};
+  for (const [lv, p] of [[c - 1, 0.2], [c, 0.6], [c + 1, 0.2]] as const) if (lv >= 1 && lv <= 10) raw[String(lv)] = p;
+  const tot = Object.values(raw).reduce((t, p) => t + p, 0);
+  const spendLevel = Object.fromEntries(Object.entries(raw).map(([k, p]) => [k, p / tot]));
+  return { main, investShare, retire, spendLevel };
 }
 
 export const heuristicDecider: Decider = {
