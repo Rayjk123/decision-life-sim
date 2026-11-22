@@ -69,7 +69,7 @@ let page = readFileSync(PAGE, 'utf8');
 for (const [name, body] of Object.entries(blocks)) {
   const re = new RegExp(`(<!-- generated:${name} -->)[\\s\\S]*?(<!-- /generated:${name} -->)`);
   if (!re.test(page)) throw new Error(`docs/results.md is missing the generated:${name} markers`);
-  page = page.replace(re, `$1\n${body}\n$2`);
+  page = page.replace(re, `$1\n\n${body}\n\n$2`);   // blank lines: kramdown (GitHub Pages) treats a table right after an HTML comment as a paragraph
 }
 writeFileSync(PAGE, page);
 console.log(`Updated ${PAGE}: ${runs.length} runs, ${cols.length} models`);

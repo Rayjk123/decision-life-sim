@@ -31,6 +31,7 @@ Which decision model best plays a sim "in character"? Every model here is graded
 ★ marks each model's best state style. **Overall** = 60% scenario score + 40% pair pass rate.
 
 <!-- generated:leaderboard -->
+
 | Model | Params | Ran on | State style | **Overall** | Scenario score | Top pick in character | Stayed out of avoid | Personality pass | **Pairs** |
 |---|---|---|---|---|---|---|---|---|---|
 | **Random** | – | CPU | words ★ | **15%** | 22% | 0% | 53% | 0% | **6%** |
@@ -45,6 +46,7 @@ Which decision model best plays a sim "in character"? Every model here is graded
 | d3:2b | 2.4B Q8_0 | RTX 4070 Super (Ollama) | words | 61% | 72% | 60% | 93% | 50% | 44% |
 | **d3:4b** | 4.8B Q8_0 | RTX 4070 Super (Ollama) | words ★ | **77%** | 88% | 87% | 93% | 94% | **61%** |
 | d3:4b | 4.8B Q8_0 | RTX 4070 Super (Ollama) | focused | 72% | 90% | 90% | 93% | 94% | 44% |
+
 <!-- /generated:leaderboard -->
 
 **Columns.** *Scenario score*: 40% top pick in character, 30% staying within the out-of-character budget, 30% ordering constraints (a scenario passes at 0.7). *Personality pass*: share of the 16 personality scenarios passed. *Pairs*: share of the 18 counterfactual pairs where the probability moved the right way by at least 0.03.
@@ -69,6 +71,7 @@ A full 1,000-sim month needs about 300 decisions, and the target is a ~90 s mont
 Each counterfactual pair changes one thing about a sim and checks that the probability of the relevant move moves the right way. The number is the change in that probability. Each model is shown with its best state style.
 
 <!-- generated:pairs -->
+
 | Counterfactual pair | Random<br><sub>words</sub> | Heuristic<br><sub>words</sub> | Kev-0.8B<br><sub>focused</sub> | Kev-4B<br><sub>words</sub> | d3:2b<br><sub>focused</sub> | d3:4b<br><sub>words</sub> |
 |---|---|---|---|---|---|---|
 | `arch-spender-car` | ❌ +0.00 | ✅ +0.46 | ❌ +0.02 | ✅ +0.15 | ✅ +0.60 | ✅ +0.66 |
@@ -90,6 +93,7 @@ Each counterfactual pair changes one thing about a sim and checks that the proba
 | `town-vacancies-rental` | ❌ +0.00 | ✅ -0.31 | ❌ +0.02 | ✅ -0.09 | ❌ +0.05 | ❌ +0.01 |
 | `age-retire` | ❌ +0.00 | ❌ +0.00 | ❌ +0.00 | ❌ +0.01 | ❌ -0.00 | ✅ +0.04 |
 | **Passed** | **1/18** | **10/18** | **6/18** | **10/18** | **8/18** | **11/18** |
+
 <!-- /generated:pairs -->
 
 **Reading the table.** Archetype and persona swaps are where the 4B models shine: d3:4b moves a stock picker's chance of trading stocks by +0.90. The heuristic is the only one that responds to traits on their own, because it was written to; only it and d3:2b respond to interest rates. The `crash`, `weak-jobs` and `boom` rows are red for every model.
@@ -102,6 +106,7 @@ Each cell shows whether the scenario passed, and the model's most likely move.
 <summary>Show all 30 scenarios</summary>
 
 <!-- generated:scenarios -->
+
 | Scenario | Random<br><sub>words</sub> | Heuristic<br><sub>words</sub> | Kev-0.8B<br><sub>focused</sub> | Kev-4B<br><sub>words</sub> | d3:2b<br><sub>focused</sub> | d3:4b<br><sub>words</sub> |
 |---|---|---|---|---|---|---|
 | `A-saver` | ❌ nothing | ✅ nothing | ❌ nothing | ✅ invest_index | ✅ invest_index | ✅ invest_index |
@@ -135,6 +140,7 @@ Each cell shows whether the scenario passed, and the model's most likely move.
 | `L-retired-72` | ❌ nothing | ✅ nothing | ✅ nothing | ✅ invest_index | ✅ invest_index | ✅ invest_index |
 | `P-status-lawyer` | ❌ nothing | ❌ buy_car | ❌ nothing | ❌ invest_index | ❌ invest_index | ✅ buy_home |
 | **Passed** | **1/30** | **27/30** | **17/30** | **23/30** | **22/30** | **26/30** |
+
 <!-- /generated:scenarios -->
 
 </details>
@@ -191,6 +197,8 @@ npm run docs:results                                           # regenerate the 
 Every run's full output (per-scenario probabilities and grades, per-pair deltas) as JSON, one file per model and style:
 
 <!-- generated:data -->
+
 [`d3-2b-focused.json`](results/data/d3-2b-focused.json) · [`d3-2b-words.json`](results/data/d3-2b-words.json) · [`d3-4b-focused.json`](results/data/d3-4b-focused.json) · [`d3-4b-words.json`](results/data/d3-4b-words.json) · [`heuristic-words.json`](results/data/heuristic-words.json) · [`kev-0.8b-focused.json`](results/data/kev-0.8b-focused.json) · [`kev-0.8b-numbers.json`](results/data/kev-0.8b-numbers.json) · [`kev-0.8b-terse.json`](results/data/kev-0.8b-terse.json) · [`kev-0.8b-words.json`](results/data/kev-0.8b-words.json) · [`kev-4b-focused.json`](results/data/kev-4b-focused.json) · [`kev-4b-words.json`](results/data/kev-4b-words.json) · [`permute-kev-0.8b-words.json`](results/data/permute-kev-0.8b-words.json) · [`random-words.json`](results/data/random-words.json)
+
 <!-- /generated:data -->
 
