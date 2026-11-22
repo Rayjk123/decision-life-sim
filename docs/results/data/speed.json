@@ -1,0 +1,8 @@
+{
+ "note": "Decisions per second on the golden-suite states, best concurrency. Kev: kev:check, 8 concurrent. d3: concurrency sweep 1-16 (Ollama serves one request at a time).",
+ "kev-0.8b": { "callsPerSec": 0.5, "p50ms": 1768, "host": "Mac M3 Pro (MLX)" },
+ "kev-4b":   { "callsPerSec": 1.1, "p50ms": 664,  "host": "Mac M3 Pro (MLX)" },
+ "d3-2b":    { "callsPerSec": 16.5, "p50ms": 69,  "host": "RTX 4070 Super (Ollama)" },
+ "d3-4b":    { "callsPerSec": 8.5, "p50ms": 125, "host": "RTX 4070 Super (Ollama)" },
+ "targetCallsPerSec": 3.33
+}
