@@ -32,6 +32,7 @@ for (const l of L) {
   if (s.archetype === "balanced" && s.age < 25 && studentOffered && idx > -1 && !weak && covered && !f.expensive && !f.unemployed && main !== "pay_debt" && main !== "sell_rental") flag("R8 under-25 balanced skipped the student loan", l, main);
   if (s.archetype === "re" && s.age < 25 && main === "pay_debt" && s.moves.some((m) => m.id === "save_cash") && covered && !f.expensive) flag("R9 under-25 real estate paid debt instead of saving", l, main);
   const RANGE = { saver: [2, 3], index: [3, 4], fire: [2, 3], picker: [4, 5], re: [4, 5], biz: [4, 5], spender: [6, 8], status: [5, 7], balanced: [4, 5] };
+  if (s.archetype === "status" && s.age < 25 && /^(buy_home|buy_car)/.test(main) && !(main === "buy_car" && /\$0 down/.test(mv?.description || ""))) flag("R11 under-25 status seeker bought a home or a non-$0-down car", l, main);
   const crunchA = !covered && (f.cash < 1000 || f.spend > f.take || f.maxRate >= 8), crunchB = f.cash < 1000 && f.spend > f.take && f.sav < 2 * f.cushion;
   const redFlag = f.expensive || !covered || weak || idx <= -5 || /failed|bankrupt|missing payments/i.test(s.state.recent || "");
   const sp = l.labels.spend_level + 1, [lo, hi] = RANGE[s.archetype], floor = lo - ((crunchA || crunchB) ? 2 : redFlag ? 1 : 0);

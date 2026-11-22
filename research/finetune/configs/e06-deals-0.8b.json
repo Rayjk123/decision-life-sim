@@ -1,0 +1,17 @@
+{
+  "_why": "E06: E05 plus 617 targeted deal states (sample-states --deals; rubric v1.9-1.10). The golden suite showed E04 never takes a signature deal (the main set had 4 rentals in 3,887 labels). Now: rentals taken in 40 of 210 deal states, businesses 26/210, status purchases 135/197, spender cars 81/117. Does coverage fix A-re/A-biz/A-status and the matching pairs without hurting gold accuracy?",
+  "base": "unsloth/Qwen3.5-0.8B",
+  "train": "data/sets/haiku-deals-hard/train.jsonl",
+  "val": "data/sets/haiku-deals-hard/val.jsonl",
+  "test": "data/sets/claude-hard/test.jsonl",
+  "max_seq_length": 2048,
+  "load_in_4bit": true,
+  "r": 16,
+  "lora_alpha": 16,
+  "lr": 0.0002,
+  "epochs": 2,
+  "batch": 2,
+  "grad_accum": 4,
+  "warmup_steps": 10,
+  "eval_every": 50
+}
