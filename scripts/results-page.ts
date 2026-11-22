@@ -176,5 +176,14 @@ for (const [name, body] of Object.entries(blocks)) {
   if (!re.test(page)) throw new Error(`docs/results.md is missing the generated:${name} markers`);
   page = page.replace(re, `$1\n\n${body}\n\n$2`);   // blank lines: kramdown (GitHub Pages) treats a table right after an HTML comment as a paragraph
 }
-writeFileSync(PAGE, page);
-console.log(`Updated ${PAGE}: ${runs.length} runs, ${cols.length} models`);
+if (process.argv.includes('--check')) {
+  // verify gate: the committed page must already match its data
+  if (page !== readFileSync(PAGE, 'utf8')) {
+    console.error('docs/results.md is out of date with docs/results/data. Run: npm run docs:results');
+    process.exit(1);
+  }
+  console.log(`docs/results.md is up to date (${runs.length} runs, ${cols.length} models)`);
+} else {
+  writeFileSync(PAGE, page);
+  console.log(`Updated ${PAGE}: ${runs.length} runs, ${cols.length} models`);
+}

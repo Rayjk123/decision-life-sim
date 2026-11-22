@@ -9,7 +9,8 @@ A town of sims living out their financial lives month by month. The rules engine
 
 ## Commands
 ```bash
-npm install && npm test                                   # 37 tests, all must pass
+npm install && npm test                                   # 40 tests, all must pass
+npm run verify                                            # the quality gate: types, tests, eval regression, docs sync, leak scan
 npm run sim -- --months 600 --pop 200                     # heuristic mode, ~10 s
 npm run dashboard                                         # http://localhost:5173 over ./world
 npm run eval -- --verbose                                 # golden suite: random + heuristic baselines

@@ -27,7 +27,7 @@ An autonomous loop that keeps making decision-life-sim more realistic, more impr
 2. **Pick.** Take the highest-priority unblocked backlog item. Every 4th iteration is an **adversarial review** iteration instead (see below). If the backlog is empty, generate new items from the review lenses.
 3. **Plan.** Write 3–6 lines in the iteration log: what, why it matters, how it will be verified.
 4. **Build** with tests. New behaviour gets a test. Every bug fixed gets a regression test written first.
-5. **Verify:** run `npm run verify` (once it exists; until then, every gate below by hand). All gates must pass.
+5. **Verify:** run `npm run verify` (G1, G2–G5, G6 heuristic, G9). Run G6 for d3, G7 and G8 by hand until they're automated. All gates must pass. If quality improved, raise the floors in `scripts/verify.baseline.json`; never lower them.
 6. **Self-review the diff** (`git diff main...`) against the review lenses. Fix what you find.
 7. **Record:** update the iteration log (result, numbers), the backlog, `docs/WORKLOG.md` when numbers changed, and `docs/results.md` via `npm run docs:results` when evals changed.
 8. **Commit and push** with a clear message and the session's attribution trailer, then stop. Don't start a second iteration in the same run.
@@ -65,7 +65,7 @@ Attack the project as a skeptic would, and file each finding as a backlog item w
 Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done items to the log.
 
 **A. Verification infrastructure (do first)**
-1. (S) `npm run verify`: typecheck + tests + heuristic eval gate + docs check + LAN-address scan, failing loudly.
+1. ~~(S) `npm run verify`~~ done in iteration 1.
 2. (M) `npm run health`: 50-year heuristic runs over seeds 1–3 with realism bands and a time budget. Record the baselines, then make it part of `verify`.
 3. (S) GitHub Actions CI on push and PR running `npm run verify` (no model needed).
 4. (M) Randomized property test: random legal-move sequences over many seeds, checking money conservation, no negative cash after shortfall handling, loans ≥ 0, asset and owner consistency, tenant and landlord symmetry.
@@ -104,3 +104,4 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 | # | Date | Type | Change | Gates | Result |
 |---|---|---|---|---|---|
 | 0 | 2026-11-21 | setup | Loop created; branch `improve/loop`; backlog seeded | G1–G2 green, 37 tests | d3:4b 77% / 61% pairs is the bar |
+| 1 | 2026-11-22 | build (A1) | `npm run verify`: one command for types, tests (with a floor on the count), deterministic heuristic eval regression, docs-in-sync (`docs:results --check`) and a leak scan (LAN IPs, GitHub/API tokens, private keys) over tracked files. Floors in `scripts/verify.baseline.json`; `scripts/` now typechecked; 3 tests for the gate's own logic | verify green in 2.7 s; 40 tests | Proven by planting 4 faults (LAN IP, stale generated table, failing test; prose outside generated blocks is allowed). Also: the 20-year d3:4b world finished, 9,386 decisions, 0 fallbacks, 17.5 min; findings in backlog B0 |
