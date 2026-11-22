@@ -27,7 +27,7 @@ An autonomous loop that keeps making decision-life-sim more realistic, more impr
 2. **Pick.** Take the highest-priority unblocked backlog item. Every 4th iteration is an **adversarial review** iteration instead (see below). If the backlog is empty, generate new items from the review lenses.
 3. **Plan.** Write 3–6 lines in the iteration log: what, why it matters, how it will be verified.
 4. **Build** with tests. New behaviour gets a test. Every bug fixed gets a regression test written first.
-5. **Verify:** run `npm run verify` (G1, G2–G5, G6 heuristic, G9). Run G6 for d3, G7 and G8 by hand until they're automated. All gates must pass. If quality improved, raise the floors in `scripts/verify.baseline.json`; never lower them.
+5. **Verify:** run `npm run verify` (G1–G9 except d3 evals). Run G6 for d3 by hand when the desktop is reachable. All gates must pass. If quality improved, raise the floors in `scripts/verify.baseline.json`; never lower them.
 6. **Self-review the diff** (`git diff main...`) against the review lenses. Fix what you find.
 7. **Record:** update the iteration log (result, numbers), the backlog, `docs/WORKLOG.md` when numbers changed, and `docs/results.md` via `npm run docs:results` when evals changed.
 8. **Commit and push** with a clear message and the session's attribution trailer, then stop. Don't start a second iteration in the same run.
@@ -42,8 +42,8 @@ An autonomous loop that keeps making decision-life-sim more realistic, more impr
 | G4 Money conservation | in G2 (20-year ledger test) | cash never appears or vanishes |
 | G5 Golden validity | in G2 | every scenario's expected options are legal |
 | G6 Eval regression | `npm run eval` (and d3 if reachable) | heuristic ≥ 77% / pairs ≥ 56%; d3:4b `words` doesn't drop > 2 points overall or on pairs vs `docs/results/data/d3-4b-words.json` |
-| G7 Sim health | `npm run health` *(to build)* | a 50-year heuristic world over 3 seeds stays inside realism bands (bankruptcy, homeownership, wealth medians, unemployment, no NaN or negative balances that shouldn't exist) |
-| G8 Performance | `npm run health` *(to build)* | 600 months × 200 sims in heuristic mode stays under its time budget (record the baseline first) |
+| G7 Sim health | `npm run health` (in `verify`) | a 50-year heuristic world over 3 seeds stays inside realism bands (bankruptcy, homeownership, wealth medians, unemployment, no NaN or negative balances that shouldn't exist) |
+| G8 Performance | `npm run health` (in `verify`) | each 50-year, 200-sim heuristic world finishes within `secondsPerRunBudget` (6 s; ~1 s today) |
 | G9 Docs | `npm run docs:results` | regenerates without error; no `192.168` in tracked files |
 | G10 Adversarial | review lenses below | no unresolved high-severity finding |
 
@@ -66,7 +66,7 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 
 **A. Verification infrastructure (do first)**
 1. ~~(S) `npm run verify`~~ done in iteration 1.
-2. (M) `npm run health`: 50-year heuristic runs over seeds 1–3 with realism bands and a time budget. Record the baselines, then make it part of `verify`.
+2. ~~(M) `npm run health`~~ done in iteration 2 (part of `verify`).
 3. (S) GitHub Actions CI on push and PR running `npm run verify` (no model needed).
 4. (M) Randomized property test: random legal-move sequences over many seeds, checking money conservation, no negative cash after shortfall handling, loans ≥ 0, asset and owner consistency, tenant and landlord symmetry.
 5. (S) Eval regression check that compares a new d3 run to the recorded best and prints the pairs that flipped.
@@ -78,6 +78,11 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 - Healthy signs to keep: early retirees lead (median $319k), spenders trail ($55k), and bankruptcies are rare (6 in 20 years).
 
 **B. Simulation realism and impressiveness**
+
+*Realism gaps measured by `npm run health` (heuristic, seeds 1–3, 50 years). Fix, then tighten the bands in `scripts/health.baseline.json` toward the target:*
+- (M, high) **Wealth is too high:** median adult net worth is $0.39M–1.52M in today's dollars, against roughly $190k in reality. Suspects: inheritance compounding, high savings rates, generous returns. Target ≤ $400k on every seed.
+- (M, high) **Wealth is too equal:** Gini 0.47–0.54, against about 0.85 for US wealth. Needs fatter tails (business winners, renters with nothing, debt). Target 0.65–0.85.
+- (S) **People retire too early:** median retirement age is 56–57 (US: 62–65). Check `canAffordRetirement` and the archetype mix. Target a median of 60–66.
 6. (M) Market signals the model can read: describe crashes, booms and rates as consequences ("the index fell 14% last month, the worst drop in years"), then rerun the market pairs. Target: d3 passes ≥ 2 of crash, weak-jobs, boom.
 7. (M) Red-flag situations: make unemployment, card debt and vacancies salient in the state; add golden scenarios for them. Target: S-unemployed and S-rentals-empty pass with d3.
 8. (L) Employment links (SPEC roadmap 4): sims work at sim-owned businesses; failures cause layoffs; growth hires.
@@ -105,3 +110,4 @@ Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done item
 |---|---|---|---|---|---|
 | 0 | 2026-11-21 | setup | Loop created; branch `improve/loop`; backlog seeded | G1–G2 green, 37 tests | d3:4b 77% / 61% pairs is the bar |
 | 1 | 2026-11-22 | build (A1) | `npm run verify`: one command for types, tests (with a floor on the count), deterministic heuristic eval regression, docs-in-sync (`docs:results --check`) and a leak scan (LAN IPs, GitHub/API tokens, private keys) over tracked files. Floors in `scripts/verify.baseline.json`; `scripts/` now typechecked; 3 tests for the gate's own logic | verify green in 2.7 s; 40 tests | Proven by planting 4 faults (LAN IP, stale generated table, failing test; prose outside generated blocks is allowed). Also: the 20-year d3:4b world finished, 9,386 decisions, 0 fallbacks, 17.5 min; findings in backlog B0 |
+| 2 | 2026-11-22 | build (A2) | `npm run health` (G7 + G8, now inside `verify`): 3 seeds × 50 years × 200 sims, in memory, heuristic. Integrity scan over the whole world (finite numbers, whole cents, no negative debts, assets or holdings), 7 realism bands, 6 s/run budget. 3 tests incl. planted NaN, fractional cents and negative debt | verify green in 5.8 s; 43 tests | Breach proven by narrowing a band. Health found 3 realism gaps (wealth too high, too equal, retirement at 56–57), now top of backlog B |

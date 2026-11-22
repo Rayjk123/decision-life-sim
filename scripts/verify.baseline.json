@@ -1,5 +1,9 @@
 {
   "_note": "Floors for npm run verify. Raise when quality improves; never lower to make a change pass. Heuristic eval is deterministic.",
-  "minTests": 40,
-  "heuristic": { "overall": 0.767, "pairPass": 0.555, "scenarioScore": 0.908 }
+  "minTests": 43,
+  "heuristic": {
+    "overall": 0.767,
+    "pairPass": 0.555,
+    "scenarioScore": 0.908
+  }
 }

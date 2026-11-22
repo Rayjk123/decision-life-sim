@@ -42,6 +42,11 @@ const gates: Gate[] = [
     if (bad.length) throw new Error(bad.join('\n'));
     return Object.entries(actual).map(([k, v]) => `${k} ${(v * 100).toFixed(1)}%`).join(', ');
   } },
+  { name: 'G7-G8 sim health + time budget', run: () => {
+    const r = sh('npx', ['tsx', 'scripts/health.ts']);
+    if (!r.ok) throw new Error(r.out.trim().split('\n').filter((l) => /❌|^ {5}|FAILED/.test(l)).join('\n') || r.out.slice(-2000));
+    return r.out.trim().split('\n').pop() ?? '';
+  } },
   { name: 'G9 docs in sync', run: () => {
     const r = sh('npx', ['tsx', 'scripts/results-page.ts', '--check']);
     if (!r.ok) throw new Error(r.out.trim());
