@@ -1,0 +1,10 @@
+{
+  "_why": "E03: same as E02 but d3 SOFT labels: the full probability d3 gave every option, not just its top pick. Does a teacher saying how sure it is teach more than its single answer (knowledge distillation)? Scored on hard top-pick test sets like every run.",
+  "base": "unsloth/Qwen3.5-0.8B",
+  "train": "data/sets/d3-soft/train.jsonl",
+  "val": "data/sets/d3-soft/val.jsonl",
+  "test": "data/sets/d3-soft/test.jsonl",
+  "max_seq_length": 2048, "load_in_4bit": true,
+  "r": 16, "lora_alpha": 16, "lr": 2e-4,
+  "epochs": 2, "batch": 2, "grad_accum": 4, "warmup_steps": 10, "eval_every": 100
+}
