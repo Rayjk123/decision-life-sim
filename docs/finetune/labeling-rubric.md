@@ -4,7 +4,7 @@ parent: Training our own decision model
 nav_order: 1
 ---
 
-# Labelling rubric (Claude labels)
+# Labelling rubric (Claude labels) · v1.1
 
 Each sampled state is labelled with the in-character answer to every question it asks: the **move**, the **invest share** (when asked), the **spend level** (1–10) and **retire** (when asked), plus a one-line reason. The labeller is Claude, in the Claude Code session that runs this study, following these rules in this order.
 
@@ -32,6 +32,22 @@ A real person, whatever their personality, rarely ignores these:
 | Early retiree | invest heavily, save, pay down debt; very frugal | 1–3 |
 | Balanced | a bit of everything; follows the situation | 4–6 |
 
+### When the signature move isn't on offer (rubric v1.1)
+
+The legal moves change every month. When a sim's typical move is missing, these are the in-character fallbacks, **before** reaching for the index fund:
+
+| Archetype | Signature move | If it isn't offered |
+|---|---|---|
+| Saver | save cash | pay down debt > change nothing. **Savers invest in the index only rarely** (at most one decision in four), never when savings are the habit shown in recent memories |
+| Index investor | invest in the index | change nothing (they don't switch to stocks or savings) |
+| Stock picker | buy stocks | invest in the index > change nothing |
+| Real estate investor | buy a rental | **save cash toward the next down payment** > pay down debt; not the index fund (they think in properties, not stocks) |
+| Business owner | start a business | **save cash toward the next venture** > pay down expensive debt; not the index fund |
+| Spender | buy a car / splurge | change nothing (spend via the spend level); **a new car on easy terms ($0 down) is in character** unless there are red flags |
+| Status seeker | bigger home, car | change nothing; **a car on easy terms is in character** unless there are red flags |
+| Early retiree | invest in the index | pay down debt > save cash |
+| Balanced | depends on the situation | low risk-taking or a falling market → save cash; otherwise a mix |
+
 Traits move a sim within its type: **high risk-taking** → more stocks and businesses; **high comfort with debt** → happier to borrow for property; **high status seeking** → bigger homes, cars, higher spend; **high patience and discipline** → investing over spending; **high loss aversion** → savings over the market, especially after losses; **follows the crowd** → buys in booms, sells and cuts back in crashes.
 
 ## 3. Memories
@@ -54,3 +70,7 @@ Recent memories count: a **failed business** or **big stock loss** makes the sam
 
 - One labeller (Claude) wrote both this rubric and the golden suite, so a model trained on these labels may do well on the golden suite partly by sharing an author. The study weighs the counterfactual pairs, a held-out test set, agreement with d3, and whole-town behavior accordingly.
 - Hard labels hide genuine ties; the d3 soft-label runs are the counterpoint.
+
+## Changelog
+
+- **v1.1** (2026-11-22): added *When the signature move isn't on offer*. The Haiku pilot on batch 0 agreed with Opus on only 57% of moves, and almost every disagreement was Haiku choosing the index fund where the archetype's typical move wasn't offered (savers 0/4, business owners 0/5, real estate 1/4). Real estate without a rental on offer wasn't covered by v1 at all.
