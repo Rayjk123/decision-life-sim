@@ -2,7 +2,7 @@
 #   Launch as a scheduled task (not over SSH: Windows OpenSSH kills a session's processes when it closes):
 #     schtasks /create /f /tn dls-queue /sc once /st 23:59 /tr "powershell -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File C:\Users\User\dls-ft\queue.ps1 -List queue.txt [-WaitPid N] [-WaitFor run]"
 #     schtasks /run /tn dls-queue
-#   The list has one job per line: "train <run>" or "eval <run>". Logged to queue.log.
+#   The list has one job per line: "train <run>", "eval <run>" or "serve <run>" (serves on :8010 until runs\<run>\serve.stop exists, max 60 min). Logged to queue.log.
 #   The task runs without admin rights; files written over SSH (elevated) need: icacls C:\Users\User\dls-ft /grant User:(OI)(CI)F /T
 param([string]$List = "queue.txt", [string]$WaitFor = "", [int]$WaitPid = 0)
 Set-Location C:\Users\User\dls-ft
@@ -17,6 +17,14 @@ foreach ($job in Get-Content $List) {
   Add-Content queue.log "$(Get-Date -Format s) start $job"
   if ($kind -eq "eval") { & $py eval_unsloth.py "runs\$run" @T *> "runs\$run\eval.log" }
   elseif ($kind -eq "train") { & $py train_unsloth.py "runs\$run\config.json" *> "runs\$run\train.log" }
+  elseif ($kind -eq "serve") {
+    # Serve the model on :8010 until runs\<run>\serve.stop appears (or 60 min), so the Mac can run the golden suite.
+    Remove-Item "runs\$run\serve.stop" -ErrorAction SilentlyContinue
+    $p = Start-Process -FilePath $py -ArgumentList "serve_unsloth.py", "runs\$run\model", "--port", "8010" -RedirectStandardOutput "runs\$run\serve.log" -RedirectStandardError "runs\$run\serve.err" -PassThru -WindowStyle Hidden
+    $deadline = (Get-Date).AddMinutes(60)
+    while (-not (Test-Path "runs\$run\serve.stop") -and (Get-Date) -lt $deadline -and -not $p.HasExited) { Start-Sleep 10 }
+    if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force; Get-CimInstance Win32_Process -Filter "ParentProcessId=$($p.Id)" | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue } }
+  }
   Add-Content queue.log "$(Get-Date -Format s) done $job (exit $LASTEXITCODE)"
 }
 Add-Content queue.log "$(Get-Date -Format s) queue finished ($List)"
