@@ -147,3 +147,26 @@ export const HOME_TIERS = [
 ] as const;
 /** Small-business profits in the table are optimistic list values; the sim pays out this share of them. */
 export const BUSINESS_PROFIT_SCALE = 0.5;
+
+// SPEC decision 18: spend levels 1-10 (logic in spend.ts; the table lives here so finance.ts can read shares)
+export interface SpendLevel {
+  level: number;
+  label: string;
+  criterion: string;                     // what the model is shown for this level
+  share: number;                         // ongoing share of income after housing and loans spent on living
+  oneOff?: [lo: number, hi: number];     // dollars, drawn once in the month the level is chosen
+  items?: string[];
+}
+
+export const SPEND_LEVELS: SpendLevel[] = [
+  { level: 1, label: 'bare bones', criterion: 'Bare bones: essentials only', share: 0.30 },
+  { level: 2, label: 'frugal', criterion: 'Frugal: cuts almost every extra', share: 0.40 },
+  { level: 3, label: 'careful', criterion: 'Careful: few extras', share: 0.50 },
+  { level: 4, label: 'modest', criterion: 'Modest: some extras', share: 0.60 },
+  { level: 5, label: 'normal', criterion: 'A normal month', share: 0.70 },
+  { level: 6, label: 'treat', criterion: 'A treat: a nice dinner or a weekend out ($100-$400)', share: 0.78, oneOff: [100, 400], items: ['a nice dinner out', 'a weekend away', 'concert tickets'] },
+  { level: 7, label: 'splurge', criterion: 'A splurge: a designer purse, a gadget or a getaway ($400-$2k)', share: 0.86, oneOff: [400, 2000], items: ['a designer purse', 'a new phone', 'a weekend getaway'] },
+  { level: 8, label: 'big purchase', criterion: 'A big purchase: a vacation or new furniture ($2k-$8k)', share: 0.86, oneOff: [2000, 8000], items: ['a vacation', 'new furniture', 'a home theater'] },
+  { level: 9, label: 'major purchase', criterion: 'A major purchase: a car paid in cash or a big trip ($8k-$30k)', share: 0.86, oneOff: [8000, 30000], items: ['a car, paid in cash', 'a big trip abroad', 'a small boat'] },
+  { level: 10, label: 'blowout', criterion: 'A blowout: a luxury car or a lavish wedding ($30k-$80k, can go on the card)', share: 0.92, oneOff: [30000, 80000], items: ['a luxury car', 'a lavish wedding', 'a dream vacation'] },
+];

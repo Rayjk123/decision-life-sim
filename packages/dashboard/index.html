@@ -74,6 +74,7 @@ const MOVE_NAMES = { nothing: 'Change nothing', invest_index: 'Invest in the ind
   buy_home: 'Buy a home', buy_home_big: 'Buy a bigger home', buy_rental: 'Buy a rental', sell_rental: 'Sell a rental', buy_car: 'Buy a car', save_cash: 'Move cash to savings' };
 const moveLabel = (id) => MOVE_NAMES[id] ?? (id.startsWith('start_') ? `Start a ${id.slice(6).replace(/_/g, ' ')}` : id.replace(/_/g, ' '));
 const SHARE_TEXT = ['10%', '25%', 'half', '75%', 'all'];
+const SPEND_NAMES = ['', 'bare bones', 'frugal', 'careful', 'modest', 'normal', 'a treat', 'a splurge', 'a big purchase', 'a major purchase', 'a blowout'];
 const LABELS = { saver:'Saver', index:'Index investor', picker:'Stock picker', re:'Real estate', biz:'Business owner', spender:'Spender', status:'Status seeker', fire:'Early retiree', balanced:'Balanced' };
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
@@ -160,7 +161,8 @@ function showDecision(d) {
   let acc = 0;
   const segs = opts.map(([id, p], i) => `<div title="${esc(moveLabel(id))} ${pct(p)}" style="width:${p*100}%;background:${id === d.picked ? color : ['#cfcac0','#ddd9d0','#e8e5de','#f0eee8'][Math.min(3,i)]}"></div>`).join('');
   const options = opts.map(([id, p]) => `<div class="opt"><div><b style="font-weight:${id === d.picked ? 700 : 500}">${esc(moveLabel(id))}</b>${id === d.heuristicPick ? ' <span class="small mute">(heuristic pick)</span>' : ''}<div class="d">${esc(d.descriptions?.[id] ?? '')}</div></div><div class="bar"><i style="width:${p*100}%;background:${id === d.picked ? color : '#b9b4a9'}"></i></div><div class="num small">${pct(p)}</div></div>`).join('');
-  const share = d.answers.investShare && d.investLevel !== undefined ? ` · putting in ${SHARE_TEXT[d.investLevel] ?? d.investLevel} of spare cash` : '';
+  const share = (d.answers.investShare && d.investLevel !== undefined ? ` · putting in ${SHARE_TEXT[d.investLevel] ?? d.investLevel} of spare cash` : '')
+    + (d.spendLevel ? ` · spending: ${SPEND_NAMES[d.spendLevel]} (${d.spendLevel}/10)` : '');
   const retire = d.answers.retire !== undefined ? ` · retire p=${d.answers.retire.toFixed(2)}${d.retired ? ' (retired)' : ''}` : '';
   $('card').innerHTML = `<div class="card" style="border-color:${color}">
     <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.model ?? d.provider)}${d.latencyMs || d.tokens ? ` · ${d.latencyMs} ms · ${d.tokens} tokens` : ''}${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>

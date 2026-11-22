@@ -95,6 +95,7 @@ export interface Sim {
 
   autoInvestPct: number;     // standing order: share of monthly surplus into investments (0..0.6)
   savings?: Cents;           // high-yield savings account: safe, ~+0.5%/yr after inflation (checking cash loses ~2.5%/yr)
+  spendLevel?: number;       // SPEC 18: current spend level 1-10 (undefined = the personality share, used by golden scenarios)
   saveHabit?: number;        // lasting saving habit: scales the share of income saved (undefined = typical, 1); < 0.5 = rarely invests
   memory: string[];          // last six notable outcomes, newest first
   lastDecisionMonth: number;
@@ -125,6 +126,7 @@ export interface Move {
 export interface Answers {
   main: Record<string, number>;          // move id -> probability
   investShare?: Record<string, number>;  // level index "0".."5" -> probability
+  spendLevel?: Record<string, number>;   // SPEC 18: "1".."10" -> probability (when the decider answers it)
   retire?: number;                       // probability of yes
 }
 
@@ -132,6 +134,7 @@ export interface DecisionRecord {
   simId: SimId;
   month: number;
   provider: string;          // 'kev' (the /v1/systemone protocol) | 'heuristic' | 'heuristic-fallback' | 'random'
+  spendLevel?: number;       // SPEC 18: the spend level chosen at this decision
   model?: string;            // the model that actually answered, e.g. 'd3' or 'kev-latest' (provider alone can't tell Kev from d3)
   moves: string[];
   answers: Answers;
@@ -152,7 +155,7 @@ export type EventType =
   | 'arrived' | 'started_career' | 'raise' | 'laid_off' | 'hired' | 'retired' | 'died'
   | 'decision' | 'bought_home' | 'bought_rental' | 'sold_rental' | 'bought_car' | 'started_business'
   | 'business_failed' | 'invested' | 'paid_debt' | 'repair' | 'vacancy' | 'tenant_found'
-  | 'missed_payment' | 'bankrupt' | 'regime_change' | 'inherited' | 'moved_in' | 'moved_out' | 'rent_cut' | 'business_exit';
+  | 'missed_payment' | 'bankrupt' | 'regime_change' | 'inherited' | 'moved_in' | 'moved_out' | 'rent_cut' | 'business_exit' | 'splurge';
 
 export interface SimEvent {
   month: number;

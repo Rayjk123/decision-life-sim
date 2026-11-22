@@ -15,6 +15,7 @@ import { ARCHETYPE } from './data.ts';
 import { fmt } from './money.ts';
 import { resetFlows } from './ledger.ts';
 import { rngFor } from './rng.ts';
+import { applySpendLevel, heuristicSpendLevel, sampleSpendLevel } from './spend.ts';
 import { releaseTenancies, settleBusinessDemand, settleRentals } from './economy.ts';
 
 export interface TickOptions {
@@ -144,10 +145,13 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     const move = moves.find((mv) => mv.id === p.picked) ?? moves[0];
     const { valid, events: evs } = applyMove(world, sim, move, p.shareLevel);
     events.push(...evs);
+    // SPEC 18: this month's spend level, from the decider when it answers, otherwise the heuristic's
+    const spend = res.answers.spendLevel ? sampleSpendLevel(res.answers.spendLevel, drawFor(world.seed, m, sim.id, 'spend')) : heuristicSpendLevel(sim, world);
+    events.push(...applySpendLevel(world, sim, spend));
     sim.lastDecisionMonth = m;
     const rec: DecisionRecord = {
       simId: sim.id, month: m, provider: res.provider, model: res.model, moves: moves.map((mv) => mv.id), answers: res.answers,
-      picked: valid ? move.id : 'nothing', draw, heuristicPick, reason, investLevel: p.shareLevel, retired: p.retire,
+      picked: valid ? move.id : 'nothing', draw, heuristicPick, reason, investLevel: p.shareLevel, retired: p.retire, spendLevel: spend,
       valid, latencyMs: res.latencyMs, tokens: res.tokens,
       state: req.state, descriptions: Object.fromEntries(moves.map((mv) => [mv.id, mv.description])),
     };

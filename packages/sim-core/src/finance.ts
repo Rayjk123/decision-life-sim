@@ -1,6 +1,6 @@
 // Money math shared by cash flow, the rules engine and the read model.
 import type { Asset, Cents, Sim, World } from './types.ts';
-import { CAREER, ARCHETYPE } from './data.ts';
+import { CAREER, ARCHETYPE, SPEND_LEVELS } from './data.ts';
 import { dollars } from './money.ts';
 import { post } from './ledger.ts';
 
@@ -143,7 +143,9 @@ export function livingCost(sim: Sim, month: number): Cents {
   // TODO(golden-change run): essentials for one person cost ~$1,800/mo (out of work ~$1,300); raising this changes
   // what the model sees in 10 golden requests, so it ships with the d3 re-eval (docs/LOOP.md B-TOP budgets a).
   const floor = sim.employed || sim.selfEmployed ? dollars(1100) : dollars(800); // out of work: bare-bones budget
-  return Math.round(Math.max(floor, afterHousing * consumptionShare(sim)));
+  // A sim's spend level (SPEC 18) sets the share; with no level set (golden scenarios) it's the personality-and-habit share
+  const share = sim.spendLevel === undefined ? consumptionShare(sim) : SPEND_LEVELS[Math.max(1, Math.min(10, sim.spendLevel)) - 1].share;
+  return Math.round(Math.max(floor, afterHousing * share));
 }
 
 /** Rent collected minus carrying costs, before mortgage. */

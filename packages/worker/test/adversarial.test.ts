@@ -69,7 +69,7 @@ function violations(world: World, before: Map<string, { cash: number; loans: Set
 
 // Each adversary must actually reach the paths it targets, or passing proves nothing.
 const MUST_SEE: Record<string, string[]> = {
-  random: ['bought_home', 'bought_rental', 'tenant_found'],
+  random: ['bought_home', 'bought_rental', 'tenant_found', 'splurge'],
   'max-leverage': ['bought_rental', 'started_business', 'bankrupt'],
   churner: ['bought_rental', 'sold_rental', 'started_business'],
   'never-pays': ['bought_car', 'missed_payment', 'bankrupt'],

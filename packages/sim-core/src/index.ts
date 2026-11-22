@@ -16,3 +16,4 @@ export * from './tick.ts';
 export * from './ledger.ts';
 export * from './memory.ts';
 export * from './economy.ts';
+export * from './spend.ts';

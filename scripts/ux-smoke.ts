@@ -62,6 +62,7 @@ if (decRows) {
   const card = await page.locator('#card').innerText();
   check('decision card shows options with probabilities', /\d+%/.test(card) && card.length > 80);
   check('decision card shows the dice roll', /dice|draw/i.test(card));
+  check('decision card shows the spend level', /spending: .*\/10/.test(card));
   check('decision card names who decided', (await page.locator('#who').count()) > 0);
   await page.screenshot({ path: join(shots, '2-decision.png'), fullPage: true });
   if (await page.locator('#who').count()) {
