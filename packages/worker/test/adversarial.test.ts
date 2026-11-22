@@ -8,7 +8,7 @@ import { integrityViolations } from '../../../scripts/health-lib.ts';
 import { randomDecider } from '../src/random.ts';
 
 // Hostile deciders: each always picks the first available move kind in its preference order.
-function prefers(name: string, order: string[], share: number, retire: number): Decider {
+function prefers(name: string, order: string[], share: number, retire: number, spend?: number): Decider {
   return {
     name,
     async decide(req) {
@@ -19,6 +19,7 @@ function prefers(name: string, order: string[], share: number, retire: number): 
           main: Object.fromEntries(req.moves.map((m) => [m.id, m.id === ranked[0].id ? 1 : 0])),
           investShare: Object.fromEntries([0, 1, 2, 3, 4].map((l) => [String(l), l === share ? 1 : 0])),
           retire: req.askRetire ? retire : undefined,
+          ...(spend ? { spendLevel: { [String(spend)]: 1 } } : {}),
         },
         provider: name, latencyMs: 0, tokens: 0,
       };
@@ -67,16 +68,23 @@ function violations(world: World, before: Map<string, { cash: number; loans: Set
   return [...out, ...integrityViolations(world).map((v) => `integrity: ${v}`)];
 }
 
+// Spend every month as hard as possible (level 10 blowouts on the card), never save or invest.
+const blowout = prefers('blowout', ['buy_car', 'buy_home', 'nothing', 'start_business', 'buy_rental', 'trade_stocks', 'pay_debt', 'invest_index', 'save_cash', 'sell_rental'], 0, 0, 10);
+// Hoard: bare-bones spending, every spare dollar into savings, never invest or retire early.
+const hoarder = prefers('hoarder', ['save_cash', 'pay_debt', 'nothing', 'invest_index', 'trade_stocks', 'buy_home', 'buy_car', 'buy_rental', 'start_business', 'sell_rental'], 4, 0, 1);
+
 // Each adversary must actually reach the paths it targets, or passing proves nothing.
 const MUST_SEE: Record<string, string[]> = {
   random: ['bought_home', 'bought_rental', 'tenant_found', 'splurge', 'saved'],
   'max-leverage': ['bought_rental', 'started_business', 'bankrupt'],
   churner: ['bought_rental', 'sold_rental', 'started_business'],
   'never-pays': ['bought_car', 'missed_payment', 'bankrupt'],
+  blowout: ['splurge', 'missed_payment', 'bankrupt'],
+  hoarder: ['saved'],
 };
 
 const RUNS: Array<{ decider: Decider; seeds: number[]; years: number; pop: number; mustSee: string[] }> = [
-  ...[randomDecider, maxLeverage, churner, neverPays].map((decider) => ({ decider, seeds: [11, 12, 13], years: 30, pop: 80, mustSee: MUST_SEE[decider.name] })),
+  ...[randomDecider, maxLeverage, churner, neverPays, blowout, hoarder].map((decider) => ({ decider, seeds: [11, 12, 13], years: 30, pop: 80, mustSee: MUST_SEE[decider.name] })),
   // A whole lifetime: the first arrivals reach 72 (forced retirement), die, and leave estates to newcomers.
   { decider: randomDecider, seeds: [14], years: 65, pop: 40, mustSee: ['retired', 'died', 'inherited'] },
 ];

@@ -3,7 +3,7 @@
 // chosen. The level persists until the sim's next decision.
 import type { Sim, SimEvent, World } from './types.ts';
 import { SPEND_LEVELS, type SpendLevel } from './data.ts';
-import { consumptionShare } from './finance.ts';
+import { canBorrow, consumptionShare } from './finance.ts';
 import { cardLimit, cardLoan } from './lifecycle.ts';
 import { rngFor } from './rng.ts';
 import { dollars, fmt } from './money.ts';
@@ -34,7 +34,7 @@ export function heuristicSpendLevel(sim: Sim, world: World): number {
   if (!sim.employed && !sim.selfEmployed && !sim.retired) level = Math.min(level, 2);
   level = Math.max(1, Math.min(10, level));
   // A one-off you can't come close to paying for doesn't happen (some of it can go on the card)
-  while (level > 5 && (spendLevel(level).oneOff?.[0] ?? 0) * 100 > sim.cash + (sim.savings ?? 0) + cardLimit(sim, world.month) * 0.5) level--;
+  while (level > 5 && (spendLevel(level).oneOff?.[0] ?? 0) * 100 > sim.cash + (sim.savings ?? 0) + (canBorrow(sim, world.month) ? cardLimit(sim, world.month) * 0.5 : 0)) level--;
   return level;
 }
 
@@ -49,7 +49,8 @@ export function applySpendLevel(world: World, sim: Sim, level: number): SimEvent
   // Paid from cash, then savings, then the card up to its limit; investments are never sold for a splurge.
   // Capped at what's reachable, and skipped if even the low end of the range is out of reach.
   const card = cardLoan(sim);
-  const room = Math.max(0, cardLimit(sim, world.month) - card.balance);
+  // Splurging on the card is new borrowing: not while bankrupt, with poor credit or with bills past due
+  const room = canBorrow(sim, world.month) ? Math.max(0, cardLimit(sim, world.month) - card.balance) : 0;
   const reachable = Math.max(0, sim.cash) + (sim.savings ?? 0) + room;
   const amount = Math.min(wanted, reachable);
   if (amount < dollars(l.oneOff[0])) return [];

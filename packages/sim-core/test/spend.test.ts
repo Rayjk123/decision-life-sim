@@ -60,6 +60,12 @@ test('a one-off purchase is drawn in range, paid through the ledger, and capped 
   Object.assign(broke, { cash: 0, savings: 0, salary: k(10), flows: {} });
   broke.loans = [{ id: 'c', kind: 'card', balance: k(100), annualRate: 0.24, payment: 0 }];
   assert.deepEqual(applySpendLevel(w, broke, 10), [], 'no money and a maxed card: no blowout');
+  // iteration 22 review: a sim barred from borrowing can't splurge on the card, even with room on it
+  const barred = adult(w, 'spender');
+  Object.assign(barred, { cash: 0, savings: 0, flows: {}, bankruptUntil: w.month + 60 });
+  barred.loans = [];
+  assert.deepEqual(applySpendLevel(w, barred, 7), [], 'bankrupt: no splurge on credit');
+  assert.equal(barred.flows.card_draw ?? 0, 0);
   assert.ok(broke.cash >= 0);
 });
 
