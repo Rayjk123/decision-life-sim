@@ -85,6 +85,9 @@ Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<na
 
 ## Deliverable: a learning track (user request)
 
+**Written:** [Learn fine-tuning from scratch](learn/index.md) (nine lessons tied to this project's numbers), [glossary](learn/glossary.md), [reading list](learn/reading.md).
+
+
 After the experiments, write `docs/finetune/learn/`: a from-the-basics course built on *this* study's runs, so every concept has a real number from the desktop attached:
 1. What a model is: tokens, embeddings, transformers; decision model vs chatbot.
 2. How training works: loss, gradients, learning rate, batch and epochs, overfitting, train/val/test (with our loss curves).
