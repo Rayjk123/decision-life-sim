@@ -11,6 +11,36 @@ import {
 } from '@dls/sim-core';
 
 /** Which building a sim walks to for each kind of move. */
+/** A sim's month-by-month history, columnar to stay small (amounts in cents). */
+export interface Journey {
+  id: string; name: string;
+  m: number[]; cash: number[]; savings: number[]; invested: number[]; property: number[]; other: number[]; debt: number[];
+  spend: Array<number | null>; inflow: number[]; outflow: number[];
+  events: Array<{ month: number; type: string; text: string }>;
+  decisions: Array<Record<string, unknown> & { month: number; stateDelta?: Record<string, unknown>; stateRemoved?: string[] }>;
+  lastState?: Record<string, unknown>;   // in memory only: the previous decision's full state
+}
+
+/** Rebuild each decision's full state from the stored deltas (what the dashboard does too). */
+export function journeyStates(x: Journey): Array<Record<string, unknown>> {
+  let cur: Record<string, unknown> = {};
+  return x.decisions.map((d) => {
+    cur = { ...cur, ...(d.stateDelta ?? {}) };
+    for (const k of d.stateRemoved ?? []) delete cur[k];
+    return cur;
+  });
+}
+const SERIES = ['m', 'cash', 'savings', 'invested', 'property', 'other', 'debt', 'spend', 'inflow', 'outflow'] as const;
+const emptyJourney = (id: string, name: string): Journey => ({ id, name, m: [], cash: [], savings: [], invested: [], property: [], other: [], debt: [], spend: [], inflow: [], outflow: [], events: [], decisions: [] });
+export function truncateJourney(x: Journey, month: number): Journey {
+  const n = x.m.filter((v) => v <= month).length;
+  const out = { ...x } as Journey;
+  for (const k of SERIES) (out[k] as unknown[]) = (x[k] as unknown[]).slice(0, n);
+  out.events = x.events.filter((e) => e.month <= month);
+  out.decisions = x.decisions.filter((d) => d.month <= month);
+  return out;
+}
+
 /** Event types that make up a life's milestones (big splurges, level 9-10, are added too). */
 const MILESTONES = new Set(['arrived', 'inherited', 'started_career', 'bought_home', 'bought_rental', 'sold_rental', 'started_business', 'business_exit', 'business_failed', 'laid_off', 'retired', 'bankrupt']);
 
@@ -38,6 +68,7 @@ export class WorldStore {
   private nwByYear = new Map<string, number[]>();
   private lastDecision = new Map<string, DecisionRecord>();
   private stats: YearStat[] = [];
+  private journeys = new Map<string, Journey>();   // month-by-month history per living sim (written yearly, at death, at the end)
 
   constructor(private dir: string) {
     for (const d of ['log', 'snapshots', 'public/months', 'public/decisions', 'public/people']) mkdirSync(join(dir, d), { recursive: true });
@@ -57,6 +88,15 @@ export class WorldStore {
   /** Load a snapshot and rebuild in-memory history from the logs, dropping anything logged after it. */
   resume(month: number): World {
     const world = JSON.parse(readFileSync(join(this.dir, `snapshots/month-${month}.json`), 'utf8')) as World;
+    // Journeys were written at year ends, so the files hold at least the history up to this snapshot: reload and trim
+    for (const s of world.sims) {
+      const path = join(this.dir, `public/people/${s.id}-journey.json`);
+      if (existsSync(path)) {
+        const x = truncateJourney(JSON.parse(readFileSync(path, 'utf8')) as Journey, month);
+        x.lastState = journeyStates(x).at(-1);
+        this.journeys.set(s.id, x);
+      }
+    }
     const trim = (file: string, onKeep: (o: any) => void) => {
       const path = join(this.dir, 'log', file);
       if (!existsSync(path)) return;
@@ -95,6 +135,7 @@ export class WorldStore {
     appendFileSync(join(this.dir, 'log/events.ndjson'), r.events.map((e) => JSON.stringify(e)).join('\n') + (r.events.length ? '\n' : ''));
     if (r.decisions.length) appendFileSync(join(this.dir, 'log/decisions.ndjson'), r.decisions.map(({ state, descriptions, ...d }) => JSON.stringify(d)).join('\n') + '\n');
     if (m % 12 === 0) writeFileSync(join(this.dir, `snapshots/month-${m}.json`), JSON.stringify(world));
+    this.recordJourneys(world, r);
 
     const changed = new Set<string>();
     for (const e of r.events) {
@@ -149,6 +190,48 @@ export class WorldStore {
     }));
     writeFileSync(join(this.dir, 'public/latest.json'), JSON.stringify({ month: m, label: monthLabel(m), population: world.sims.length, writtenAt: new Date().toISOString() }));
   }
+
+  /** Append this month to every living sim's journey; write the dead at once and everyone at year ends. */
+  private recordJourneys(world: World, r: MonthResult) {
+    const m = r.month;
+    const j = (id: string, name: string) => { let x = this.journeys.get(id); if (!x) this.journeys.set(id, (x = emptyJourney(id, name))); return x; };
+    for (const s of world.sims) {
+      const b = balanceSheet(s), x = j(s.id, s.name);
+      const flows = Object.values(s.flows ?? {});
+      const usd = (c: number) => Math.round(c / 100);   // whole dollars keep the file small
+      x.m.push(m); x.cash.push(usd(b.cash)); x.savings.push(usd(b.savings ?? 0)); x.invested.push(usd(b.investments)); x.property.push(usd(b.property));
+      x.other.push(usd(b.other)); x.debt.push(usd(b.debt)); x.spend.push(s.spendLevel ?? null);
+      x.inflow.push(usd(flows.filter((v) => v > 0).reduce((t, v) => t + v, 0))); x.outflow.push(usd(flows.filter((v) => v < 0).reduce((t, v) => t + v, 0)));
+    }
+    for (const e of r.events) if (e.simId && e.type !== 'decision') this.journeys.get(e.simId)?.events.push({ month: e.month, type: e.type, text: e.text });
+    for (const d of r.decisions) {
+      const x = this.journeys.get(d.simId);
+      if (!x) continue;
+      // The state is stored as a delta: in full on the first decision, then only the facts that changed
+      // (small files, and exactly what "what changed since the last decision" needs)
+      const prev = x.lastState ?? {};
+      const state = (d.state ?? {}) as Record<string, unknown>;
+      const changed = Object.fromEntries(Object.entries(state).filter(([k, v]) => prev[k] !== v));
+      const removed = Object.keys(prev).filter((k) => !(k in state));
+      x.lastState = state;
+      x.decisions.push({
+        month: d.month, picked: d.picked, valid: d.valid, heuristicPick: d.heuristicPick, reason: d.reason, draw: d.draw,
+        investLevel: d.investLevel, spendLevel: d.spendLevel, retired: d.retired, provider: d.provider, model: d.model,
+        odds: Object.fromEntries(Object.entries(d.answers.main).map(([k, v]) => [k, Math.round(v * 1000) / 1000])),
+        stateDelta: changed, ...(removed.length ? { stateRemoved: removed } : {}),
+      });
+    }
+    for (const e of r.events) if (e.type === 'died' && e.simId) { this.writeJourney(e.simId); this.journeys.delete(e.simId); }
+    if (m % 12 === 0) for (const s of world.sims) this.writeJourney(s.id);
+  }
+
+  private writeJourney(id: string) {
+    const x = this.journeys.get(id);
+    if (x) { const { lastState: _omit, ...file } = x; writeFileSync(join(this.dir, `public/people/${id}-journey.json`), JSON.stringify(file)); }
+  }
+
+  /** Write every living sim's journey (end of a run). */
+  flush(world: World) { for (const s of world.sims) this.writeJourney(s.id); }
 
   /** Recent events (newest first, capped) plus a separate, chronological list of life milestones. */
   private addLife(e: SimEvent) {

@@ -33,6 +33,7 @@ export async function runWorld(o: RunOptions): Promise<{ world: World; decisions
     calls += r.calls; fallbacks += r.fallbacks;
     o.onMonth?.(world, r, Date.now() - t);
   }
+  store.flush(world);
   return { world, decisions, calls, fallbacks, resumedFrom };
 }
 

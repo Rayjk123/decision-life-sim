@@ -24,7 +24,7 @@ test('a run writes the read model the browser needs', async () => {
   const decisions = readdirSync(join(pub, 'decisions')).map((f) => read(join(pub, 'decisions', f))).flat();
   assert.ok(decisions.length > 0);
   assert.ok(decisions[0].state && decisions[0].descriptions && decisions[0].answers.main);
-  const people = readdirSync(join(pub, 'people'));
+  const people = readdirSync(join(pub, 'people')).filter((f) => !f.endsWith('-journey.json'));   // person files, not journeys
   assert.ok(people.length > 0);
   const person = read(join(pub, 'people', people[0]));
   for (const key of ['balance', 'thisMonth', 'life', 'netWorthByYear', 'assets']) assert.ok(key in person, `person file missing ${key}`);
