@@ -26,6 +26,25 @@ Newest session first. Each entry: what was done, the current state, and the next
 **Prompt to paste into the new session**
 > Read CLAUDE.md, docs/SPEC.md and docs/WORKLOG.md (start with "Handoff to the next session"). Kev has never been run for real: get Kev-0.8B serving locally on this Mac's GPU, fix anything in the Kev client that doesn't match the real API, then run kev:check, the eval suite with all three styles, and the experiment. Record the results in the worklog, compare against the heuristic baseline, and propose what to do next from the roadmap. Commit after each step.
 
+## Session 3 · 2026-11-21 (Mac, first real Kev)
+
+**Done**
+- Repo under git (initial commit); open-source README, MIT `LICENSE`, `docs/assets/icon.svg`. `scripts/kev.sh` had lost its execute bit; now committed as 100755.
+- 37/37 tests pass on the Mac (Node 20.11).
+- Kev-0.8B serving locally: `kev.serve` on `mps via mlx (bfloat16)`, port 8009. Not Ollama: Kev's own Uvicorn server, weights from Hugging Face.
+- **`kev:check` passes with no client changes.** The real response matches `kev.ts`: `answers.main.probabilities` keyed by our move ids, `usage.input_tokens`, `latency_ms`.
+  - Sample (Ivy, early retiree, 388 input tokens): Kev nothing 71% / buy_home 22% / buy_car 7%; heuristic 70 / 28 / 2. Sensible: a frugal early retiree mostly stands pat and avoids the car.
+
+**Throughput (the problem)**
+- One decision takes ~1.7 s of model time. 8 concurrent requests: 23 calls in 43.9 s = **0.5 calls/s**, p50 13.3 s (queueing).
+- Why concurrency doesn't help: Kev's MLX backend runs batches **one request at a time** (`.kev/kev/mlx_model.py` `probs_batch`); only the CUDA path runs requests together.
+- 300 calls (1,000 sims × ~⅓ a month) take ~570 s against a 90 s month target, so **~6× short**. 200 sims (~65 calls) take ~2 min a month, which is fine for evals and short runs.
+- Levers: shorter states (`terse` style, trimming `recent`), fewer calls (yearly reviews for steady sims), the CUDA box in roadmap item 7 (real batching), or hosted Jev.
+
+**Next**
+1. `npm run eval -- --decider kev --style all --verbose` (speed is fine at this size).
+2. Experiment, a 24-month sim and a dashboard check, as in the handoff steps 6–7.
+
 ## Session 2 · 2026-11-21 (evening)
 
 **Done**
