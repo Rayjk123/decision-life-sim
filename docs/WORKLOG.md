@@ -57,9 +57,24 @@ Newest session first. Each entry: what was done, the current state, and the next
 - An untested hypothesis: option-order bias, since `nothing` is always listed first. Check with `/v1/systemone/permute` (roadmap item 3) before concluding it's a pure prior.
 - The eval ran much faster per call (14 s for the `words` run) than `kev:check`'s 1.7 s/decision. Eval states are probably shorter and share prefixes (Kev has a prefix cache). Not investigated.
 
+**Option-order check** (`npm run eval:permute`, 30 scenarios × 8 orders, `words`)
+- **Not the cause.** `nothing` is the top pick in 99% of 240 orders. p(nothing) is 0.37 when listed first, 0.38 when not first and 0.40 when last.
+- An option listed first gets 0.82× its mean probability, a mild penalty for going first, not a bonus. The argmax is stable in 28 of 30 scenarios, and the mean max spread across orders is 0.10.
+- So the pull toward "change nothing" is a genuine preference; Kev's training uses "none" options (`--p_none_pair`), which may explain it.
+
+**`focused` state style** (new; persona first, standout traits as phrases, spare cash, empty fields dropped, repeated memories collapsed; about 35–40% shorter than `words`)
+
+| Kev-0.8B | Overall | Scenario score | Top pick in character | Personality pass | Pairs |
+|---|---|---|---|---|---|
+| words | 53% | 62% | 50% | 19% | 39% (7/18) |
+| **focused** | **55%** | **70%** | **63%** | **44%** | 33% (6/18) |
+
+- Personality reads much better: archetype swaps move picker→stocks +0.24 and fire→index +0.23, and `nothing` is no longer the top pick for picker, fire and biz.
+- Pairs are a wash, within about one pair. Two misses are just under the 0.03 bar (card debt -0.027, rates -0.026). Persona-only, traits-only, crash, jobs, boom, age and vacancies still barely move.
+
 **Next (roadmap item 2, in order)**
-1. Option-order check with `/permute`: if `nothing` wins because it comes first, shuffling or listing it last is a cheap fix.
-2. Shorter, sharper state: lead with the personality and drop low-signal fields. Re-run the eval.
+1. ~~Option-order check~~ (done: not the cause).
+2. ~~Shorter, sharper state~~ (done: `focused`, small gain).
 3. Kev-4B: `./scripts/kev.sh jaredpalmer/kev-4b`. This Mac is an M3 Pro with 36 GB, so it should fit, but expect it to be several times slower.
 4. Fine-tune on golden-style labels (keep held-out scenarios for honest grading).
 5. Hold the experiment and the 24-month Kev run until a variant beats the heuristic; at 0.5 calls/s they cost real time.
