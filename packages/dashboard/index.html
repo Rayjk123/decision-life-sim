@@ -76,7 +76,7 @@ header .kpi span[title]{border-bottom:1px dotted #6b6f7d;cursor:help}
   </section>
   <div style="display:flex;flex-direction:column;gap:16px">
     <section class="card"><h2>Median net worth by archetype <small>today's dollars, yearly</small></h2><div id="chart" style="height:260px"></div><div class="legend" id="legend"></div></section>
-    <section class="card"><h2>Leaderboard <small id="lbnote"></small></h2><table id="leaders"></table></section>
+    <section class="card"><h2><span>Leaderboard</span><small id="lbnote"></small></h2><div class="row" id="lbtabs"><button class="pill on" data-t="living">Living</button><button class="pill" data-t="hof">Hall of Fame</button></div><table id="leaders"></table></section>
   </div>
   <section class="card">
     <h2>Decision explorer <small id="decnote"></small></h2>
@@ -198,9 +198,22 @@ async function drawChart() {
   $('legend').innerHTML = keys.map((k) => `<span><i class="dot" style="background:${COLORS[k]}"></i>${LABELS[k]}</span>`).join('');
 }
 
+let lbTab = 'living';
 async function drawLeaders() {
   const lb = await get('leaderboard.json');
-  $('lbnote').textContent = `${lb.hallOfFame.length} in the Hall of Fame`;
+  $('lbtabs').querySelectorAll('button').forEach((b) => { b.classList.toggle('on', b.dataset.t === lbTab); b.onclick = () => { lbTab = b.dataset.t; drawLeaders(); }; });
+  $('lbtabs').querySelector('[data-t="hof"]').textContent = `Hall of Fame (${lb.hallOfFame.length})`;
+  if (lbTab === 'hof') {
+    // Lives that have ended, by peak net worth; opening one shows their story with how it ended
+    $('lbnote').textContent = 'lives that have ended, by peak wealth';
+    $('leaders').innerHTML = lb.hallOfFame.length
+      ? `<tr><th>#</th><th>Sim</th><th>Archetype</th><th class="num">Died at</th><th class="num">Peak</th><th class="num">Final</th></tr>` +
+        lb.hallOfFame.slice(0, 15).map((h, i) => `<tr class="click" data-id="${esc(h.simId)}" data-i="${i}"><td>${i+1}</td><td>${esc(h.name)}</td><td><i class="dot" style="background:${COLORS[h.archetype]}"></i>${LABELS[h.archetype]}</td><td class="num">${h.ageAtDeath}</td><td class="num">${money(h.peakNetWorth)}</td><td class="num">${money(h.finalNetWorth)}</td></tr>`).join('')
+      : '<tr><td class="empty">Nobody has died yet. Lives end between 35 and 95.</td></tr>';
+    $('leaders').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => openPerson(tr.dataset.id, lb.hallOfFame[+tr.dataset.i]));
+    return;
+  }
+  $('lbnote').textContent = 'richest living sims';
   $('leaders').innerHTML = `<tr><th>#</th><th>Sim</th><th>Archetype</th><th class="num">Age</th><th class="num">Net worth</th></tr>` +
     lb.living.slice(0, 15).map((r, i) => `<tr class="click" data-id="${esc(r.id)}"><td>${i+1}</td><td>${esc(r.name)}</td><td><i class="dot" style="background:${COLORS[r.arch]}"></i>${LABELS[r.arch]}</td><td class="num">${r.age}</td><td class="num">${money(r.nw)}</td></tr>`).join('');
   $('leaders').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => openPerson(tr.dataset.id));
@@ -251,7 +264,7 @@ function showDecision(d) {
   $('who').onclick = (e) => { e.preventDefault(); openPerson(d.simId); };
 }
 
-async function openPerson(id) {
+async function openPerson(id, died) {
   const p = await get(`people/${id}.json`).catch(() => null);
   const el = $('person');
   if (!p) { el.innerHTML = '<button class="close" id="x">Close</button><p class="empty">No file for this sim yet.</p>'; el.classList.add('open'); $('x').onclick = () => el.classList.remove('open'); return; }
@@ -262,6 +275,7 @@ async function openPerson(id) {
   const flows = Object.entries(p.thisMonth ?? {}).filter(([, v]) => v).sort((a, b) => b[1] - a[1]);
   el.innerHTML = `<button class="close" id="x">Close</button>
     <h2 style="margin:0 0 2px">${esc(p.name)}</h2>
+    ${died ? `<div class="small" style="background:#f7f5f0;border-radius:6px;padding:6px 8px;margin:6px 0">Died at ${died.ageAtDeath} in year ${Math.floor((died.diedMonth - 1) / 12) + 1} with ${money(died.finalNetWorth)} (peak ${money(died.peakNetWorth)})${died.heirs ? ` · the estate was split among ${died.heirs} heir${died.heirs > 1 ? 's' : ''}, one of whom moved to town` : died.finalNetWorth <= 0 ? ' · nothing left to inherit' : ''}. The story below is their life as of their last month.</div>` : ''}
     <div class="mute">${p.age} · ${esc(p.career)} · ${esc(p.archetype)}${p.retired ? ' · retired' : p.selfEmployed ? ' · runs a business' : p.employed ? '' : ' · out of work'}</div>
     <p class="small">${esc(p.persona)}</p>
     <div class="grid2 small"><div>Net worth <b>${money(b.netWorth)}</b></div><div>Cash <b>${money(b.cash)}</b></div>${b.savings ? `<div>Savings <b>${money(b.savings)}</b></div>` : ''}<div>Investments <b>${money(b.investments)}</b></div><div>Property <b>${money(b.property)}</b></div><div>Debt <b>${money(b.debt)}</b></div><div>Credit <b>${p.creditScore}</b></div></div>

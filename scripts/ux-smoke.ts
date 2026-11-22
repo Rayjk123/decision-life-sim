@@ -118,6 +118,19 @@ for (const v of [min, Math.round((min + max) / 2), max]) {
 }
 check('month slider scrubs without errors', max > min, `range ${min}-${max}`);
 
+await page.locator('#lbtabs [data-t="hof"]').click();
+await page.waitForTimeout(300);
+const hofRows = await page.locator('#leaders tr.click').count();
+check('Hall of Fame tab lists lives that ended', hofRows >= 1 || /Nobody has died yet/.test(await page.locator('#leaders').innerText()), `${hofRows} rows`);
+if (hofRows) {
+  await page.locator('#leaders tr.click').first().click();
+  await page.waitForTimeout(400);
+  check('a Hall of Fame life opens with how it ended', /Died at \d+ in year \d+/.test(await page.locator('#person').innerText()));
+  await page.screenshot({ path: join(shots, '3b-hall-of-fame.png'), fullPage: true });
+  await page.keyboard.press('Escape');
+}
+await page.locator('#lbtabs [data-t="living"]').click();
+await page.waitForTimeout(300);
 if (leaders) {
   await page.locator('#leaders tr.click').first().click();
   await page.waitForTimeout(400);
