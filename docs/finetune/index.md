@@ -61,6 +61,27 @@ One change per run against a fixed baseline.
 | Calibration | on / off |
 | Augmentation | option-order shuffling (position bias) |
 
+## Run queue (the research cadence works through this in order)
+
+Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<name>/config.json`), `sync.sh push-run`, train on the desktop, then **evaluate** with `eval_unsloth.py runs/<name> data/sets/heuristic-hard/test.jsonl data/sets/d3-hard/test.jsonl data/sets/claude-hard/test.jsonl`, `sync.sh pull-run`, record a notebook row, commit. **The GPU should never sit idle**: start the next run as soon as one finishes. Defaults unless stated: 0.8B, r 16, lr 2e-4, 2 epochs, 2,048 tokens.
+
+| Run | Changes vs E01 | Question it answers | Status |
+|---|---|---|---|
+| E01 | heuristic labels (baseline) | the baseline | running |
+| E02 | d3 hard labels | does distilling a decision model beat rules? | queued |
+| E03 | d3 **soft** labels | do full probabilities teach more than top picks? | queued |
+| E04 | Haiku v1.2 labels (needs train batches 16–29 + val 30–34 labelled) | in-character labels vs d3 | needs labels |
+| E05 | Haiku v1.1 (noisy) labels, same states as E04 | how much does hidden label noise cost? | needs E04 |
+| E06 | LoRA r 64 | capacity | queued after E02–E03 |
+| E07 | lr 2e-5 | the guide's two learning rates | queued |
+| E08 | 1 and 4 epochs | under- vs over-fitting | queued |
+| E09 | Brier + ordinal + label smoothing | the Clef loss terms | queued |
+| E10 | permute_fields | order-bias augmentation | queued |
+| E11 | Qwen3.5-2B, then 4B, on the best labels | does size matter more than labels? | queued |
+| E12 | best model served via `serve_unsloth.py` on the golden suite + pairs + a 20-year world | the real test vs d3 and Kev | after E11 |
+
+**Labelling queue:** Haiku train batches 16–29 and val 30–34 (rubric v1.2); **Opus gold test batches 36–42** (Claude labels them itself between runs).
+
 ## Deliverable: a learning track (user request)
 
 After the experiments, write `docs/finetune/learn/`: a from-the-basics course built on *this* study's runs, so every concept has a real number from the desktop attached:
