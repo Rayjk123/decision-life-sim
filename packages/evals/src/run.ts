@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { heuristicDecider, type Decider, type StateStyle } from '@dls/sim-core';
 import { kevDecider } from '@dls/worker/src/kev.ts';
 import { randomDecider, runSuite, type SuiteResult } from './suite.ts';
+import { compareRuns, formatComparison, loadRun } from './compare.ts';
 
 const { values: a } = parseArgs({
   options: {
@@ -17,6 +18,7 @@ const { values: a } = parseArgs({
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'evals-results' },
     verbose: { type: 'boolean', default: false },
+    compare: { type: 'string' },                        // baseline eval JSON: print flips, exit 1 on regression
   },
 });
 
@@ -55,3 +57,16 @@ const md = [`# Eval results · ${new Date().toISOString()}`, '', '| decider | st
   ...results.map((r) => `| ${r.decider} | ${r.style} | ${pct(r.summary.overall)} | ${pct(r.summary.scenarioScore)} | ${pct(r.summary.scenarioPass)} | ${pct(r.summary.topAccuracy)} | ${pct(r.summary.avoidRate)} | ${pct(r.summary.pairPass)} |`)].join('\n');
 writeFileSync(file.replace(/\.json$/, '.md'), md + '\n');
 console.log(`\nWrote ${file} and the .md summary`);
+
+if (a.compare) {
+  let regressed = false;
+  for (const r of results.filter((x) => x.decider !== 'random')) {
+    const base = loadRun(a.compare, r.style);
+    const now = { decider: r.decider, model: a.model, style: r.style, summary: r.summary,
+      scenarios: r.scenarios.map((s) => ({ id: s.scenario.id, grade: s.grade })), pairs: r.pairs.map((p) => ({ id: p.pair.id, grade: p.grade })) };
+    const c = compareRuns(now, base);
+    console.log('\n' + formatComparison(c, `${r.decider === 'kev' ? a.model : r.decider} (${r.style})`, `${a.compare} (${base.style})`));
+    regressed ||= c.regressed.length > 0;
+  }
+  if (regressed) process.exit(1);
+}

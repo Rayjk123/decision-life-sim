@@ -21,7 +21,8 @@
     "eval:permute": "tsx packages/evals/src/permute.ts",
     "docs:results": "tsx scripts/results-page.ts",
     "verify": "tsx scripts/verify.ts",
-    "health": "tsx scripts/health.ts"
+    "health": "tsx scripts/health.ts",
+    "eval:compare": "tsx packages/evals/src/compare.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",

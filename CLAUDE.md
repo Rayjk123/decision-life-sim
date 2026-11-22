@@ -9,7 +9,7 @@ A town of sims living out their financial lives month by month. The rules engine
 
 ## Commands
 ```bash
-npm install && npm test                                   # 43 tests, all must pass
+npm install && npm test                                   # 51 tests, all must pass
 npm run verify                                            # the quality gate: types, tests, eval regression, sim health, docs sync, leak scan
 npm run health [-- --record]                              # 50-year worlds x 3 seeds: integrity, realism bands, time budget
 npm run sim -- --months 600 --pop 200                     # heuristic mode, ~10 s
@@ -17,7 +17,8 @@ npm run dashboard                                         # http://localhost:517
 npm run eval -- --verbose                                 # golden suite: random + heuristic baselines
 ./scripts/kev.sh                                          # Kev-0.8B on http://127.0.0.1:8009 (macOS uses MLX on the GPU)
 npm run kev:check                                         # one real Kev decision vs heuristic + throughput
-npm run eval -- --decider kev --style all --verbose       # Kev on the golden suite, 3 state wordings
+npm run eval -- --decider kev --style all --verbose       # Kev on the golden suite, all state wordings
+npm run eval:compare -- <new.json> [--against <base.json>] # flips + regression verdict between two eval runs
 npm run experiment -- --deciders heuristic,kev --seeds 1 --years 10
 npm run sim -- --decider kev --months 24 --pop 200 [--resume]
 ```
