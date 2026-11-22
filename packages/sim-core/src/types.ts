@@ -99,7 +99,7 @@ export interface Sim {
   flows: Record<string, Cents>;
 }
 
-export type StateStyle = 'words' | 'numbers' | 'terse';
+export type StateStyle = 'words' | 'numbers' | 'terse' | 'focused';
 
 export type MoveKind =
   | 'nothing' | 'invest_index' | 'trade_stocks' | 'pay_debt'

@@ -20,7 +20,7 @@ const { values: a } = parseArgs({
   },
 });
 
-const styles: StateStyle[] = a.style === 'all' ? ['words', 'numbers', 'terse'] : [a.style as StateStyle];
+const styles: StateStyle[] = a.style === 'all' ? ['words', 'numbers', 'terse', 'focused'] : [a.style as StateStyle];
 const deciders: Decider[] =
   a.decider === 'baselines' ? [randomDecider, heuristicDecider]
   : a.decider === 'random' ? [randomDecider]

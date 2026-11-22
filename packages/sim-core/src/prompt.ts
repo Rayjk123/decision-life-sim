@@ -18,6 +18,30 @@ const pct = (x: number) => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`;
 
 export function firstName(sim: Sim) { return sim.name.split(' ')[0]; }
 
+// focused style: only the traits that stand out, as plain phrases (middling traits say nothing about a choice)
+const TRAIT_PHRASES: Array<[keyof Sim['traits'], string, string]> = [
+  ['risk', 'loves taking risks', 'avoids risk'],
+  ['debt', 'comfortable borrowing', 'hates debt'],
+  ['status', 'wants to look successful', "doesn't care about status"],
+  ['patience', 'thinks long term', 'wants results now'],
+  ['discipline', 'sticks to a plan', 'impulsive with money'],
+  ['herding', 'follows the crowd', 'ignores the crowd'],
+];
+function traitPhrases(t: Sim['traits']): string {
+  return TRAIT_PHRASES.flatMap(([k, hi, lo]) => (t[k] >= 0.7 ? [hi] : t[k] < 0.3 ? [lo] : [])).join(', ');
+}
+
+// "Put $2.1k into the index fund" x6 becomes "Put $2.1k into the index fund (6 times)"; amounts are ignored for matching
+function dedupe(lines: string[]): string[] {
+  const out: Array<{ text: string; key: string; n: number }> = [];
+  for (const text of lines) {
+    const key = text.replace(/\$[\d.,]+[km]?/gi, '$');
+    const prev = out.find((o) => o.key === key);
+    if (prev) prev.n++; else out.push({ text, key, n: 1 });
+  }
+  return out.map((o) => (o.n > 1 ? `${o.text} (${o.n} times)` : o.text));
+}
+
 function workLine(sim: Sim, world: World): string {
   const m = world.month;
   const c = career(sim);
@@ -54,6 +78,24 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
       market: `index ${pct(mk.lastIndexReturn)}, homes ${homeDir}, rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs ${mk.jobsSignal}`,
       recent: sim.memory.slice(0, 3).join('; ') || 'none',
     };
+  }
+
+  if (style === 'focused') {
+    // Personality first, only the facts that should move a decision, nothing empty, no repeated lines.
+    const spare = Math.max(0, sim.cash - emergencyFloor(sim, m));
+    const s: Record<string, unknown> = {
+      who: `${sim.name}, ${age}, ${workLine(sim, world)}. ${sim.persona}`,
+      character: traitPhrases(t) || 'average on every trait',
+      money: `${fmt(spare)} spare cash beyond a ${fmt(emergencyFloor(sim, m))} cushion; ${fmt(sim.index + sim.stocks)} invested; net worth ${fmt(bs.netWorth)}; saves about ${fmt(Math.max(0, takeHome - spend))} a month`,
+    };
+    if (debts.length) s.debts = debts.join('; ');
+    s.home = h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`;
+    if (rs.length) s.rentals = `${rs.length} worth ${fmt(rs.reduce((sum, r) => sum + r.value, 0))}${empty ? `, ${empty} empty` : ''}`;
+    if (biz.length) s.business = biz.map((b) => (b.businessType ?? '').replace(/_/g, ' ')).join(', ');
+    s.economy = `index ${pct(mk.lastIndexReturn)} last month, home prices ${homeDir}, mortgage rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs report ${mk.jobsSignal}; ${econ.vacantUnits} of ${econ.rentalUnits} town rentals empty`;
+    const recent = dedupe(sim.memory).slice(0, 4);
+    if (recent.length) s.recent = recent.join('; ');
+    return s;
   }
 
   const traits = style === 'numbers'

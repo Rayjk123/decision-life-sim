@@ -126,6 +126,11 @@ test('state styles: words has persona and trait levels, numbers has decimals, te
   assert.match(String(numbers.traits), /risk 0\.\d/);
   assert.equal(terse.personality, undefined);
   assert.match(String(terse.who), /Balanced/);
+  const focused = buildState(s, w, 'focused');
+  assert.ok(String(focused.who).endsWith(s.persona), 'focused leads with who the sim is');
+  assert.equal(Object.keys(focused)[0], 'who');
+  assert.ok(JSON.stringify(focused).length < JSON.stringify(words).length);
+  assert.ok(!('rentals' in focused) || /worth/.test(String(focused.rentals)), 'empty fields are dropped');
 });
 
 test('questions list every legal move with its description, and only ask retirement when allowed', () => {
