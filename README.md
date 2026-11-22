@@ -97,9 +97,9 @@ Also requires git and [uv](https://docs.astral.sh/uv/) (`curl -LsSf https://astr
 
 ```bash
 npm run kev:check                                        # one real decision vs the heuristic, plus throughput
-npm run eval -- --decider kev --style all --verbose      # Kev on the golden suite, three state wordings
-npm run experiment -- --deciders heuristic,kev --seeds 1 --years 10
-npm run sim -- --decider kev --months 24 --pop 200       # two years with Kev (add --resume to continue)
+npm run eval -- --decider model --style all --verbose      # Kev on the golden suite, three state wordings
+npm run experiment -- --deciders heuristic,model --seeds 1 --years 10
+npm run sim -- --decider model --months 24 --pop 200       # two years with Kev (add --resume to continue)
 ```
 
 ## How a month works
@@ -136,10 +136,10 @@ Claude Opus wrote the golden dataset in `packages/evals/golden/` as a reference 
 | Heuristic | CPU | 77% | 56% | instant |
 | Random | CPU | 15% | 6% | instant |
 
-Any model that speaks the `/v1/systemone` decision API can be swapped in with `--kev-url` and `--model` (or `KEV_URL` / `KEV_MODEL`). Ollama serves d3 on that endpoint, so it works unchanged:
+Any model that speaks the `/v1/systemone` decision API can be swapped in with `--decision-url` and `--model` (or `DECISION_URL` / `KEV_MODEL`; the older `--kev-url` / `KEV_URL` still work). Ollama serves d3 on that endpoint, so it works unchanged:
 
 ```bash
-npm run eval -- --decider kev --kev-url http://<ollama-host>:11434 --model d3
+npm run eval -- --decider model --decision-url http://<ollama-host>:11434 --model d3
 ```
 
 The world experiment also measures "world separation", the average distance between archetypes' decision mixes over 30-year runs: random 8%, heuristic 32% (3 seeds).
@@ -161,7 +161,7 @@ The world experiment also measures "world separation", the average distance betw
 | `--pop` | 200 | Target population |
 | `--seed` | 1 | World seed (same seed = same world) |
 | `--decider` | heuristic | `heuristic` or `kev` |
-| `--kev-url` | http://127.0.0.1:8009 | Kev server (or `KEV_URL`) |
+| `--decision-url` | http://127.0.0.1:8009 | decision model server: Kev, Ollama (d3) or a fine-tuned model (or `DECISION_URL`; `--kev-url` / `KEV_URL` still work) |
 | `--policy` | events | `events` (quarterly reviews + life events) or `monthly` |
 | `--style` | words | State wording sent to the model: `words`, `numbers`, `terse` |
 | `--resume` | off | Continue from the latest yearly snapshot in the output folder |

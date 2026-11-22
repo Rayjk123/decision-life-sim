@@ -17,6 +17,11 @@ export interface KevOptions {
 interface KevAnswer { type: string; choice?: string; noul?: number; score?: number; probabilities?: Record<string, number> }
 interface KevResponse { answers: Record<string, KevAnswer>; usage?: { input_tokens?: number }; latency_ms?: number }
 
+/** The decision model endpoint: --decision-url, then DECISION_URL; the older --kev-url / KEV_URL still work. */
+export function decisionUrl(flags: { 'decision-url'?: string; 'kev-url'?: string } = {}, fallback = 'http://127.0.0.1:8009'): string {
+  return flags['decision-url'] ?? flags['kev-url'] ?? process.env.DECISION_URL ?? process.env.KEV_URL ?? fallback;
+}
+
 export function kevDecider(opts: KevOptions): Decider & { stats: { calls: number; cacheHits: number; latencies: number[]; errors: number } } {
   const model = opts.model ?? 'kev-latest';
   const cache = new Map<string, DecisionResult>();

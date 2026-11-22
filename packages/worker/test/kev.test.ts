@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { buildQuestions, buildState, createWorld, heuristicDecider, legalMoves, runMonth, inSchool } from '@dls/sim-core';
-import { kevDecider } from '../src/kev.ts';
+import { decisionUrl, kevDecider } from '../src/kev.ts';
 
 test('the Kev gateway sends the TypeSafe request shape, parses answers and caches repeats', async () => {
   let hits = 0;
@@ -56,4 +56,21 @@ test('the Kev gateway sends the TypeSafe request shape, parses answers and cache
   assert.deepEqual(r1.answers.spendLevel, { '1': 0.1, '7': 0.9 }, 'score positions 0-9 map to spend levels 1-10');
   assert.equal(r1.model, 'kev-latest', 'the result names the model that answered');
   assert.equal(r2.model, 'kev-latest', 'a cache hit names it too');
+});
+
+test('the decision model URL: --decision-url, then --kev-url, then DECISION_URL, then KEV_URL, then the default', () => {
+  const saved = { d: process.env.DECISION_URL, k: process.env.KEV_URL };
+  try {
+    delete process.env.DECISION_URL; delete process.env.KEV_URL;
+    assert.equal(decisionUrl(), 'http://127.0.0.1:8009');
+    process.env.KEV_URL = 'http://old-env';
+    assert.equal(decisionUrl(), 'http://old-env', 'the old env var still works');
+    process.env.DECISION_URL = 'http://new-env';
+    assert.equal(decisionUrl(), 'http://new-env', 'DECISION_URL wins over KEV_URL');
+    assert.equal(decisionUrl({ 'kev-url': 'http://old-flag' }), 'http://old-flag', 'a flag wins over env');
+    assert.equal(decisionUrl({ 'kev-url': 'http://old-flag', 'decision-url': 'http://new-flag' }), 'http://new-flag', '--decision-url wins');
+  } finally {
+    if (saved.d === undefined) delete process.env.DECISION_URL; else process.env.DECISION_URL = saved.d;
+    if (saved.k === undefined) delete process.env.KEV_URL; else process.env.KEV_URL = saved.k;
+  }
 });

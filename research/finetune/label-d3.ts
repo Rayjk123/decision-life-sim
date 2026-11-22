@@ -5,7 +5,7 @@ import { appendFileSync, existsSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 const { values: a } = parseArgs({ options: {
-  url: { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:11434' },
+  url: { type: 'string', default: process.env.DECISION_URL ?? process.env.KEV_URL ?? 'http://127.0.0.1:11434' },
   model: { type: 'string', default: 'd3' },
   in: { type: 'string', default: 'research/finetune/data/states.jsonl' },
   out: { type: 'string', default: 'research/finetune/data/labels/d3.jsonl' },

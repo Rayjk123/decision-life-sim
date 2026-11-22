@@ -1,6 +1,7 @@
 // Option-order bias probe: re-asks each golden scenario's main question under several option orders through Kev's
 // /v1/systemone/permute endpoint and reports whether an option gains probability just by its position.
-//   npm run eval:permute -- [--n 8] [--style words] [--kev-url http://127.0.0.1:8009]
+//   npm run eval:permute -- [--n 8] [--style words] [--decision-url http://127.0.0.1:8009]
+import { decisionUrl } from '@dls/worker/src/kev.ts';
 import { parseArgs } from 'node:util';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,7 +13,8 @@ const { values: a } = parseArgs({
   options: {
     n: { type: 'string', default: '8' },
     style: { type: 'string', default: 'words' },
-    'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
+    'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
+    'kev-url': { type: 'string' },
     model: { type: 'string', default: 'kev-latest' },
     out: { type: 'string', default: 'evals-results' },
   },
@@ -27,7 +29,7 @@ const rows: Array<{ id: string; options: number; stable: boolean; nothingFirst: 
 
 for (const sc of scenarios) {
   const req = requestFor(sc, a.style as StateStyle);
-  const res = await fetch(`${a['kev-url']!.replace(/\/$/, '')}/v1/systemone/permute`, {
+  const res = await fetch(`${decisionUrl(a).replace(/\/$/, '')}/v1/systemone/permute`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ request: { model: a.model, state: req.state, questions: { main: (req.questions as Record<string, unknown>).main } }, question: 'main', n_perm: nPerm, seed: 1 }),
   });

@@ -1,33 +1,37 @@
 // Run the eval suite.
 //   npm run eval                                  heuristic and random baselines (no model needed)
-//   npm run eval -- --decider kev                 Kev on :8009, default "words" state style
-//   npm run eval -- --decider kev --style all     compare words / numbers / terse
+//   npm run eval -- --decider model                 Kev on :8009, default "words" state style
+//   npm run eval -- --decider model --style all     compare words / numbers / terse
 import { parseArgs } from 'node:util';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { heuristicDecider, type Decider, type StateStyle } from '@dls/sim-core';
-import { kevDecider } from '@dls/worker/src/kev.ts';
+import { decisionUrl, kevDecider } from '@dls/worker/src/kev.ts';
 import { randomDecider, runSuite, type SuiteResult } from './suite.ts';
 import { compareRuns, formatComparison, loadRun } from './compare.ts';
 
 const { values: a } = parseArgs({
   options: {
-    decider: { type: 'string', default: 'baselines' },  // baselines | heuristic | random | kev
+    decider: { type: 'string', default: 'baselines' },  // baselines | heuristic | random | model (alias: kev)
     style: { type: 'string', default: 'words' },        // words | numbers | terse | all
-    'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
+    'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
+    'kev-url': { type: 'string' },
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'evals-results' },
     verbose: { type: 'boolean', default: false },
     compare: { type: 'string' },                        // baseline eval JSON: print flips, exit 1 on regression
   },
 });
+// `--decider model` is the documented name for "any /v1/systemone decision model" (Kev, d3, a fine-tuned model); `kev` is its
+// internal id (kept in saved results and decision records), so it still works as an alias.
+if (a.decider === 'model') a.decider = 'kev';
 
 const styles: StateStyle[] = a.style === 'all' ? ['words', 'numbers', 'terse', 'focused'] : [a.style as StateStyle];
 const deciders: Decider[] =
   a.decider === 'baselines' ? [randomDecider, heuristicDecider]
   : a.decider === 'random' ? [randomDecider]
   : a.decider === 'heuristic' ? [heuristicDecider]
-  : [kevDecider({ url: a['kev-url']!, model: a.model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 })];
+  : [kevDecider({ url: decisionUrl(a), model: a.model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 })];
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const results: SuiteResult[] = [];

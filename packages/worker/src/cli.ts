@@ -1,11 +1,11 @@
 // Run the world from the command line.
 //   npm run sim -- --months 600 --pop 200                     heuristic mode, no model needed
-//   npm run sim -- --decider kev --months 24 --pop 200        uses the Kev server on localhost:8009
-//   npm run sim -- --decider kev --months 120 --resume        continue from the latest yearly snapshot
+//   npm run sim -- --decider model --months 24 --pop 200        uses the Kev server on localhost:8009
+//   npm run sim -- --decider model --months 120 --resume        continue from the latest yearly snapshot
 import { parseArgs } from 'node:util';
 import { join } from 'node:path';
 import { heuristicDecider, type Decider, type StateStyle } from '@dls/sim-core';
-import { kevDecider, percentile } from './kev.ts';
+import { decisionUrl, kevDecider, percentile } from './kev.ts';
 import { monthLabel } from './store.ts';
 import { runWorld, worldDir } from './runner.ts';
 import { archetypeTable, decisionMix } from './report.ts';
@@ -15,8 +15,9 @@ const { values: a } = parseArgs({
     months: { type: 'string', default: '600' },
     pop: { type: 'string', default: '200' },
     seed: { type: 'string', default: '1' },
-    decider: { type: 'string', default: 'heuristic' },          // heuristic | kev
-    'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
+    decider: { type: 'string', default: 'heuristic' },          // heuristic | model (alias: kev)
+    'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
+    'kev-url': { type: 'string' },
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     policy: { type: 'string', default: 'events' },               // events | monthly
     style: { type: 'string', default: 'words' },                 // words | numbers | terse
@@ -27,6 +28,9 @@ const { values: a } = parseArgs({
     quiet: { type: 'boolean', default: false },
   },
 });
+// `--decider model` is the documented name for "any /v1/systemone decision model" (Kev, d3, a fine-tuned model); `kev` is its
+// internal id (kept in saved results and decision records), so it still works as an alias.
+if (a.decider === 'model') a.decider = 'kev';
 
 const seed = Number(a.seed);
 // a non-default model gets its own world folder (seed-1-d3), so a d3 run never lands in seed-1-kev
@@ -35,7 +39,7 @@ const out = worldDir(a.out!, seed, label);
 let decider: Decider = heuristicDecider;
 let kev: ReturnType<typeof kevDecider> | undefined;
 if (a.decider === 'kev') {
-  kev = kevDecider({ url: a['kev-url']!, model: a.model, apiKey: process.env.KEV_API_KEY, cacheFile: join(out, 'kev-cache.ndjson') });
+  kev = kevDecider({ url: decisionUrl(a), model: a.model, apiKey: process.env.KEV_API_KEY, cacheFile: join(out, 'kev-cache.ndjson') });
   decider = kev;
 }
 

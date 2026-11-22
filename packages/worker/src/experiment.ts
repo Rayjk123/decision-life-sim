@@ -1,12 +1,12 @@
 // Whole-world experiment: run the same seeds with different deciders and compare how distinct and
 // sensible the archetypes end up.
 //   npm run experiment                                   random vs heuristic, 3 seeds x 30 years (no model)
-//   npm run experiment -- --deciders random,heuristic,kev --seeds 1 --years 10
+//   npm run experiment -- --deciders random,heuristic,model --seeds 1 --years 10
 import { parseArgs } from 'node:util';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ARCHETYPES, balanceSheet, heuristicDecider, home, rentals, type Decider, type DecisionRecord, type World } from '@dls/sim-core';
-import { kevDecider } from './kev.ts';
+import { decisionUrl, kevDecider } from './kev.ts';
 import { runWorld } from './runner.ts';
 import { randomDecider } from './random.ts';
 
@@ -16,11 +16,15 @@ const { values: a } = parseArgs({
     seeds: { type: 'string', default: '1,2,3' },
     years: { type: 'string', default: '30' },
     pop: { type: 'string', default: '200' },
-    'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
+    'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
+    'kev-url': { type: 'string' },
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'experiments' },
   },
 });
+// `--decider model` is the documented name for "any /v1/systemone decision model" (Kev, d3, a fine-tuned model); `kev` is its
+// internal id (kept in saved results and decision records), so it still works as an alias.
+a.deciders = a.deciders!.split(',').map((d) => (d === 'model' ? 'kev' : d)).join(',');
 
 const KINDS = ['nothing', 'invest_index', 'save_cash', 'trade_stocks', 'pay_debt', 'buy_home', 'buy_rental', 'sell_rental', 'buy_car', 'start'];
 const kindOf = (id: string) => (id.startsWith('start_') ? 'start' : id.startsWith('buy_home') ? 'buy_home' : id);
@@ -68,7 +72,7 @@ function outcomes(world: World) {
 
 const deciderFor = (name: string): Decider =>
   name === 'random' ? randomDecider : name === 'heuristic' ? heuristicDecider
-  : kevDecider({ url: a['kev-url']!, model: a.model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
+  : kevDecider({ url: decisionUrl(a), model: a.model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
 
 const rows: Array<Record<string, unknown>> = [];
 const months = Number(a.years) * 12;

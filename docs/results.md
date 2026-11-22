@@ -212,8 +212,8 @@ The heuristic scores 98% on personality scenarios largely because its weights an
 ```bash
 npm run eval                                                   # random + heuristic baselines
 ./scripts/kev.sh jaredpalmer/kev-4b                            # then, in another terminal:
-npm run eval -- --decider kev --style all --verbose            # Kev on :8009, all four state styles
-npm run eval -- --decider kev --kev-url http://<ollama-host>:11434 --model d3 --style words
+npm run eval -- --decider model --style all --verbose            # Kev on :8009, all four state styles
+npm run eval -- --decider model --decision-url http://<ollama-host>:11434 --model d3 --style words
 npm run eval:permute                                           # option-order probe (Kev only)
 npm run docs:results                                           # regenerate the tables on this page
 ```

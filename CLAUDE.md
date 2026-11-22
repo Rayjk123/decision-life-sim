@@ -18,10 +18,10 @@ npm run dashboard                                         # http://localhost:517
 npm run eval -- --verbose                                 # golden suite: random + heuristic baselines
 ./scripts/kev.sh                                          # Kev-0.8B on http://127.0.0.1:8009 (macOS uses MLX on the GPU)
 npm run kev:check                                         # one real Kev decision vs heuristic + throughput
-npm run eval -- --decider kev --style all --verbose       # Kev on the golden suite, all state wordings
+npm run eval -- --decider model --style all --verbose       # Kev on the golden suite, all state wordings
 npm run eval:compare -- <new.json> [--against <base.json>] # flips + regression verdict between two eval runs
-npm run experiment -- --deciders heuristic,kev --seeds 1 --years 10
-npm run sim -- --decider kev --months 24 --pop 200 [--resume]
+npm run experiment -- --deciders heuristic,model --seeds 1 --years 10
+npm run sim -- --decider model --months 24 --pop 200 [--resume]
 ```
 Run `./scripts/kev.sh` in the background (or a second terminal) and wait for "serving ..." before calling it. First run clones Kev into `.kev/`, installs its env with `uv`, and downloads weights from Hugging Face.
 

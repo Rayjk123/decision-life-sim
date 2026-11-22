@@ -4,7 +4,8 @@
 #   research/finetune/sync.sh push-run <run-name>  copy a run's config up
 #   research/finetune/sync.sh pull-run <run-name>  copy a run's metrics.json + logs back (not the model weights)
 set -euo pipefail
-HOST="${DLS_TRAINER:-user@192.168.50.162}"
+# The training desktop, e.g. DLS_TRAINER=user@<desktop-ip>. Set it in your shell (never commit a LAN address: the repo is public).
+HOST="${DLS_TRAINER:?set DLS_TRAINER=user@<desktop-host> (the Windows training machine)}"
 REMOTE="C:/Users/User/dls-ft"
 cd "$(dirname "$0")"
 case "${1:-}" in
