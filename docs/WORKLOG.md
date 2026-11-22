@@ -72,10 +72,26 @@ Newest session first. Each entry: what was done, the current state, and the next
 - Personality reads much better: archetype swaps move picker→stocks +0.24 and fire→index +0.23, and `nothing` is no longer the top pick for picker, fire and biz.
 - Pairs are a wash, within about one pair. Two misses are just under the 0.03 bar (card debt -0.027, rates -0.026). Persona-only, traits-only, crash, jobs, boom, age and vacancies still barely move.
 
-**Next (roadmap item 2, in order)**
-1. ~~Option-order check~~ (done: not the cause).
-2. ~~Shorter, sharper state~~ (done: `focused`, small gain).
-3. Kev-4B: `./scripts/kev.sh jaredpalmer/kev-4b`. This Mac is an M3 Pro with 36 GB, so it should fit, but expect it to be several times slower.
+**Kev-4B** (`./scripts/kev.sh jaredpalmer/kev-4b`: a rank-16 LoRA on `Qwen/Qwen3.5-4B-Base`, MLX bf16, temperature 2.41; about 11 GB in the HF cache together with 0.8B)
+- **Faster than 0.8B on this Mac.** `kev:check` takes 664 ms for one decision (0.8B: 1,768 ms). Throughput is 1.1 calls/s, p50 6.0 s at 8 concurrent (0.8B: 0.5/s). 300 calls take ~260 s, still ~3× over a 90 s month. So the 0.8B per-call cost was mostly not model size: probably overhead or warm-up, worth profiling.
+- Ivy sample: nothing 78% / buy_home 19% / buy_car 3%.
+
+| Golden eval | Overall | Scenario score | Top in character | Avoided | Personality pass | Pairs |
+|---|---|---|---|---|---|---|
+| Kev-0.8B words | 53% | 62% | 50% | 67% | 19% | 39% |
+| Kev-0.8B focused | 55% | 70% | 63% | 73% | 44% | 33% |
+| **Kev-4B words** | **72%** | **82%** | **77%** | **93%** | **75%** | **56% (10/18)** |
+| Kev-4B focused | 70% | 80% | 77% | 80% | 75% | 56% |
+| *heuristic* | *77%* | | | | *98% score* | *56%* |
+
+- On 4B, `words` beats `focused` (better at staying out of avoid, 93% vs 80%). `focused` only helped the small model, so keep `words` as the default.
+- **Pairs: same count as the heuristic, different pairs.** Kev-4B reads persona text alone (spender +0.14), a stock-loss memory (-0.28), card debt (-0.07), town vacancies (-0.09), a layoff (+0.17), and every archetype swap (picker→stocks +0.50). The heuristic passes traits-only, rates and the business-failure memory, where Kev doesn't. **Both fail** crash, weak jobs, boom FOMO, raise memory and age, so Kev ignores market signals and age entirely.
+- **New failure mode: over-investing.** `invest_index` is the top pick for the spender, the unemployed sim (59% avoid), card debt, the new grad and the status lawyer. The 0.8B "nothing" prior is gone, and an index-fund prior has taken its place.
+
+**Next**
+1. Profile one request (state pass, question rows, PointerHead readout) before writing cross-request batching for `.kev/kev/mlx_model.py` `probs_batch`. mlx-lm 0.31.3 already supports left-padded batches, including the qwen3_5 DeltaNet layers.
+2. Close the remaining 5 points: add market and age context the model can act on (for example "a crash just hit: index -14%"), and target the over-investing cases. Then consider fine-tuning on golden-style labels with held-out scenarios.
+3. Experiment and a 24-month run with Kev-4B (it's now close to the heuristic, so the world-level comparison is worth the time).: `./scripts/kev.sh jaredpalmer/kev-4b`. This Mac is an M3 Pro with 36 GB, so it should fit, but expect it to be several times slower.
 4. Fine-tune on golden-style labels (keep held-out scenarios for honest grading).
 5. Hold the experiment and the 24-month Kev run until a variant beats the heuristic; at 0.5 calls/s they cost real time.
 
