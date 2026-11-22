@@ -21,6 +21,8 @@ case "${1:-}" in
   pull-run)
     mkdir -p runs/"$2"
     scp -q "$HOST:$REMOTE/runs/$2/metrics.json" runs/"$2"/ 2>/dev/null || echo "no metrics yet"
-    scp -q "$HOST:$REMOTE/runs/$2/train.log" runs/"$2"/ 2>/dev/null || true ;;
+    scp -q "$HOST:$REMOTE/runs/$2/train.log" runs/"$2"/ 2>/dev/null || true
+    scp -q "$HOST:$REMOTE/runs/$2/eval*" runs/"$2"/ 2>/dev/null || echo "no eval yet"
+    scp -q "$HOST:$REMOTE/runs/$2/pred-*" runs/"$2"/ 2>/dev/null || true ;;
   *) echo "usage: sync.sh push <set>... | push-run <run> | pull-run <run>"; exit 1 ;;
 esac

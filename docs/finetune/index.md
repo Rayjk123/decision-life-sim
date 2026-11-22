@@ -63,7 +63,7 @@ One change per run against a fixed baseline.
 
 ## Run queue (the research cadence works through this in order)
 
-Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<name>/config.json`), `sync.sh push-run`, train on the desktop, then **evaluate** with `eval_unsloth.py runs/<name> data/sets/heuristic-hard/test.jsonl data/sets/d3-hard/test.jsonl data/sets/claude-hard/test.jsonl`, `sync.sh pull-run`, record a notebook row, commit. **The GPU should never sit idle**: start the next run as soon as one finishes. Defaults unless stated: 0.8B, r 16, lr 2e-4, 2 epochs, 2,048 tokens.
+Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<name>/config.json`), `sync.sh push-run`, train on the desktop, then **evaluate** with `eval_unsloth.py runs/<name> data/sets/heuristic-hard/test.jsonl data/sets/d3-hard/test.jsonl data/sets/claude-hard/test.jsonl`, `sync.sh pull-run`, record a notebook row, commit. **Check run status from the desktop's `train.log` / `eval.log`, not the local `.done` files**: an SSH drop (exit 255) ends the local wait while training carries on. **The GPU should never sit idle**: start the next run as soon as one finishes. Defaults unless stated: 0.8B, r 16, lr 2e-4, 2 epochs, 2,048 tokens.
 
 | Run | Changes vs E01 | Question it answers | Status |
 |---|---|---|---|
