@@ -7,7 +7,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { rngFor } from '@dls/sim-core';
 
-const { values: a } = parseArgs({ options: { batch: { type: 'string', default: '0' }, size: { type: 'string', default: '40' }, list: { type: 'boolean', default: false } } });
+const { values: a } = parseArgs({ options: { batch: { type: 'string', default: '0' }, size: { type: 'string', default: '40' }, list: { type: 'boolean', default: false }, pool: { type: 'string', default: 'core' } } });
 const rows = readFileSync('research/finetune/data/states.jsonl', 'utf8').trim().split('\n').map((l) => JSON.parse(l));
 const QUOTA: Record<string, number> = { train: 1200, val: 200, test: 300 };
 
@@ -24,6 +24,15 @@ for (const [split, n] of Object.entries(QUOTA)) {
   const picked: any[] = [];
   for (let k = 0; picked.length < n && queues.some((q) => q.length); k++) { const q = queues[k % queues.length]; if (q.length) picked.push(q.shift()); }
   chosen.push(...picked);
+}
+// --pool extra: every train state NOT in the core set, in a stable keyed order (for labelling the whole train split
+// without renumbering the core batches: core train 0-29, val 30-34, test 35-42).
+if (a.pool === 'extra') {
+  const core = new Set(chosen.map((r) => r.id));
+  const extra = rows.filter((r) => r.split === 'train' && !core.has(r.id));
+  const rng = rngFor(7, 'claude-label-extra');
+  for (let i = extra.length - 1; i > 0; i--) { const j = Math.floor(rng.next() * (i + 1)); [extra[i], extra[j]] = [extra[j], extra[i]]; }
+  chosen.length = 0; chosen.push(...extra);
 }
 const size = Number(a.size);
 const batches = Math.ceil(chosen.length / size);
@@ -42,4 +51,4 @@ for (const r of chosen.slice(b * size, (b + 1) * size)) {
   console.log(`MOVES: ${moves}`);
   console.log(`ASK: main ${asks}`);
 }
-console.log(`\n(batch ${b} of ${batches - 1}; ${existsSync(`research/finetune/data/labels/claude/batch-${b}.jsonl`) ? 'ALREADY LABELLED' : 'not labelled yet'})`);
+console.log(`\n(${a.pool === 'extra' ? 'extra ' : ''}batch ${b} of ${batches - 1})`);
