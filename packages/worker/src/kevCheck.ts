@@ -6,6 +6,7 @@ import {
 import { kevDecider, percentile } from './kev.ts';
 
 const url = process.env.KEV_URL ?? 'http://127.0.0.1:8009';
+const model = process.env.KEV_MODEL ?? 'kev-latest';   // e.g. KEV_MODEL=d3 KEV_URL=http://<ollama-host>:11434
 try {
   const r = await fetch(`${url}/v1/models`, { signal: AbortSignal.timeout(5000) });
   console.log(`Kev server at ${url}: ${r.ok ? 'up' : `HTTP ${r.status}`}`);
@@ -17,7 +18,7 @@ try {
 // Grow a small world in heuristic mode so sims have real histories, then ask Kev about some of them.
 const world = createWorld(7, 120);
 for (let i = 0; i < 180; i++) await runMonth(world, heuristicDecider);
-const kev = kevDecider({ url, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
+const kev = kevDecider({ url, model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
 
 const candidates = world.sims.filter((s) => !inSchool(s, world.month) && legalMoves(s, world).length >= 3).slice(0, 24);
 if (!candidates.length) { console.error('No sims with real choices yet.'); process.exit(1); }

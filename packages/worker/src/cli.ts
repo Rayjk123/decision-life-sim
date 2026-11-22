@@ -17,7 +17,7 @@ const { values: a } = parseArgs({
     seed: { type: 'string', default: '1' },
     decider: { type: 'string', default: 'heuristic' },          // heuristic | kev
     'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
-    model: { type: 'string', default: 'kev-latest' },
+    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     policy: { type: 'string', default: 'events' },               // events | monthly
     style: { type: 'string', default: 'words' },                 // words | numbers | terse
     concurrency: { type: 'string', default: '8' },

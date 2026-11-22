@@ -14,7 +14,7 @@ const { values: a } = parseArgs({
     decider: { type: 'string', default: 'baselines' },  // baselines | heuristic | random | kev
     style: { type: 'string', default: 'words' },        // words | numbers | terse | all
     'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
-    model: { type: 'string', default: 'kev-latest' },
+    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'evals-results' },
     verbose: { type: 'boolean', default: false },
   },

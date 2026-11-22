@@ -17,6 +17,7 @@ const { values: a } = parseArgs({
     years: { type: 'string', default: '30' },
     pop: { type: 'string', default: '200' },
     'kev-url': { type: 'string', default: process.env.KEV_URL ?? 'http://127.0.0.1:8009' },
+    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'experiments' },
   },
 });
@@ -67,7 +68,7 @@ function outcomes(world: World) {
 
 const deciderFor = (name: string): Decider =>
   name === 'random' ? randomDecider : name === 'heuristic' ? heuristicDecider
-  : kevDecider({ url: a['kev-url']!, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
+  : kevDecider({ url: a['kev-url']!, model: a.model, apiKey: process.env.KEV_API_KEY, timeoutMs: 120_000 });
 
 const rows: Array<Record<string, unknown>> = [];
 const months = Number(a.years) * 12;

@@ -88,6 +88,25 @@ Newest session first. Each entry: what was done, the current state, and the next
 - **Pairs: same count as the heuristic, different pairs.** Kev-4B reads persona text alone (spender +0.14), a stock-loss memory (-0.28), card debt (-0.07), town vacancies (-0.09), a layoff (+0.17), and every archetype swap (picker→stocks +0.50). The heuristic passes traits-only, rates and the business-failure memory, where Kev doesn't. **Both fail** crash, weak jobs, boom FOMO, raise memory and age, so Kev ignores market signals and age entirely.
 - **New failure mode: over-investing.** `invest_index` is the top pick for the spender, the unemployed sim (59% avoid), card debt, the new grad and the status lawyer. The 0.8B "nothing" prior is gone, and an index-fund prior has taken its place.
 
+**d3 via Ollama (desktop GPU over the LAN)**
+- `d3` is vLLM Semantic Router's decision model in the Ollama library (`d3:2b/4b/9b/27b`, Apache 2.0). The 4B tag is 4.84B parameters (Qwen3.5-4B plus a 334M vision projector), Q8_0, 5.8 GB, with a 4,096-token context. It needs Ollama ≥ 0.40.9.
+- **Ollama serves the same `POST /v1/systemone` shape as Kev**, so `kev.ts` works unchanged: point `--kev-url`/`KEV_URL` at `http://<host>:11434` and set `--model d3` or `KEV_MODEL=d3`. The response matches (choice probabilities keyed by move id, score probabilities, `noul`, `usage.input_tokens`) except there's no `latency_ms`, and the client falls back to wall-clock time.
+- Added `KEV_MODEL` (and `--model` on the experiment) so `kev:check`, eval, experiment and sim can all target another model.
+- **Speed:** the first call took 40 s (model load); warm calls take ~40 ms. `kev:check` gives 8.9 calls/s at 8 concurrent, p50 0.9 s, **300 calls ≈ 34 s, inside the 90 s month.** That's the first setup that fits the 1,000-sim target.
+
+| Golden eval | Overall | Scenario score | Top in character | Avoided | Personality pass | Pairs | Suite time |
+|---|---|---|---|---|---|---|---|
+| **d3 words** | **77%** | **88%** | **87%** | 93% | **94%** | **61% (11/18)** | 6 s |
+| d3 focused | 72% | 90% | 90% | 93% | 94% | 44% | 5 s |
+| Kev-4B words | 72% | 82% | 77% | 93% | 75% | 56% | 55 s |
+| *heuristic* | *77%* | | | | *98% score* | *56%* | |
+
+- d3 ties the heuristic overall and is **the first model to beat it on pairs**. `words` is again the best style.
+- **Reads strongly:** archetype and persona text (picker→stocks +0.90, persona-only spender +0.65), all three memories (stock loss -0.18, business failure -0.11, raise +0.04), card debt (-0.26), age (+0.04).
+- **Ignores:** traits alone, rates, crash, weak jobs, boom and vacancies. Every model so far misses market signals; that's now the clearest gap in the state or the suite.
+- **Situation blind spots:** the unemployed sim still invests (90% avoid; laid-off pair -0.01), and an investor buys another rental while rentals sit empty (93% avoid). Personality overrides red-flag situations.
+- **Very sharp distributions** (often > 0.9 on one move, e.g. 0.99 in a probe). With discipline-scaled sampling this means less variety than Kev; check archetype mixes in the experiment.
+
 **Next**
 1. Profile one request (state pass, question rows, PointerHead readout) before writing cross-request batching for `.kev/kev/mlx_model.py` `probs_batch`. mlx-lm 0.31.3 already supports left-padded batches, including the qwen3_5 DeltaNet layers.
 2. Close the remaining 5 points: add market and age context the model can act on (for example "a crash just hit: index -14%"), and target the over-investing cases. Then consider fine-tuning on golden-style labels with held-out scenarios.
