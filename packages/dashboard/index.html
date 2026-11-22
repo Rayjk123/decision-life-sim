@@ -40,6 +40,13 @@ svg text{font-size:11px;fill:var(--mute)}
 #person.open{display:block}
 .close{float:right}
 .empty{color:var(--mute);padding:24px 0;text-align:center}
+#intro{grid-column:1/-1;background:#fffdf7;border-color:#e9dfc4;display:none}
+#intro.show{display:block}
+#intro h2{font-size:16px;margin-bottom:6px}
+#intro p{margin:0 0 10px;max-width:900px}
+#intro ol{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px 20px;margin:0 0 12px;padding-left:18px}
+#help{width:34px;padding:0;border-radius:17px;background:#2a2d3a;color:#f4f1ea;border-color:#3a3e4d}
+header .kpi span[title]{border-bottom:1px dotted #6b6f7d;cursor:help}
 </style>
 </head>
 <body>
@@ -47,8 +54,19 @@ svg text{font-size:11px;fill:var(--mute)}
   <h1>decision-life-sim</h1>
   <select id="world" aria-label="World"></select>
   <span class="kpi" id="kpis"></span>
+  <button id="help" aria-label="What am I looking at?" title="What am I looking at?">?</button>
 </header>
 <main>
+  <section class="card" id="intro" aria-label="About this town">
+    <h2>A town that runs on decisions</h2>
+    <p>Every sim here is a person with a job, a personality and money to manage. Each month some of them face a money decision: invest, save, buy a home or a rental, start a business, splurge, or retire. A decision model reads their situation and gives every legal option odds; then a seeded dice roll picks one, so the same town always replays the same way.</p>
+    <ol class="small">
+      <li><b>Decision explorer</b>: this month's decisions. Click one to see the odds, the dice roll and what the model saw.</li>
+      <li><b>Leaderboard</b>: click any sim to read their life story, money in and out, and what they own.</li>
+      <li><b>Chart</b>: how each personality type builds wealth over the years, in today's dollars.</li>
+    </ol>
+    <button id="gotit">Got it</button>
+  </section>
   <div style="display:flex;flex-direction:column;gap:16px">
     <section class="card"><h2>Median net worth by archetype <small>today's dollars, yearly</small></h2><div id="chart" style="height:260px"></div><div class="legend" id="legend"></div></section>
     <section class="card"><h2>Leaderboard <small id="lbnote"></small></h2><table id="leaders"></table></section>
@@ -97,7 +115,14 @@ async function openWorld(name) {
   $('month').max = latest.month; $('month').value = latest.month;
   const m = await get(`months/${latest.month}.json`);
   const e = m.economy ?? {};
-  $('kpis').innerHTML = `<b>${esc(m.label)}</b> · economy <b>${esc(m.market.regime)}</b> · index <b>${m.market.index}</b> · mortgage <b>${(m.market.mortgageRate*100).toFixed(1)}%</b> · pop <b>${latest.population}</b> · businesses <b>${e.businessCount ?? '-'}</b> · empty rentals <b>${e.vacantUnits ?? 0}/${e.rentalUnits ?? 0}</b>`;
+  // Plain-language header: stocks over the last year rather than a raw index level
+  const yearAgo = latest.month > 12 ? await get(`months/${latest.month - 12}.json`).catch(() => null) : null;
+  const yr = yearAgo?.market?.index ? (m.market.index / yearAgo.market.index - 1) * 100 : null;
+  const regime = m.market.regime[0].toUpperCase() + m.market.regime.slice(1);
+  $('kpis').innerHTML = `<b>${esc(m.label)}</b> · <span title="The state of the economy: expansion, boom, recession or crash"><b>${esc(regime)}</b></span>`
+    + (yr === null ? '' : ` · <span title="How the town's stock market index moved over the last 12 months, after inflation">Stocks <b>${yr >= 0 ? '+' : ''}${yr.toFixed(0)}%</b> this year</span>`)
+    + ` · <span title="The rate on a new 30-year mortgage">Mortgages <b>${(m.market.mortgageRate*100).toFixed(1)}%</b></span> · <b>${latest.population}</b> residents · <b>${e.businessCount ?? 0}</b> local businesses`
+    + ` · <span title="Rentals owned by sims that have no tenant right now"><b>${e.vacantUnits ?? 0}</b> of ${e.rentalUnits ?? 0} rentals empty</span>`;
   drawChart(); drawLeaders(); loadMonth(latest.month);
 }
 
@@ -204,6 +229,14 @@ addEventListener('keydown', (e) => { if (e.key === 'Escape') $('person').classLi
 addEventListener('resize', () => world && drawChart());
 loadWorlds();
 }
+
+// First-visit intro: shown until dismissed (remembered per browser when storage is available); ? reopens it
+const INTRO_KEY = 'dls-intro-dismissed';
+const remembered = () => { try { return localStorage.getItem(INTRO_KEY) === '1'; } catch { return false; } };
+const showIntro = (on) => document.getElementById('intro').classList.toggle('show', on);
+showIntro(!remembered());
+document.getElementById('gotit').onclick = () => { showIntro(false); try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* private mode */ } };
+document.getElementById('help').onclick = () => { showIntro(true); document.getElementById('intro').scrollIntoView({ behavior: 'smooth', block: 'start' }); };
 </script>
 </body>
 </html>
