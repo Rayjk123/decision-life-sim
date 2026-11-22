@@ -1,0 +1,1329 @@
+{
+  "author": "Claude Opus 5.5, 2026-11-21",
+  "notes": "Golden expectations for 'act true to this person's personality and situation'. Base A: a 34-year-old nurse renting, $60k cash, $10k invested, no debt, no car. Base B: a 50-year-old engineer who owns a home, $150k cash, $20k car loan, $200k invested. Dollar amounts are in today's dollars.",
+  "scenarios": [
+    {
+      "id": "A-saver",
+      "category": "personality",
+      "title": "Saver with $60k and nothing pressing",
+      "sim": {
+        "name": "Ana Silva",
+        "archetype": "saver",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index",
+          "trade_stocks",
+          "buy_home",
+          "buy_car"
+        ],
+        "best": [
+          "nothing",
+          "invest_index",
+          "buy_home"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car",
+          "start_*",
+          "buy_home_big",
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "trade_stocks"
+          },
+          {
+            "more": "buy_home",
+            "than": "buy_home_big"
+          }
+        ]
+      },
+      "rationale": "A careful saver keeps cash or makes the safe move (index fund, a modest home). Individual stocks, a bigger house, a new car or a side business are out of character."
+    },
+    {
+      "id": "A-index",
+      "category": "personality",
+      "title": "Index investor with $60k",
+      "sim": {
+        "name": "Sam Lind",
+        "archetype": "index",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "trade_stocks"
+        ],
+        "best": [
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "trade_stocks"
+          },
+          {
+            "more": "invest_index",
+            "than": "nothing"
+          }
+        ]
+      },
+      "rationale": "The index investor automates investing and ignores the news: spare cash goes into the index fund, not single stocks."
+    },
+    {
+      "id": "A-picker",
+      "category": "personality",
+      "title": "Stock picker with $60k",
+      "sim": {
+        "name": "Ben Kim",
+        "archetype": "picker",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "trade_stocks"
+        ],
+        "best": [
+          "trade_stocks"
+        ],
+        "avoid": [
+          "nothing"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": "trade_stocks",
+            "than": "invest_index"
+          }
+        ]
+      },
+      "rationale": "A confident stock picker who likes to trade puts spare cash into individual stocks."
+    },
+    {
+      "id": "A-re",
+      "category": "personality",
+      "title": "Real estate investor with $60k",
+      "sim": {
+        "name": "Rosa Ruiz",
+        "archetype": "re",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "buy_rental",
+          "buy_home",
+          "trade_stocks"
+        ],
+        "best": [
+          "buy_rental",
+          "buy_home",
+          "buy_home_big"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "buy_rental",
+            "than": "trade_stocks"
+          },
+          {
+            "more": [
+              "buy_rental",
+              "buy_home*"
+            ],
+            "than": [
+              "invest_index",
+              "trade_stocks"
+            ]
+          }
+        ]
+      },
+      "rationale": "Thinks in properties, not stocks: a first rental (or a home of her own as the first property) is the in-character move."
+    },
+    {
+      "id": "A-biz",
+      "category": "personality",
+      "title": "Entrepreneur with $60k",
+      "sim": {
+        "name": "Omar Haddad",
+        "archetype": "biz",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "start_*",
+          "invest_index"
+        ],
+        "best": [
+          "start_*"
+        ],
+        "avoid": [
+          "nothing"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": "start_*",
+            "than": "invest_index"
+          },
+          {
+            "more": "start_*",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "Wants to own a business and takes swings: starting one is the in-character use of $60k."
+    },
+    {
+      "id": "A-spender",
+      "category": "personality",
+      "title": "Spender with $60k and no car",
+      "sim": {
+        "name": "Jules Costa",
+        "archetype": "spender",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "buy_car",
+          "invest_index"
+        ],
+        "best": [
+          "buy_car",
+          "buy_home_big",
+          "nothing"
+        ],
+        "avoid": [
+          "invest_index",
+          "pay_debt"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "buy_car",
+            "than": "invest_index"
+          }
+        ]
+      },
+      "rationale": "Lives for today and loves new cars: the car (or the bigger house) beats investing."
+    },
+    {
+      "id": "A-status",
+      "category": "personality",
+      "title": "Status seeker with $60k, renting",
+      "sim": {
+        "name": "Lena Voss",
+        "archetype": "status",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "buy_home_big",
+          "buy_home",
+          "buy_car"
+        ],
+        "best": [
+          "buy_home_big",
+          "buy_car"
+        ],
+        "avoid": [
+          "nothing",
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "buy_home_big",
+            "than": "buy_home"
+          },
+          {
+            "more": [
+              "buy_home_big",
+              "buy_car"
+            ],
+            "than": [
+              "invest_index",
+              "trade_stocks"
+            ]
+          }
+        ]
+      },
+      "rationale": "Wants the big house in the nice neighborhood and the nice car; investing is a side note."
+    },
+    {
+      "id": "A-fire",
+      "category": "personality",
+      "title": "Early retiree with $60k",
+      "sim": {
+        "name": "Kai Sato",
+        "archetype": "fire",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "buy_car"
+        ],
+        "best": [
+          "invest_index"
+        ],
+        "avoid": [
+          "buy_car",
+          "buy_home_big",
+          "trade_stocks",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "buy_car"
+          },
+          {
+            "more": "invest_index",
+            "than": "nothing"
+          }
+        ]
+      },
+      "rationale": "Extremely frugal and investing most income to retire early: everything goes to the index fund."
+    },
+    {
+      "id": "A-balanced",
+      "category": "personality",
+      "title": "Balanced planner with $60k",
+      "sim": {
+        "name": "Nora Brooks",
+        "archetype": "balanced",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "buy_home"
+        ],
+        "best": [
+          "invest_index",
+          "buy_home",
+          "nothing"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": [
+              "invest_index",
+              "buy_home"
+            ],
+            "than": [
+              "trade_stocks",
+              "start_*"
+            ]
+          }
+        ]
+      },
+      "rationale": "An ordinary planner at 34 with $60k: a first home or steady investing; speculative moves are unlikely."
+    },
+    {
+      "id": "B-saver",
+      "category": "personality",
+      "title": "50-year-old saver with a car loan",
+      "sim": {
+        "name": "Ruth Novak",
+        "archetype": "saver",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "pay_debt",
+          "invest_index",
+          "buy_rental",
+          "trade_stocks"
+        ],
+        "best": [
+          "pay_debt",
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*",
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "pay_debt",
+            "than": "trade_stocks"
+          },
+          {
+            "more": "pay_debt",
+            "than": "buy_rental"
+          }
+        ]
+      },
+      "rationale": "Hates debt: paying off the car loan early is the saver's move; speculation and new leverage are out."
+    },
+    {
+      "id": "B-re",
+      "category": "personality",
+      "title": "50-year-old real estate investor with $150k cash",
+      "sim": {
+        "name": "Diego Reyes",
+        "archetype": "re",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "buy_rental",
+          "invest_index"
+        ],
+        "best": [
+          "buy_rental"
+        ],
+        "avoid": [
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "buy_rental",
+            "than": "invest_index"
+          },
+          {
+            "more": "buy_rental",
+            "than": "pay_debt"
+          }
+        ]
+      },
+      "rationale": "Plenty of cash and comfortable with leverage: another rental is exactly what this person does."
+    },
+    {
+      "id": "B-picker",
+      "category": "personality",
+      "title": "50-year-old stock picker with $150k cash",
+      "sim": {
+        "name": "Marco Berg",
+        "archetype": "picker",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "trade_stocks",
+          "invest_index"
+        ],
+        "best": [
+          "trade_stocks"
+        ],
+        "avoid": [
+          "pay_debt"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "trade_stocks",
+            "than": "invest_index"
+          }
+        ]
+      },
+      "rationale": "Likes to trade and follows momentum: individual stocks."
+    },
+    {
+      "id": "B-fire",
+      "category": "personality",
+      "title": "50-year-old early retiree with $150k cash",
+      "sim": {
+        "name": "Ivy Shah",
+        "archetype": "fire",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "pay_debt"
+        ],
+        "best": [
+          "invest_index",
+          "pay_debt"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*",
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "Invests most of everything and keeps it simple; clearing the car loan also fits."
+    },
+    {
+      "id": "B-biz",
+      "category": "personality",
+      "title": "50-year-old entrepreneur with $150k cash",
+      "sim": {
+        "name": "Felix Osei",
+        "archetype": "biz",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "start_*",
+          "invest_index"
+        ],
+        "best": [
+          "start_*"
+        ],
+        "avoid": [],
+        "constraints": [
+          {
+            "more": "start_*",
+            "than": "invest_index"
+          },
+          {
+            "more": "start_*",
+            "than": "pay_debt"
+          }
+        ]
+      },
+      "rationale": "Has the money and the appetite: starts a business."
+    },
+    {
+      "id": "B-index",
+      "category": "personality",
+      "title": "50-year-old index investor with $150k cash",
+      "sim": {
+        "name": "Grace Walsh",
+        "archetype": "index",
+        "career": "engineer",
+        "age": 50,
+        "cash": 150000,
+        "index": 200000,
+        "home": {
+          "value": 400000,
+          "mortgage": 180000
+        },
+        "car": {
+          "value": 24000,
+          "ageMonths": 20,
+          "loan": 20000
+        }
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "trade_stocks"
+        ],
+        "best": [
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "Spare cash goes into the index fund, as always."
+    },
+    {
+      "id": "S-card-debt",
+      "category": "situation",
+      "title": "Balanced planner carrying $12k of 24% card debt",
+      "sim": {
+        "name": "Owen Park",
+        "archetype": "balanced",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000,
+        "debts": [
+          {
+            "kind": "card",
+            "balance": 12000,
+            "rate": 0.24
+          }
+        ]
+      },
+      "expect": {
+        "options": [
+          "pay_debt",
+          "invest_index"
+        ],
+        "best": [
+          "pay_debt"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car",
+          "buy_home_big"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "pay_debt",
+            "than": "invest_index"
+          },
+          {
+            "more": "pay_debt",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "24% card debt with $60k in cash: an ordinary sensible person pays it off."
+    },
+    {
+      "id": "S-crash-balanced",
+      "category": "situation",
+      "title": "Balanced planner during a crash",
+      "sim": {
+        "name": "Iris Moreau",
+        "archetype": "balanced",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "market": {
+        "regime": "crash",
+        "lastIndexReturn": -0.14,
+        "lastHomeReturn": -0.015,
+        "mortgageRate": 0.05,
+        "jobsSignal": "weak"
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index",
+          "buy_car"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "buy_car",
+          "buy_home_big",
+          "start_*",
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": "nothing",
+            "than": "buy_car"
+          },
+          {
+            "more": "nothing",
+            "than": "start_*"
+          }
+        ]
+      },
+      "rationale": "Markets down 14% in a month, jobs weak: an ordinary person holds on to cash or keeps investing steadily, and does not start a business or buy a car."
+    },
+    {
+      "id": "S-crash-index",
+      "category": "situation",
+      "title": "Index investor during a crash",
+      "sim": {
+        "name": "Hugo Feld",
+        "archetype": "index",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000
+      },
+      "market": {
+        "regime": "crash",
+        "lastIndexReturn": -0.14,
+        "lastHomeReturn": -0.015,
+        "mortgageRate": 0.05,
+        "jobsSignal": "weak"
+      },
+      "expect": {
+        "options": [
+          "invest_index",
+          "nothing"
+        ],
+        "best": [
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "nothing"
+          }
+        ]
+      },
+      "rationale": "Ignores the news and plays the long game: a crash is just a cheaper month to keep buying the index."
+    },
+    {
+      "id": "S-unemployed",
+      "category": "situation",
+      "title": "Balanced planner, laid off four months ago",
+      "sim": {
+        "name": "Tess Quinn",
+        "archetype": "balanced",
+        "career": "sales",
+        "age": 38,
+        "employed": false,
+        "monthsUnemployed": 4,
+        "cash": 30000,
+        "index": 15000
+      },
+      "market": {
+        "jobsSignal": "weak",
+        "regime": "recession",
+        "lastIndexReturn": -0.02
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index"
+        ],
+        "best": [
+          "nothing"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "invest_index",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": "nothing",
+            "than": "invest_index"
+          },
+          {
+            "more": "nothing",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "No paycheck for four months in a recession: hold the cash."
+    },
+    {
+      "id": "S-raise-renter",
+      "category": "situation",
+      "title": "29-year-old renter who just got a big raise",
+      "sim": {
+        "name": "Nico Diaz",
+        "archetype": "balanced",
+        "career": "swe",
+        "age": 29,
+        "salary": 140000,
+        "cash": 70000,
+        "index": 25000,
+        "memory": [
+          "Got a raise to $140k"
+        ]
+      },
+      "expect": {
+        "options": [
+          "buy_home",
+          "invest_index"
+        ],
+        "best": [
+          "buy_home",
+          "buy_home_big",
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": [
+              "buy_home*",
+              "invest_index"
+            ],
+            "than": [
+              "trade_stocks",
+              "start_*",
+              "buy_car"
+            ]
+          }
+        ]
+      },
+      "rationale": "A raise and $70k saved while renting: buying a first home or investing are the typical moves."
+    },
+    {
+      "id": "S-rentals-empty",
+      "category": "situation",
+      "title": "Real estate investor with two of three rentals empty",
+      "sim": {
+        "name": "Malik Mensah",
+        "archetype": "re",
+        "career": "engineer",
+        "age": 45,
+        "cash": 90000,
+        "index": 30000,
+        "home": {
+          "value": 350000,
+          "mortgage": 200000
+        },
+        "car": {
+          "value": 20000,
+          "ageMonths": 30
+        },
+        "rentals": [
+          {
+            "value": 180000,
+            "mortgage": 130000,
+            "rented": true
+          },
+          {
+            "value": 180000,
+            "mortgage": 135000,
+            "rented": false
+          },
+          {
+            "value": 175000,
+            "mortgage": 140000,
+            "rented": false
+          }
+        ],
+        "memory": [
+          "A rental went vacant",
+          "A rental went vacant",
+          "Cut the rent after 3 empty months"
+        ]
+      },
+      "economy": {
+        "rentalUnits": 40,
+        "vacantUnits": 18
+      },
+      "expect": {
+        "options": [
+          "buy_rental",
+          "sell_rental",
+          "nothing"
+        ],
+        "best": [
+          "nothing",
+          "sell_rental",
+          "pay_debt"
+        ],
+        "avoid": [
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.35,
+        "constraints": [
+          {
+            "more": [
+              "nothing",
+              "sell_rental"
+            ],
+            "than": "buy_rental"
+          }
+        ]
+      },
+      "rationale": "Even a real estate investor pauses when two of three units sit empty and nearly half the town's rentals are vacant."
+    },
+    {
+      "id": "M-stock-loss",
+      "category": "memory",
+      "title": "Balanced planner who just lost $20k on stocks",
+      "sim": {
+        "name": "June Ito",
+        "archetype": "balanced",
+        "career": "nurse",
+        "age": 34,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000,
+        "memory": [
+          "Lost $20k on individual stocks",
+          "Sold the rest of the stocks at a loss"
+        ]
+      },
+      "expect": {
+        "options": [
+          "trade_stocks",
+          "invest_index"
+        ],
+        "best": [
+          "nothing",
+          "invest_index",
+          "buy_home"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "invest_index",
+            "than": "trade_stocks"
+          },
+          {
+            "more": "nothing",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "Burned by individual stocks last month: an ordinary person stays away from them for a while."
+    },
+    {
+      "id": "M-business-failed",
+      "category": "memory",
+      "title": "Balanced planner whose coffee shop just failed",
+      "sim": {
+        "name": "Cole Duarte",
+        "archetype": "balanced",
+        "career": "nurse",
+        "age": 38,
+        "salary": 85000,
+        "cash": 60000,
+        "index": 10000,
+        "memory": [
+          "The coffee shop failed",
+          "Lost $40k in the coffee shop"
+        ]
+      },
+      "expect": {
+        "options": [
+          "start_*",
+          "nothing"
+        ],
+        "best": [
+          "nothing",
+          "invest_index",
+          "buy_home"
+        ],
+        "avoid": [
+          "start_*",
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.25,
+        "constraints": [
+          {
+            "more": "nothing",
+            "than": "start_*"
+          }
+        ]
+      },
+      "rationale": "Right after a business failure, an ordinary person does not start another one."
+    },
+    {
+      "id": "M-laid-off-before",
+      "category": "memory",
+      "title": "Saver who was laid off last year",
+      "sim": {
+        "name": "Elsa Lind",
+        "archetype": "saver",
+        "career": "sales",
+        "age": 36,
+        "cash": 55000,
+        "index": 10000,
+        "memory": [
+          "Found a new job after a layoff",
+          "Was laid off"
+        ]
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "buy_car"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "buy_car",
+          "start_*",
+          "trade_stocks",
+          "buy_home_big"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "nothing",
+            "than": "buy_car"
+          }
+        ]
+      },
+      "rationale": "A saver who just lived through a layoff rebuilds the cushion first."
+    },
+    {
+      "id": "L-new-grad",
+      "category": "lifecycle",
+      "title": "23-year-old saver with student loans",
+      "sim": {
+        "name": "Ada Romero",
+        "archetype": "saver",
+        "career": "teacher",
+        "age": 23,
+        "salary": 45000,
+        "cash": 30000,
+        "debts": [
+          {
+            "kind": "student",
+            "balance": 28000,
+            "rate": 0.055
+          }
+        ]
+      },
+      "expect": {
+        "options": [
+          "pay_debt",
+          "nothing"
+        ],
+        "best": [
+          "pay_debt",
+          "nothing"
+        ],
+        "avoid": [
+          "buy_car",
+          "start_*",
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "pay_debt",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "A saver with fresh student loans pays them down early."
+    },
+    {
+      "id": "L-fire-58",
+      "category": "lifecycle",
+      "title": "58-year-old early retiree with $2.5M invested",
+      "sim": {
+        "name": "Raj Patel",
+        "archetype": "fire",
+        "career": "engineer",
+        "age": 58,
+        "cash": 80000,
+        "index": 2500000,
+        "home": {
+          "value": 450000,
+          "mortgage": 0
+        },
+        "car": {
+          "value": 15000,
+          "ageMonths": 40
+        }
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "start_*",
+          "trade_stocks",
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.25,
+        "retire": {
+          "min": 0.5
+        }
+      },
+      "rationale": "The whole plan was to stop working early, and $2.5M covers it many times over: retire."
+    },
+    {
+      "id": "L-index-67",
+      "category": "lifecycle",
+      "title": "67-year-old index investor with $1.2M",
+      "sim": {
+        "name": "Vera Khan",
+        "archetype": "index",
+        "career": "accountant",
+        "age": 67,
+        "cash": 40000,
+        "index": 1200000,
+        "home": {
+          "value": 380000,
+          "mortgage": 0
+        },
+        "car": {
+          "value": 15000,
+          "ageMonths": 40
+        }
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*"
+        ],
+        "maxAvoidMass": 0.25,
+        "retire": {
+          "min": 0.4
+        }
+      },
+      "rationale": "At 67 with $1.2M and a paid-off house, retirement is the natural step."
+    },
+    {
+      "id": "L-teacher-62",
+      "category": "lifecycle",
+      "title": "62-year-old saver teacher with a pension",
+      "sim": {
+        "name": "Clara Haddad",
+        "archetype": "saver",
+        "career": "teacher",
+        "age": 62,
+        "cash": 90000,
+        "index": 600000,
+        "home": {
+          "value": 300000,
+          "mortgage": 0
+        },
+        "car": {
+          "value": 12000,
+          "ageMonths": 50
+        }
+      },
+      "expect": {
+        "options": [
+          "nothing"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "start_*",
+          "buy_rental"
+        ],
+        "maxAvoidMass": 0.2,
+        "retire": {
+          "min": 0.35
+        }
+      },
+      "rationale": "A pension plus $600k and no mortgage: a careful saver can retire at 62."
+    },
+    {
+      "id": "L-retired-72",
+      "category": "lifecycle",
+      "title": "72-year-old retired saver",
+      "sim": {
+        "name": "Ruth Okafor",
+        "archetype": "saver",
+        "career": "nurse",
+        "age": 72,
+        "retired": true,
+        "cash": 60000,
+        "index": 800000,
+        "home": {
+          "value": 320000,
+          "mortgage": 0
+        },
+        "car": {
+          "value": 6000,
+          "ageMonths": 100
+        }
+      },
+      "expect": {
+        "options": [
+          "nothing",
+          "invest_index"
+        ],
+        "best": [
+          "nothing",
+          "invest_index"
+        ],
+        "avoid": [
+          "trade_stocks",
+          "buy_car"
+        ],
+        "maxAvoidMass": 0.2,
+        "constraints": [
+          {
+            "more": "nothing",
+            "than": "trade_stocks"
+          }
+        ]
+      },
+      "rationale": "Retired and careful: little changes month to month."
+    },
+    {
+      "id": "P-status-lawyer",
+      "category": "personality",
+      "title": "Status-seeking lawyer renting with $150k",
+      "sim": {
+        "name": "Lucia Silva",
+        "archetype": "status",
+        "career": "lawyer",
+        "age": 36,
+        "salary": 190000,
+        "cash": 150000,
+        "index": 20000
+      },
+      "expect": {
+        "options": [
+          "buy_home"
+        ],
+        "best": [
+          "buy_home"
+        ],
+        "avoid": [
+          "nothing",
+          "trade_stocks"
+        ],
+        "maxAvoidMass": 0.3,
+        "constraints": [
+          {
+            "more": "buy_home",
+            "than": "invest_index"
+          },
+          {
+            "more": "buy_home",
+            "than": "buy_rental"
+          }
+        ]
+      },
+      "rationale": "High income, lots of cash and status-driven: the luxury home (her natural tier at a $190k salary)."
+    }
+  ]
+}

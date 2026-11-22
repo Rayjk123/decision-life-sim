@@ -1,0 +1,198 @@
+<p align="center">
+  <img src="docs/assets/icon.svg" width="96" height="96" alt="decision-life-sim icon: a pixel house with a gold coin">
+</p>
+
+<h1 align="center">decision-life-sim</h1>
+
+<p align="center">
+  A town of sims living out their financial lives month by month, with every money decision made by a small open-weights model running on your own machine.
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/node-%3E%3D20-339933?logo=node.js&logoColor=white" alt="Node 20+">
+  <img src="https://img.shields.io/badge/TypeScript-5.7-3178C6?logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/tests-37%20passing-brightgreen" alt="37 tests passing">
+  <img src="https://img.shields.io/badge/runtime%20deps-0-lightgrey" alt="Zero runtime dependencies">
+</p>
+
+---
+
+## Table of contents
+
+- [What is it?](#what-is-it)
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Run with Kev](#run-with-kev-macos-apple-silicon)
+- [How a month works](#how-a-month-works)
+- [Evaluating the decision model](#evaluating-the-decision-model)
+- [Interesting learnings](#interesting-learnings)
+- [CLI options](#cli-options)
+- [Output](#output)
+- [Project layout](#project-layout)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
+
+## What is it?
+
+Sims start out at 18 with a career, a personality and some student debt. Each month they get paid, pay rent or a mortgage, pick up repair bills, get raises or lose their jobs, and ride the markets. Every so often each sim decides what to do with their money: invest, pay down debt, buy a home, a rental or a car, start a business, or retire.
+
+Three parts split up the work:
+
+1. **The rules engine** (`packages/sim-core`) works out which moves are legal and what each one really costs. It also keeps the books: every cent that moves goes through a ledger.
+2. **A decision model, Kev**, reads the sim's situation in plain language and assigns a probability to each legal move, according to what *this person* would do.
+3. **A seeded dice roll** picks a move from those probabilities, so the same seed always replays the same world.
+
+Kev never decides what is legal, so a sim can't buy something it can't afford. A hand-tuned heuristic and a random decider run behind the same interface, which gives every model a baseline to beat.
+
+The aim is a tech demo where you can see what the model weighed. Every decision card shows the probability spread, the dice roll, the exact state the model saw, and what the heuristic would have picked.
+
+## Features
+
+- **Deterministic world.** Every random draw is keyed by `(seed, purpose, month, sim)`, so the order sims are processed in never changes the results. Resuming from a snapshot gives byte-identical output to a straight run.
+- **Audited money.** All amounts are integer cents in today's dollars. A test runs 20 years and proves that no cash appears or vanishes.
+- **Connected economy.** Renters live in rentals owned by other sims, business profits come from residents' spending (shared out with crowding by business type), and estates pass to newcomers.
+- **Realistic money mechanics.** 21 careers and 9 personality archetypes, plus market regimes (expansion, boom, recession, crash), 30-year mortgages with debt-to-income limits, credit cards, past-due bills, bankruptcy, 25 business types, and early retirement.
+- **Golden eval suite.** 30 scenarios and 18 counterfactual pairs, graded automatically, check whether a model acts in character *and* reads each part of the state.
+- **Zero-dependency dashboard.** Leaderboard, archetype chart, a decision explorer with filters for close calls, surprises and disagreements with the heuristic, plus each sim's life story.
+- **Laptop-friendly.** 50 years × 200 sims takes about 10 s in heuristic mode. Kev answers are cached on disk, so replays never call the model again.
+
+## Quick start
+
+Requires **Node 20+**. No model is needed for the heuristic mode.
+
+```bash
+git clone <this repo> && cd decision-life-sim
+npm install
+npm test                                  # 37 tests
+
+npm run sim -- --months 600 --pop 200     # 50 years, 200 sims, about 10 s
+npm run dashboard                         # http://localhost:5173
+```
+
+```bash
+npm run eval -- --verbose                 # grade random + heuristic on the golden suite
+npm run experiment                        # whole-world comparison across seeds
+```
+
+## Run with Kev (macOS, Apple Silicon)
+
+Also requires git and [uv](https://docs.astral.sh/uv/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
+
+**Terminal 1:** start the Kev server. The first run clones Kev into `.kev/`, installs its Python environment and downloads the weights. On Apple Silicon it runs on the GPU through MLX.
+
+```bash
+./scripts/kev.sh                          # Kev-0.8B on http://127.0.0.1:8009
+./scripts/kev.sh jaredpalmer/kev-4b       # bigger model, needs about 32 GB of RAM
+```
+
+**Terminal 2:**
+
+```bash
+npm run kev:check                                        # one real decision vs the heuristic, plus throughput
+npm run eval -- --decider kev --style all --verbose      # Kev on the golden suite, three state wordings
+npm run experiment -- --deciders heuristic,kev --seeds 1 --years 10
+npm run sim -- --decider kev --months 24 --pop 200       # two years with Kev (add --resume to continue)
+```
+
+## How a month works
+
+```
+market ─▶ arrivals ─▶ upkeep ─▶ deaths ─▶ decisions ─▶ publish
+  │          │           │                    │
+  │          │           │                    └─ legal moves → state → Kev → seeded pick → re-check → apply
+  │          │           └─ pay, rent/mortgage, loans, rentals, businesses, repairs, shortfalls → card → bankruptcy
+  │          └─ the town fills over 10 years; afterwards each death brings an 18-year-old newcomer
+  └─ hidden regime → index return, home prices, rates, a noisy jobs report (only public signals reach the model)
+```
+
+Not every sim decides every month. Decisions come from life events plus staggered quarterly reviews, which works out to about a third of the town each month.
+
+## Evaluating the decision model
+
+Claude Opus wrote the golden dataset in `packages/evals/golden/` as a reference for "acting true to this person's personality and situation". Each entry includes a written rationale.
+
+| | |
+|---|---|
+| **30 scenarios** | personality (16), situation (6), memory (3), lifecycle (5). Each lists in-character picks, out-of-character picks with a probability budget, and ordering constraints. |
+| **18 counterfactual pairs** | Each pair changes one thing (archetype, persona text, a trait, rates, a crash, a memory, debt, unemployment, vacancies, age) and requires the probability to move the right way by at least 0.03. |
+| **Score** | 60% scenario score + 40% pair pass rate. A scenario passes at 0.7. |
+
+**Baselines**
+
+| Decider | Overall | Counterfactual pairs | World separation |
+|---|---|---|---|
+| Random | 15% | n/a | 8% |
+| Heuristic | 77% | 56% | 32% |
+| Kev-0.8B | *pending first real run* | | |
+
+"World separation" is the average distance between archetypes' decision mixes over 30-year runs (3 seeds), so it measures whether personalities actually behave differently.
+
+## Interesting learnings
+
+- **A baseline can grade well because its author also wrote the test.** The heuristic scores 98% on personality scenarios, mostly because its weights and the golden labels come from the same author. Counterfactual pairs expose it: at 56%, they show that it ignores memory, debt and most market signals. Pairs are the honest test of whether a model *reads* the state.
+- **Index investors beat stock pickers, as they do in real life.** Each picker's portfolio is modelled as 1.15 × the index minus fees plus personal noise. Over 50 years, the median index investor ends with about $2.7M and the median stock picker with about $963k.
+- **Inheritance compounds.** Estates pass to newcomers, so the richest family lines keep getting richer. Savers and index investors reach $2–3M medians on some seeds. An estate tax or split estates is on the tuning list.
+- **Bankruptcy clusters by personality.** It runs at about 0.6% of sims a year, concentrated among business owners and status seekers. That matches intuition, but it might also be a tuning artifact, and it's being checked against the dashboard stories.
+- **Keyed randomness pays for itself.** With one RNG stream per `(seed, purpose, month, sim)`, async model calls, parallelism and resuming can't change outcomes, which made replay and resume tests trivial to write.
+- **The model never touches legality.** Moves come with their real costs written into their descriptions, and the executor re-checks every pick. A model that misreads the state makes an odd choice, never an impossible one.
+
+## CLI options
+
+| Flag | Default | Meaning |
+|---|---|---|
+| `--months` | 600 | Months to simulate |
+| `--pop` | 200 | Target population |
+| `--seed` | 1 | World seed (same seed = same world) |
+| `--decider` | heuristic | `heuristic` or `kev` |
+| `--kev-url` | http://127.0.0.1:8009 | Kev server (or `KEV_URL`) |
+| `--policy` | events | `events` (quarterly reviews + life events) or `monthly` |
+| `--style` | words | State wording sent to the model: `words`, `numbers`, `terse` |
+| `--resume` | off | Continue from the latest yearly snapshot in the output folder |
+| `--concurrency` | 8 | Parallel Kev requests |
+| `--out` | world | Output folder |
+
+## Output
+
+Each run writes `world/seed-<seed>-<decider>/`:
+
+- `log/events.ndjson`, `log/decisions.ndjson`: full history, one JSON object per line
+- `snapshots/month-N.json`: the whole world every 12 months (used by `--resume`)
+- `public/latest.json`, `public/months/N.json`, `public/decisions/N.json`, `public/people/<id>.json`, `public/leaderboard.json`, `public/stats.json`: the static read model the dashboard (and later the pixel town) reads
+- `kev-cache.ndjson`: cached Kev answers, so replays never call Kev again
+
+## Project layout
+
+```
+packages/sim-core   the world: rules, ledger, markets, rentals, businesses, decisions (pure, deterministic)
+packages/worker     Kev gateway, storage, resume, CLI, experiment
+packages/evals      golden dataset, grader, eval runner
+packages/dashboard  zero-dependency local dashboard
+scripts/kev.sh      starts a local Kev server
+docs/SPEC.md        every design decision and the roadmap
+docs/WORKLOG.md     progress, current numbers, next steps
+```
+
+## Roadmap
+
+1. Validate Kev-0.8B on real hardware against the heuristic baseline
+2. "Why?" for every decision card: counterfactual probes, side gauges, an option-order bias check
+3. Employment links: sims working for sim-owned businesses
+4. A watch-only pixel town (Phaser 3 + React) that replays the same month files
+5. One shared world in the cloud
+
+Details are in [`docs/SPEC.md`](docs/SPEC.md#roadmap-proposed-improvements-in-priority-order).
+
+## Contributing
+
+Issues and pull requests are welcome. A few house rules keep the world honest:
+
+- Every cash change goes through `post(sim, kind, amount)` in `ledger.ts`.
+- Never use `Math.random`; use `rngFor(seed, purpose, month, simId)`.
+- New moves go in `rules.ts` (with real costs in the description), get applied in `executor.ts`, and are taught to `heuristic.ts`.
+- `npm test` must pass, including the check that every golden scenario's expected options are still legal.
+
+## License
+
+[MIT](LICENSE)

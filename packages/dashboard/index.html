@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>decision-life-sim</title>
+<style>
+:root{--bg:#f5f3ee;--card:#fff;--ink:#1d1f27;--mute:#5b5f6b;--line:#e4e1da;--accent:#2f5fd0}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 Inter,system-ui,-apple-system,sans-serif}
+header{background:var(--ink);color:#f4f1ea;padding:12px 20px;display:flex;flex-wrap:wrap;gap:10px 24px;align-items:center}
+header h1{font-size:16px;margin:0;letter-spacing:.2px}
+header .kpi{font-size:13px;color:#b9bcc8}header .kpi b{color:#f4f1ea;font-weight:600}
+select,button,input{font:inherit}
+select,button{height:34px;border-radius:6px;border:1px solid #c9c4b8;background:#fff;padding:0 10px;color:var(--ink)}
+header select{background:#2a2d3a;color:#f4f1ea;border-color:#3a3e4d}
+main{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:16px;padding:16px 20px;max-width:1500px;margin:0 auto}
+@media(max-width:1000px){main{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.card h2{font-size:14px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.card h2 small{font-weight:400;color:var(--mute);font-size:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}td,th{padding:6px 4px;border-top:1px solid var(--line);text-align:left}
+th{color:var(--mute);font-weight:500;border-top:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.click{cursor:pointer}tr.click:hover{background:#f7f5f0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px}
+.pill{height:30px;border-radius:15px;font-size:12px}.pill.on{background:var(--ink);color:#f4f1ea;border-color:var(--ink)}
+.bar{height:12px;background:#eceae3;border-radius:3px;overflow:hidden}.bar i{display:block;height:100%;border-radius:3px}
+.opt{display:grid;grid-template-columns:minmax(0,1fr) 120px 40px;gap:8px;align-items:center;padding:4px 0}
+.opt .d{font-size:11px;color:var(--mute)}
+.dice{position:relative;height:16px;display:flex;border-radius:3px;overflow:hidden;border:1px solid var(--line)}
+.marker{position:absolute;top:-3px;width:2px;height:22px;background:var(--ink)}
+.mute{color:var(--mute)}.small{font-size:12px}
+pre{white-space:pre-wrap;font-size:12px;background:#f7f5f0;border-radius:6px;padding:8px;margin:6px 0 0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 16px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--mute);margin-top:6px}
+svg text{font-size:11px;fill:var(--mute)}
+#person{position:fixed;inset:0 0 0 auto;width:min(460px,100%);background:#fff;border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.08);padding:18px;overflow:auto;display:none;z-index:5}
+#person.open{display:block}
+.close{float:right}
+.empty{color:var(--mute);padding:24px 0;text-align:center}
+</style>
+</head>
+<body>
+<header>
+  <h1>decision-life-sim</h1>
+  <select id="world" aria-label="World"></select>
+  <span class="kpi" id="kpis"></span>
+</header>
+<main>
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <section class="card"><h2>Median net worth by archetype <small>today's dollars, yearly</small></h2><div id="chart" style="height:260px"></div><div class="legend" id="legend"></div></section>
+    <section class="card"><h2>Leaderboard <small id="lbnote"></small></h2><table id="leaders"></table></section>
+  </div>
+  <section class="card">
+    <h2>Decision explorer <small id="decnote"></small></h2>
+    <div class="row">
+      <label class="small mute" for="month">Month</label>
+      <input id="month" type="range" min="1" max="1" value="1" style="flex:1;min-width:140px">
+      <span id="monthLabel" class="small"></span>
+    </div>
+    <div class="row" id="filters"></div>
+    <div id="decisions" style="max-height:330px;overflow:auto"></div>
+    <div id="card" style="margin-top:12px"></div>
+  </section>
+</main>
+<aside id="person" aria-label="Sim details"></aside>
+<script>
+{
+const COLORS = { saver:'#3b82c4', index:'#2ba39a', picker:'#7a5af8', re:'#e8833a', biz:'#d9455f', spender:'#ec6fb4', status:'#9b6b43', fire:'#4f9d45', balanced:'#8a919b' };
+const LABELS = { saver:'Saver', index:'Index investor', picker:'Stock picker', re:'Real estate', biz:'Business owner', spender:'Spender', status:'Status seeker', fire:'Early retiree', balanced:'Balanced' };
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+const money = (c) => { const d = c / 100, a = Math.abs(d), s = a >= 1e6 ? `$${(a/1e6).toFixed(1)}M` : a >= 1e4 ? `$${Math.round(a/1e3)}k` : a >= 1e3 ? `$${(a/1e3).toFixed(1)}k` : `$${Math.round(a)}`; return d < 0 ? `-${s}` : s; };
+const pct = (x) => `${Math.round(x * 100)}%`;
+let world = null, latest = null, decisions = [], filter = 'all', selected = null;
+const get = async (p) => (await fetch(`/world/${world}/public/${p}`)).json();
+
+async function loadWorlds() {
+  const ws = await (await fetch('/api/worlds')).json();
+  if (!ws.length) { document.querySelector('main').innerHTML = '<p class="empty">No worlds yet. Run <code>npm run sim</code> first.</p>'; return; }
+  $('world').innerHTML = ws.map((w) => `<option value="${esc(w.name)}">${esc(w.name)} · ${esc(w.latest.label)}</option>`).join('');
+  $('world').onchange = () => openWorld($('world').value);
+  openWorld(ws[0].name);
+}
+
+async function openWorld(name) {
+  world = name;
+  latest = await get('latest.json');
+  $('month').max = latest.month; $('month').value = latest.month;
+  const m = await get(`months/${latest.month}.json`);
+  const e = m.economy ?? {};
+  $('kpis').innerHTML = `<b>${esc(m.label)}</b> · economy <b>${esc(m.market.regime)}</b> · index <b>${m.market.index}</b> · mortgage <b>${(m.market.mortgageRate*100).toFixed(1)}%</b> · pop <b>${latest.population}</b> · businesses <b>${e.businessCount ?? '-'}</b> · empty rentals <b>${e.vacantUnits ?? 0}/${e.rentalUnits ?? 0}</b>`;
+  drawChart(); drawLeaders(); loadMonth(latest.month);
+}
+
+async function drawChart() {
+  const { years } = await get('stats.json').catch(() => ({ years: [] }));
+  const el = $('chart');
+  if (!years.length) { el.innerHTML = '<p class="empty">Charts appear after the first full year.</p>'; return; }
+  const W = el.clientWidth, H = el.clientHeight, L = 52, B = 22, T = 8;
+  const keys = Object.keys(COLORS);
+  const max = Math.max(1, ...years.flatMap((y) => keys.map((k) => y.byArchetype[k]?.medianNetWorth ?? 0)));
+  const x = (i) => L + (i / Math.max(1, years.length - 1)) * (W - L - 8);
+  const y = (v) => T + (1 - Math.max(0, v) / max) * (H - T - B);
+  const ticks = [0, .25, .5, .75, 1].map((f) => f * max);
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Median net worth by archetype over time">`;
+  for (const t of ticks) s += `<line x1="${L}" x2="${W-8}" y1="${y(t)}" y2="${y(t)}" stroke="#eeebe4"/><text x="${L-6}" y="${y(t)+4}" text-anchor="end">${money(t)}</text>`;
+  const step = Math.max(1, Math.round(years.length / 6));
+  years.forEach((yr, i) => { if (i % step === 0) s += `<text x="${x(i)}" y="${H-6}" text-anchor="middle">yr ${yr.year}</text>`; });
+  for (const k of keys) {
+    const pts = years.map((yr, i) => yr.byArchetype[k] ? `${x(i)},${y(yr.byArchetype[k].medianNetWorth)}` : null).filter(Boolean);
+    if (pts.length > 1) s += `<polyline fill="none" stroke="${COLORS[k]}" stroke-width="2" points="${pts.join(' ')}"/>`;
+  }
+  el.innerHTML = s + '</svg>';
+  $('legend').innerHTML = keys.map((k) => `<span><i class="dot" style="background:${COLORS[k]}"></i>${LABELS[k]}</span>`).join('');
+}
+
+async function drawLeaders() {
+  const lb = await get('leaderboard.json');
+  $('lbnote').textContent = `${lb.hallOfFame.length} in the Hall of Fame`;
+  $('leaders').innerHTML = `<tr><th>#</th><th>Sim</th><th>Archetype</th><th class="num">Age</th><th class="num">Net worth</th></tr>` +
+    lb.living.slice(0, 15).map((r, i) => `<tr class="click" data-id="${esc(r.id)}"><td>${i+1}</td><td>${esc(r.name)}</td><td><i class="dot" style="background:${COLORS[r.arch]}"></i>${LABELS[r.arch]}</td><td class="num">${r.age}</td><td class="num">${money(r.nw)}</td></tr>`).join('');
+  $('leaders').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => openPerson(tr.dataset.id));
+}
+
+const top = (d) => Object.entries(d.answers.main).sort((a, b) => b[1] - a[1]);
+const kindOf = (id) => id.startsWith('start_') ? 'start_business' : id.startsWith('buy_home') ? 'buy_home' : id;
+const FILTERS = {
+  all: ['All', () => true],
+  close: ['Close calls', (d) => { const t = top(d); return t.length > 1 && t[0][1] - t[1][1] < 0.1; }],
+  surprise: ['Surprises', (d) => d.picked !== top(d)[0][0]],
+  disagree: ['vs heuristic', (d) => kindOf(d.picked) !== kindOf(d.heuristicPick)],
+  invalid: ['Rejected', (d) => !d.valid],
+};
+
+async function loadMonth(m) {
+  $('monthLabel').textContent = `month ${m}`;
+  decisions = await get(`decisions/${m}.json`).catch(() => []);
+  $('filters').innerHTML = Object.entries(FILTERS).map(([k, [label, fn]]) => `<button class="pill ${k === filter ? 'on' : ''}" data-f="${k}">${label} ${decisions.filter(fn).length}</button>`).join('');
+  $('filters').querySelectorAll('button').forEach((b) => b.onclick = () => { filter = b.dataset.f; loadMonth(m); });
+  const list = decisions.filter(FILTERS[filter][1]);
+  $('decnote').textContent = `${decisions.length} decisions · ${decisions[0]?.provider ?? ''}`;
+  $('decisions').innerHTML = list.length ? `<table>${list.map((d, i) => `<tr class="click" data-i="${decisions.indexOf(d)}"><td><i class="dot" style="background:${COLORS[d.arch] ?? '#999'}"></i>${esc(d.name ?? d.simId)}</td><td>${esc(d.picked)}</td><td class="num">${pct(d.answers.main[d.picked] ?? 0)}</td><td class="small mute">${esc(d.reason ?? '')}</td></tr>`).join('')}</table>` : '<p class="empty">No decisions match.</p>';
+  $('decisions').querySelectorAll('tr.click').forEach((tr) => tr.onclick = () => showDecision(decisions[+tr.dataset.i]));
+  $('card').innerHTML = '';
+  if (list[0]) showDecision(list[0]);
+}
+$('month').oninput = () => loadMonth(+$('month').value);
+
+function showDecision(d) {
+  const opts = top(d);
+  const color = COLORS[d.arch] ?? '#2f5fd0';
+  let acc = 0;
+  const segs = opts.map(([id, p], i) => `<div title="${esc(id)} ${pct(p)}" style="width:${p*100}%;background:${id === d.picked ? color : ['#cfcac0','#ddd9d0','#e8e5de','#f0eee8'][Math.min(3,i)]}"></div>`).join('');
+  const options = opts.map(([id, p]) => `<div class="opt"><div><b style="font-weight:${id === d.picked ? 700 : 500}">${esc(id)}</b>${id === d.heuristicPick ? ' <span class="small mute">(heuristic pick)</span>' : ''}<div class="d">${esc(d.descriptions?.[id] ?? '')}</div></div><div class="bar"><i style="width:${p*100}%;background:${id === d.picked ? color : '#b9b4a9'}"></i></div><div class="num small">${pct(p)}</div></div>`).join('');
+  const share = d.answers.investShare ? ` · invest share level ${d.investLevel}` : '';
+  const retire = d.answers.retire !== undefined ? ` · retire p=${d.answers.retire.toFixed(2)}${d.retired ? ' (retired)' : ''}` : '';
+  $('card').innerHTML = `<div class="card" style="border-color:${color}">
+    <h2><span><a href="#" id="who">${esc(d.name ?? d.simId)}</a> · ${LABELS[d.arch] ?? ''}</span><small>${esc(d.provider)} · ${d.latencyMs} ms · ${d.tokens} tokens${d.valid ? '' : ' · <b>rejected by rules</b>'}</small></h2>
+    <div class="small mute" style="margin-bottom:6px">Why asked: ${esc(d.reason ?? '')}${share}${retire}</div>
+    ${options}
+    <div class="small" style="margin:10px 0 4px"><b>The dice roll</b> <span class="mute">(after sharpening by discipline)</span></div>
+    <div class="dice">${segs}<div class="marker" style="left:calc(${d.draw*100}% - 1px)"></div></div>
+    <div class="small mute" style="margin-top:4px">draw ${d.draw.toFixed(2)} → ${esc(d.picked)}</div>
+    ${d.state ? `<details style="margin-top:8px"><summary class="small">What the model saw</summary><pre>${esc(Object.entries(d.state).map(([k, v]) => `${k}: ${v}`).join('\n'))}</pre></details>` : ''}
+  </div>`;
+  $('who').onclick = (e) => { e.preventDefault(); openPerson(d.simId); };
+}
+
+async function openPerson(id) {
+  const p = await get(`people/${id}.json`).catch(() => null);
+  const el = $('person');
+  if (!p) { el.innerHTML = '<button class="close" id="x">Close</button><p class="empty">No file for this sim yet.</p>'; el.classList.add('open'); $('x').onclick = () => el.classList.remove('open'); return; }
+  const b = p.balance;
+  const nw = p.netWorthByYear ?? [];
+  const max = Math.max(1, ...nw), min = Math.min(0, ...nw);
+  const spark = nw.length > 1 ? `<svg width="100%" height="60" viewBox="0 0 300 60" preserveAspectRatio="none" role="img" aria-label="Net worth by year"><polyline fill="none" stroke="#2f5fd0" stroke-width="2" points="${nw.map((v, i) => `${(i/(nw.length-1))*300},${58 - ((v-min)/(max-min||1))*54}`).join(' ')}"/></svg>` : '<p class="small mute">History builds yearly.</p>';
+  const flows = Object.entries(p.thisMonth ?? {}).filter(([, v]) => v).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = `<button class="close" id="x">Close</button>
+    <h2 style="margin:0 0 2px">${esc(p.name)}</h2>
+    <div class="mute">${p.age} · ${esc(p.career)} · ${esc(p.archetype)}${p.retired ? ' · retired' : p.selfEmployed ? ' · runs a business' : p.employed ? '' : ' · out of work'}</div>
+    <p class="small">${esc(p.persona)}</p>
+    <div class="grid2 small"><div>Net worth <b>${money(b.netWorth)}</b></div><div>Cash <b>${money(b.cash)}</b></div><div>Investments <b>${money(b.investments)}</b></div><div>Property <b>${money(b.property)}</b></div><div>Debt <b>${money(b.debt)}</b></div><div>Credit <b>${p.creditScore}</b></div></div>
+    <h3 style="font-size:13px;margin:14px 0 4px">Net worth by year</h3>${spark}
+    <h3 style="font-size:13px;margin:14px 0 4px">Money in and out this month</h3>
+    <table>${flows.map(([k, v]) => `<tr><td>${esc(k.replace(/_/g, ' '))}</td><td class="num" style="color:${v < 0 ? '#9a3a2a' : '#2f7d4f'}">${money(v)}</td></tr>`).join('') || '<tr><td class="mute">None recorded</td></tr>'}</table>
+    <h3 style="font-size:13px;margin:14px 0 4px">Owns</h3>
+    <div class="small">${p.assets.map((a) => `${esc(a.kind)}${a.businessType ? ` (${esc(a.businessType)})` : ''} ${money(a.value)}${a.kind === 'rental' ? (a.rented ? ` · rented ${money(a.rent)}/mo` : ' · empty') : ''}`).join('<br>') || 'Nothing yet'}</div>
+    <h3 style="font-size:13px;margin:14px 0 4px">Life</h3>
+    <table>${p.life.slice(0, 40).map((e) => `<tr><td class="mute small" style="white-space:nowrap">yr ${Math.floor((e.month-1)/12)+1}</td><td class="small">${esc(e.text)}</td></tr>`).join('')}</table>`;
+  el.classList.add('open');
+  $('x').onclick = () => el.classList.remove('open');
+}
+addEventListener('keydown', (e) => { if (e.key === 'Escape') $('person').classList.remove('open'); });
+addEventListener('resize', () => world && drawChart());
+loadWorlds();
+}
+</script>
+</body>
+</html>

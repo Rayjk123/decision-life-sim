@@ -1,0 +1,27 @@
+{
+  "name": "decision-life-sim",
+  "private": true,
+  "version": "0.1.0",
+  "description": "A pixel life-sim where every sim's financial decisions come from a decision model (Kev).",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "sim": "tsx packages/worker/src/cli.ts",
+    "kev:check": "tsx packages/worker/src/kevCheck.ts",
+    "test": "node --import tsx --test packages/*/test/*.test.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "eval": "tsx packages/evals/src/run.ts",
+    "experiment": "tsx packages/worker/src/experiment.ts",
+    "dashboard": "node packages/dashboard/serve.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

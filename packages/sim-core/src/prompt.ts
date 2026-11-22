@@ -1,0 +1,104 @@
+// Builds the compact state object and questions sent to the decision model (Kev / Jev request shape).
+// Kev flattens an object state into "key: value" lines, and shows choice options as "name: description".
+// Three styles exist so the eval suite can measure which one the model reads best:
+//   words   - plain sentences and qualitative trait levels (default)
+//   numbers - exact figures and 0-1 trait scores
+//   terse   - minimal labels, archetype name instead of the persona sentence
+import type { Move, Sim, StateStyle, World } from './types.ts';
+import { ARCHETYPE } from './data.ts';
+import { fmt } from './money.ts';
+import { SHARE_LABELS } from './executor.ts';
+import {
+  ageInt, balanceSheet, businessIncomeMonthly, career, emergencyFloor, grossMonthlyIncome, home, housingCost, inSchool,
+  livingCost, rentals, scheduledLoanPayments, taxRate,
+} from './finance.ts';
+
+const level = (x: number) => (x >= 0.7 ? 'high' : x >= 0.4 ? 'medium' : 'low');
+const pct = (x: number) => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`;
+
+export function firstName(sim: Sim) { return sim.name.split(' ')[0]; }
+
+function workLine(sim: Sim, world: World): string {
+  const m = world.month;
+  const c = career(sim);
+  if (sim.retired) return `retired (was a ${c.label.toLowerCase()})`;
+  if (inSchool(sim, m)) return `in training to be a ${c.label.toLowerCase()} until ${c.startAge}`;
+  if (sim.selfEmployed) return `runs a business full time (trained as a ${c.label.toLowerCase()})`;
+  if (!sim.employed) return `unemployed for ${sim.monthsUnemployed} months (a ${c.label.toLowerCase()})`;
+  return `${c.label.toLowerCase()} earning ${fmt(sim.salary)} a year`;
+}
+
+export function buildState(sim: Sim, world: World, style: StateStyle = 'words'): Record<string, unknown> {
+  const m = world.month;
+  const bs = balanceSheet(sim);
+  const t = sim.traits;
+  const age = ageInt(sim, m);
+  const gross = grossMonthlyIncome(sim, m) + businessIncomeMonthly(sim);
+  const takeHome = Math.round(gross * (1 - taxRate(gross * 12)));
+  const spend = housingCost(sim, m) + scheduledLoanPayments(sim, m) + livingCost(sim, m);
+  const debts = sim.loans.filter((l) => l.balance > 0).map((l) => `${l.kind} ${fmt(l.balance)} at ${(l.annualRate * 100).toFixed(1)}%`);
+  const rs = rentals(sim);
+  const empty = rs.filter((r) => !r.tenantId).length;
+  const biz = sim.assets.filter((a) => a.kind === 'business');
+  const h = home(sim);
+  const mk = world.market;
+  const econ = world.economy;
+  const homeDir = mk.lastHomeReturn > 0.002 ? 'rising' : mk.lastHomeReturn < -0.002 ? 'falling' : 'flat';
+
+  if (style === 'terse') {
+    return {
+      who: `${firstName(sim)}, ${age}, ${ARCHETYPE[sim.archetype].label}`,
+      work: workLine(sim, world),
+      cash: fmt(sim.cash), invested: fmt(sim.index + sim.stocks), debt: fmt(bs.debt), net_worth: fmt(bs.netWorth),
+      home: h ? 'owns' : 'rents', rentals: rs.length, business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'none',
+      market: `index ${pct(mk.lastIndexReturn)}, homes ${homeDir}, rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs ${mk.jobsSignal}`,
+      recent: sim.memory.slice(0, 3).join('; ') || 'none',
+    };
+  }
+
+  const traits = style === 'numbers'
+    ? `risk ${t.risk}, debt comfort ${t.debt}, status ${t.status}, patience ${t.patience}, discipline ${t.discipline}, herding ${t.herding}, loss aversion ${t.lossAversion} (0 to 1)`
+    : `risk taking ${level(t.risk)}, comfort with debt ${level(t.debt)}, status seeking ${level(t.status)}, patience ${level(t.patience)}, discipline ${level(t.discipline)}, follows the crowd ${level(t.herding)}`;
+  const market = style === 'numbers'
+    ? `index fund ${pct(mk.lastIndexReturn)} last month, home prices ${pct(mk.lastHomeReturn)} last month, mortgage rate ${(mk.mortgageRate * 100).toFixed(2)}%, jobs report ${mk.jobsSignal}`
+    : `index fund ${pct(mk.lastIndexReturn)} last month, home prices ${homeDir}, mortgage rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs report ${mk.jobsSignal}`;
+
+  return {
+    person: `${sim.name}, ${age}, ${workLine(sim, world)}`,
+    personality: sim.persona,
+    traits,
+    money: `cash ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} as a cushion), index fund ${fmt(sim.index)}, stocks ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
+    debts: debts.length ? debts.join('; ') : 'no debt',
+    monthly: `takes home ${fmt(takeHome)}, spends about ${fmt(spend)}, auto-invests ${Math.round(sim.autoInvestPct * 100)}% of what is left`,
+    housing: h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`,
+    property: rs.length ? `${rs.length} rental${rs.length > 1 ? 's' : ''} worth ${fmt(rs.reduce((s, a) => s + a.value, 0))}${empty ? `, ${empty} empty` : ''}` : 'no rentals',
+    business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'no business',
+    market,
+    town: `${econ.businessCount} local businesses (${econ.demandIndex >= 1.1 ? 'busy' : econ.demandIndex >= 0.8 ? 'healthy' : 'crowded'}), ${econ.vacantUnits} of ${econ.rentalUnits} rentals empty`,
+    recent: sim.memory.length ? sim.memory.join('; ') : 'nothing notable lately',
+  };
+}
+
+export function buildQuestions(sim: Sim, moves: Move[], askRetire: boolean): Record<string, unknown> {
+  const first = firstName(sim);
+  const q: Record<string, unknown> = {
+    main: {
+      type: 'choice',
+      instructions: `Acting true to ${first}'s personality and situation, what does ${first} do with money this month?`,
+      criteria: Object.fromEntries(moves.map((mv) => [mv.id, mv.description])),
+    },
+  };
+  if (moves.some((mv) => mv.kind === 'invest_index' || mv.kind === 'trade_stocks' || mv.kind === 'pay_debt')) {
+    q.invest_share = {
+      type: 'score',
+      instructions: `If ${first} invests or pays down debt this month, how much of the spare cash goes in?`,
+      criteria: SHARE_LABELS,
+    };
+  }
+  if (askRetire) {
+    q.retire = { type: 'noul', instructions: `Does ${first} retire from work this month?` };
+  }
+  return q;
+}
+
+export function archetypeLabel(sim: Sim) { return ARCHETYPE[sim.archetype].label; }

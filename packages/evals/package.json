@@ -1,0 +1,10 @@
+{
+  "name": "@dls/evals",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@dls/sim-core": "0.1.0",
+    "@dls/worker": "0.1.0"
+  }
+}

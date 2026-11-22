@@ -1,0 +1,8 @@
+node_modules/
+.kev/
+world/
+.cache/
+*.log
+.DS_Store
+evals-results/
+experiments/
