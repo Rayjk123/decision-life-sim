@@ -13,7 +13,7 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 
 | # | Decision | Choice | Why |
 |---|---|---|---|
-| 1 | Decision model | Any `/v1/systemone` model behind one `Decider` interface (`--decision-url`, `--model` / `DECISION_URL`, `KEV_MODEL`). **Best so far: d3:4b on Ollama** (77% overall, 61% pairs, 8.5 calls/s on an RTX 4070 Super). Kev-0.8B/4B via `scripts/kev.sh` on the Mac | Open weights, self-hosted, and Kev, Jev and Ollama's d3 share the request shape, so swapping is config. See `docs/results.md` |
+| 1 | Decision model | Any `/v1/systemone` model behind one `Decider` interface (`--decision-url`, `--model` / `DECISION_URL`, `DECISION_MODEL`). **Default: E07m, our own 4B fine-tune** (2026-11-23): 77% overall / 57% pairs on the medieval golden suite vs d3:4b 70% / 48%; served from the training desktop on :8010 (`research/finetune/desktop/serve-default.ps1`). d3:4b on Ollama is the fallback. See `docs/finetune/story.md` | Our own model beats every off-the-shelf option on the independent test, runs on our hardware, and can be retrained as the town changes |
 | 2 | Sim goal | **Act in character.** No explicit goals or optimization yet | Personal goals + a second leaderboard are a later option |
 | 3 | Prediction market | **Out of v1** | Stocks, housing, cars, businesses first |
 | 4 | Language | TypeScript for engine and worker (shared with the browser later). Python only inside Kev | The browser must replay the same paths and rules |

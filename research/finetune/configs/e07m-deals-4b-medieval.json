@@ -1,0 +1,17 @@
+{
+  "_why": "E07m: E06's labelled decisions, rewritten into the medieval wording (medievalize.ts: same ids, labels and numbers), on Qwen3.5-4B (4.66B, the size of d3:4b). Tests whether a d3-sized fine-tune beats d3 on the medieval golden suite (d3: 70% / 48% pairs), and 4B vs 0.8B on the same data.",
+  "base": "unsloth/Qwen3.5-4B",
+  "train": "data/sets/haiku-deals-med/train.jsonl",
+  "val": "data/sets/haiku-deals-med/val.jsonl",
+  "test": "data/sets/claude-hard-med/test.jsonl",
+  "max_seq_length": 2048,
+  "load_in_4bit": true,
+  "r": 16,
+  "lora_alpha": 16,
+  "lr": 0.0002,
+  "epochs": 2,
+  "batch": 1,
+  "grad_accum": 8,
+  "warmup_steps": 10,
+  "eval_every": 50
+}

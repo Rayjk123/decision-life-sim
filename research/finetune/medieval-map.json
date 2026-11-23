@@ -1,0 +1,308 @@
+{
+ "labels": [
+  [
+   "Retail worker",
+   "Shop assistant"
+  ],
+  [
+   "Warehouse worker",
+   "Dock porter"
+  ],
+  [
+   "Soldier",
+   "Soldier of the garrison"
+  ],
+  [
+   "Plumber",
+   "Mason"
+  ],
+  [
+   "Electrician",
+   "Blacksmith"
+  ],
+  [
+   "HVAC technician",
+   "Chimney sweep"
+  ],
+  [
+   "Truck driver",
+   "Carter"
+  ],
+  [
+   "Real estate agent",
+   "Land agent"
+  ],
+  [
+   "Police officer",
+   "Town watchman"
+  ],
+  [
+   "Teacher",
+   "Schoolmaster"
+  ],
+  [
+   "Graphic designer",
+   "Illuminator"
+  ],
+  [
+   "Sales rep",
+   "Traveling merchant"
+  ],
+  [
+   "Nurse",
+   "Healer"
+  ],
+  [
+   "Accountant",
+   "Bookkeeper"
+  ],
+  [
+   "Mechanical engineer",
+   "Millwright"
+  ],
+  [
+   "Software engineer",
+   "Clockmaker"
+  ],
+  [
+   "Pilot",
+   "Ship"
+  ],
+  [
+   "Pharmacist",
+   "Apothecary"
+  ],
+  [
+   "Lawyer",
+   "Advocate"
+  ],
+  [
+   "Dentist",
+   "Barber-surgeon"
+  ],
+  [
+   "Doctor",
+   "Physician"
+  ],
+  [
+   "Index investor",
+   "Guild Fund investor"
+  ],
+  [
+   "Stock picker",
+   "Voyage backer"
+  ],
+  [
+   "Real estate investor",
+   "Landlord"
+  ],
+  [
+   "Snack cart",
+   "Pie cart"
+  ],
+  [
+   "Cleaning service",
+   "Laundress service"
+  ],
+  [
+   "Lawn care",
+   "Garden-keeping"
+  ],
+  [
+   "Vending route",
+   "Peddler"
+  ],
+  [
+   "Laundromat",
+   "Washhouse"
+  ],
+  [
+   "Self-storage",
+   "Granary"
+  ],
+  [
+   "Barbershop",
+   "Barber"
+  ],
+  [
+   "Food truck",
+   "Roast-meat cart"
+  ],
+  [
+   "Daycare",
+   "Dame school"
+  ],
+  [
+   "Coffee shop",
+   "Tea house"
+  ],
+  [
+   "Auto repair shop",
+   "Wheelwright"
+  ],
+  [
+   "Car wash",
+   "Livery stable"
+  ],
+  [
+   "Burger franchise",
+   "Chain of coaching inns"
+  ],
+  [
+   "Plumbing / HVAC company",
+   "Masons"
+  ],
+  [
+   "Fitness gym",
+   "Fencing hall"
+  ],
+  [
+   "Bar",
+   "Alehouse"
+  ],
+  [
+   "Restaurant",
+   "Tavern"
+  ],
+  [
+   "Real estate brokerage",
+   "Land agency"
+  ],
+  [
+   "Law firm",
+   "Advocate"
+  ],
+  [
+   "Dental / medical practice",
+   "Physician"
+  ],
+  [
+   "Motel",
+   "Inn"
+  ],
+  [
+   "Online store",
+   "Caravan trading company"
+  ],
+  [
+   "Mobile app studio",
+   "Printing press"
+  ],
+  [
+   "Tech startup",
+   "Alchemist"
+  ],
+  [
+   "starter",
+   "cottage"
+  ],
+  [
+   "family",
+   "townhouse"
+  ],
+  [
+   "luxury",
+   "manor house"
+  ]
+ ],
+ "personas": [
+  [
+   "A careful saver. Keeps a big cash cushion, hates debt, buys used and pays things off early.",
+   "A careful saver. Keeps a big purse in reserve, hates debt, buys secondhand and pays things off early."
+  ],
+  [
+   "A steady index-fund investor. Automates investing, ignores the news, plays the long game.",
+   "A steady Guild Fund investor. Puts a share of every wage into the fund, ignores market gossip, plays the long game."
+  ],
+  [
+   "An active stock picker. Confident, follows market momentum, likes to trade.",
+   "A bold backer of trading voyages. Confident, follows the talk of the market, likes to stake coin on single ships."
+  ],
+  [
+   "A real estate investor. Comfortable with leverage, wants to own many rentals, thinks in properties not stocks.",
+   "A would-be landlord. Comfortable borrowing, wants to own many cottages to let, thinks in property, not voyages or funds."
+  ],
+  [
+   "An entrepreneur. Wants to own a business, takes big swings, reinvests in ventures.",
+   "An entrepreneur. Wants to run a business of their own, takes big risks on new businesses, puts profits back into the business."
+  ],
+  [
+   "A spender. Lives for today, loves new cars and nice things, rarely thinks about retirement.",
+   "A spender. Lives for today, loves fine horses, new clothes and nice things, rarely thinks about old age."
+  ],
+  [
+   "A status seeker. Wants the big house in the nice neighborhood and the luxury car, invests a little.",
+   "A status seeker. Wants the grandest house in town and a fine carriage to be seen in, invests a little."
+  ],
+  [
+   "Pursuing early retirement. Extremely frugal, invests most income, wants to stop working decades early.",
+   "Saving to stop working early. Extremely frugal, puts most wages into the Guild Fund, wants to leave the trade decades early."
+  ],
+  [
+   "A balanced, ordinary planner. A bit of saving, a bit of investing, a bit of fun.",
+   "A balanced, ordinary townsperson. A bit of saving, a bit of investing, a bit of fun."
+  ]
+ ],
+ "items": [
+  [
+   "a nice dinner out",
+   "a feast at the tavern"
+  ],
+  [
+   "a weekend away",
+   "a day at the fair"
+  ],
+  [
+   "concert tickets",
+   "minstrels at the inn"
+  ],
+  [
+   "a designer purse",
+   "a silk gown"
+  ],
+  [
+   "a new phone",
+   "a silver brooch"
+  ],
+  [
+   "a weekend getaway",
+   "a trip to the coast"
+  ],
+  [
+   "a vacation",
+   "new oak furniture"
+  ],
+  [
+   "new furniture",
+   "a pilgrimage"
+  ],
+  [
+   "a home theater",
+   "a woven tapestry"
+  ],
+  [
+   "a car, paid in cash",
+   "a horse, paid in coin"
+  ],
+  [
+   "a big trip abroad",
+   "a voyage abroad"
+  ],
+  [
+   "a small boat",
+   "a small boat"
+  ],
+  [
+   "a luxury car",
+   "a fine carriage"
+  ],
+  [
+   "a lavish wedding",
+   "a lavish wedding feast"
+  ],
+  [
+   "a dream vacation",
+   "a grand tour"
+  ]
+ ]
+}

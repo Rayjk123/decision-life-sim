@@ -29,6 +29,7 @@
 - [What is it?](#what-is-it)
 - [Features](#features)
 - [Quick start](#quick-start)
+- [Run E07m, the default decision model](#run-e07m-the-default-decision-model) · [how we trained it](docs/finetune/story.md)
 - [Run with Kev](#run-with-kev-macos-apple-silicon)
 - [How a month works](#how-a-month-works)
 - [Evaluating the decision model](#evaluating-the-decision-model) · [full results](docs/results.md)
@@ -82,6 +83,22 @@ npm run eval -- --verbose                 # grade random + heuristic on the gold
 npm run experiment                        # whole-world comparison across seeds
 ```
 
+## Run E07m, the default decision model
+
+E07m is our own fine-tuned decision model (a 4.7B LoRA fine-tune of Qwen3.5-4B, Apache-2.0). It runs on [llama.cpp](https://github.com/ggml-org/llama.cpp) (build b11443 or newer, which has the `/v1/systemone` decision API), on a Mac, Linux or Windows, GPU or CPU:
+
+```bash
+# 1. get llama.cpp (prebuilt: github.com/ggml-org/llama.cpp/releases) and the model files from https://huggingface.co/bdleecs95/decision-life-sim-e07m
+hf download bdleecs95/decision-life-sim-e07m gguf/model-Q4_K_M.gguf gguf/mmproj-Q8_0.gguf --local-dir e07m && cd e07m/gguf
+llama-server -m model-Q4_K_M.gguf --mmproj mmproj-Q8_0.gguf --port 8010 -c 16384 -b 4096 -ub 4096   # 2.6 GB; big batch: it reads each request in one pass
+# 2. point the town at it
+export DECISION_URL=http://localhost:8010
+npm run sim -- --decider model --months 24 --pop 200
+npm run eval -- --decider model --style words      # reproduces 77% overall / 57% pairs (~1.2 decisions/s on an M3 Pro; ~13/s on an RTX 4070 Super)
+```
+
+Model, data and card on Hugging Face: **[bdleecs95/decision-life-sim-e07m](https://huggingface.co/bdleecs95/decision-life-sim-e07m)** (upload pending: the account is being set up) (source of the card: [`research/finetune/release/MODEL_CARD.md`](research/finetune/release/MODEL_CARD.md)); the training data and the labelling rubric are published with it. With a GPU and Python you can also load the merged weights with Unsloth (`FastDecisionModel.from_pretrained`).
+
 ## Run with Kev (macOS, Apple Silicon)
 
 Also requires git and [uv](https://docs.astral.sh/uv/) (`curl -LsSf https://astral.sh/uv/install.sh | sh`).
@@ -129,14 +146,13 @@ Claude Opus wrote the golden dataset in `packages/evals/golden/` as a reference 
 
 | Decider | Ran on | Overall | Counterfactual pairs | Speed |
 |---|---|---|---|---|
-| **d3:4b** (4.8B, Ollama) | RTX 4070 Super | **77%** | **61%** | 8.5 decisions/s |
-| Kev-4B (MLX) | Mac M3 Pro | 72% | 56% | 1.1 decisions/s |
-| d3:2b (2.4B, Ollama) | RTX 4070 Super | 66% | 44% | 16.5 decisions/s |
-| Kev-0.8B (MLX) | Mac M3 Pro | 55% | 33% | 0.5 decisions/s |
-| Heuristic | CPU | 77% | 56% | instant |
-| Random | CPU | 15% | 6% | instant |
+| **E07m** (ours, 4.7B fine-tune) · default | RTX 4070 Super | **77%** | **57%** | ~13 decisions/s |
+| d3:4b (4.8B, Ollama) | RTX 4070 Super | 70% | 48% | 8.5 decisions/s |
+| Heuristic | CPU | 83% | 67% | instant |
 
-Any model that speaks the `/v1/systemone` decision API can be swapped in with `--decision-url` and `--model` (or `DECISION_URL` / `KEV_MODEL`; the older `--kev-url` / `KEV_URL` still work). Ollama serves d3 on that endpoint, so it works unchanged:
+Scores on the medieval golden suite (Nov 2026). Older models (Kev, d3:2b) were measured on earlier wording; see the results page. How E07m was trained, with every trial and lesson: [docs/finetune/story.md](docs/finetune/story.md).
+
+Any model that speaks the `/v1/systemone` decision API can be swapped in with `--decision-url` and `--model` (or `DECISION_URL` / `DECISION_MODEL`; the older `--kev-url` / `KEV_URL` / `KEV_MODEL` still work). Ollama serves d3 on that endpoint, so it works unchanged:
 
 ```bash
 npm run eval -- --decider model --decision-url http://<ollama-host>:11434 --model d3
@@ -145,6 +161,8 @@ npm run eval -- --decider model --decision-url http://<ollama-host>:11434 --mode
 The world experiment also measures "world separation", the average distance between archetypes' decision mixes over 30-year runs: random 8%, heuristic 32% (3 seeds).
 
 ## Interesting learnings
+
+- **To train a better decision model, change the teacher, not the training.** The same small model scored 62% on gold decisions trained on the hand-written rules' answers, 61% on d3's, and 96% on answers written to a careful rubric; more data added a point. Then the independent test caught what the gold test couldn't (the model never took a good deal, because the training towns rarely offered one), and targeted data plus a 4B base produced E07m, the first model to beat d3. [The story](docs/finetune/story.md).
 
 - **A baseline can grade well because its author also wrote the test.** The heuristic scores 98% on personality scenarios, mostly because its weights and the golden labels come from the same author. Counterfactual pairs expose it: at 56%, they show that it ignores memory, debt and most market signals. Pairs are the honest test of whether a model *reads* the state.
 - **Index investors beat stock pickers, as they do in real life.** Each picker's portfolio is modelled as 1.15 × the index minus fees plus personal noise. Over 50 years, the median index investor ends with about $2.7M and the median stock picker with about $963k.

@@ -2,12 +2,12 @@
 //   npm run probe -- --world world/seed-1-heuristic --sim s00042 [--change laid_off|all] [--decider model --decision-url ... --model d3]
 import { parseArgs } from 'node:util';
 import { heuristicDecider, probe, probeChangesFor, type Decider } from '@dls/sim-core';
-import { decisionUrl, kevDecider } from './kev.ts';
+import { DEFAULT_MODEL, decisionUrl, kevDecider } from './kev.ts';
 import { WorldStore } from './store.ts';
 
 const { values: a } = parseArgs({ options: {
   world: { type: 'string' }, sim: { type: 'string' }, change: { type: 'string', default: 'all' },
-  decider: { type: 'string', default: 'heuristic' }, model: { type: 'string', default: process.env.KEV_MODEL ?? 'd3' },
+  decider: { type: 'string', default: 'heuristic' }, model: { type: 'string', default: DEFAULT_MODEL },
   'decision-url': { type: 'string' }, 'kev-url': { type: 'string' },
 } });
 if (!a.world) { console.error('usage: npm run probe -- --world <world-dir> [--sim <id>] [--change <id>|all] [--decider model ...]'); process.exit(1); }

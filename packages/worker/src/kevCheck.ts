@@ -3,10 +3,10 @@
 import {
   ARCHETYPE, createWorld, heuristicAnswers, heuristicDecider, legalMoves, buildQuestions, buildState, runMonth, ageInt, inSchool,
 } from '@dls/sim-core';
-import { decisionUrl, kevDecider, percentile } from './kev.ts';
+import { DEFAULT_MODEL, decisionUrl, kevDecider, percentile } from './kev.ts';
 
 const url = decisionUrl();
-const model = process.env.KEV_MODEL ?? 'kev-latest';   // e.g. KEV_MODEL=d3 DECISION_URL=http://<ollama-host>:11434
+const model = DEFAULT_MODEL;   // e.g. DECISION_MODEL=d3 DECISION_URL=http://<ollama-host>:11434
 try {
   const r = await fetch(`${url}/v1/models`, { signal: AbortSignal.timeout(5000) });
   console.log(`Kev server at ${url}: ${r.ok ? 'up' : `HTTP ${r.status}`}`);

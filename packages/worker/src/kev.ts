@@ -21,6 +21,10 @@ export interface KevOptions {
 interface KevAnswer { type: string; choice?: string; noul?: number; score?: number; probabilities?: Record<string, number> }
 interface KevResponse { answers: Record<string, KevAnswer>; usage?: { input_tokens?: number }; latency_ms?: number }
 
+/** The default decision model (user, 2026-11-23): E07m, our 4B fine-tune, served on the training desktop at :8010
+ * (`research/finetune/desktop/serve-default.ps1`). Override with DECISION_MODEL (or the older KEV_MODEL). */
+export const DEFAULT_MODEL = process.env.DECISION_MODEL ?? process.env.KEV_MODEL ?? 'e07m';
+
 /** The decision model endpoint: --decision-url, then DECISION_URL; the older --kev-url / KEV_URL still work. */
 export function decisionUrl(flags: { 'decision-url'?: string; 'kev-url'?: string } = {}, fallback = 'http://127.0.0.1:8009'): string {
   return flags['decision-url'] ?? flags['kev-url'] ?? process.env.DECISION_URL ?? process.env.KEV_URL ?? fallback;

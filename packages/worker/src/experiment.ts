@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { ARCHETYPES, balanceSheet, heuristicDecider, home, rentals, type Decider, type DecisionRecord, type World } from '@dls/sim-core';
-import { decisionUrl, kevDecider } from './kev.ts';
+import { DEFAULT_MODEL, decisionUrl, kevDecider } from './kev.ts';
 import { runWorld } from './runner.ts';
 import { randomDecider } from './random.ts';
 
@@ -18,7 +18,7 @@ const { values: a } = parseArgs({
     pop: { type: 'string', default: '200' },
     'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
     'kev-url': { type: 'string' },
-    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
+    model: { type: 'string', default: DEFAULT_MODEL },
     out: { type: 'string', default: 'experiments' },
     concurrency: { type: 'string', default: '8' },   // decisions sent to the model at once (d3 on Ollama: ~8.5/s at 8, ~2/s at 1)
   },

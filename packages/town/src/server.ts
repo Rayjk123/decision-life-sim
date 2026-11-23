@@ -16,7 +16,7 @@ for (const name of ['street-market.jpg', 'street-guild.jpg', 'street-square.jpg'
 }
 const assetDir = process.env.TOWN_ASSETS ?? fileURLToPath(new URL('../', import.meta.url));
 const modelOptions = process.env.DECISION_URL ? {
-  url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'kev-latest', apiKey: process.env.KEV_API_KEY,
+  url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'e07m', apiKey: process.env.KEV_API_KEY,
 } : undefined;
 const decider = modelOptions && kevDecider(modelOptions);
 const modelProbe = modelOptions && {

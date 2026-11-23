@@ -6,7 +6,7 @@ import { parseArgs } from 'node:util';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { heuristicDecider, type Decider, type StateStyle } from '@dls/sim-core';
-import { decisionUrl, kevDecider } from '@dls/worker/src/kev.ts';
+import { DEFAULT_MODEL, decisionUrl, kevDecider } from '@dls/worker/src/kev.ts';
 import { randomDecider, runSuite, type SuiteResult } from './suite.ts';
 import { compareRuns, formatComparison, loadRun } from './compare.ts';
 
@@ -16,7 +16,7 @@ const { values: a } = parseArgs({
     style: { type: 'string', default: 'words' },        // words | numbers | terse | all
     'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
     'kev-url': { type: 'string' },
-    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
+    model: { type: 'string', default: DEFAULT_MODEL },
     out: { type: 'string', default: 'evals-results' },
     verbose: { type: 'boolean', default: false },
     compare: { type: 'string' },                        // baseline eval JSON: print flips, exit 1 on regression

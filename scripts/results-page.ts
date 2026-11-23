@@ -17,6 +17,7 @@ const MODELS: Record<string, { label: string; params: string; host: string }> = 
   'kev-4b': { label: 'Kev-4B', params: '4B (LoRA)', host: 'Mac M3 Pro (MLX)' },
   'd3-2b': { label: 'd3:2b', params: '2.4B Q8_0', host: 'RTX 4070 Super (Ollama)' },
   'd3-4b': { label: 'd3:4b', params: '4.8B Q8_0', host: 'RTX 4070 Super (Ollama)' },
+  'e07m-4b': { label: 'E07m (ours)', params: '4.7B, LoRA fine-tune', host: 'RTX 4070 Super (Unsloth)' },
 };
 
 interface Grade { pass: boolean; top?: string; delta?: number }
@@ -34,7 +35,13 @@ const runs: Run[] = readdirSync(DATA).filter((f) => f.endsWith('.json'))
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const best = new Map<string, Run>();
-for (const r of runs) if (!best.has(r.model) || r.summary.overall > best.get(r.model)!.summary.overall) best.set(r.model, r);
+// A model's best run, preferring runs on the current (medieval, golden v5) wording when it has any: an older run on
+// different wording isn't comparable with the current ones, however good its score.
+const current = (r: Run) => /medieval/.test((r as Run & { golden?: string }).golden ?? '');
+for (const r of runs) {
+  const b = best.get(r.model);
+  if (!b || (current(r) && !current(b)) || (current(r) === current(b) && r.summary.overall > b.summary.overall)) best.set(r.model, r);
+}
 const cols = Object.keys(MODELS).filter((m) => best.has(m));
 const head = (first: string) => `| ${first} | ${cols.map((m) => `${MODELS[m].label}<br><sub>${best.get(m)!.style}</sub>`).join(' | ')} |\n|---|${cols.map(() => '---').join('|')}|`;
 
@@ -103,7 +110,7 @@ function tradeoffChart(): string {
   out.push(`<line x1="${tx}" x2="${tx}" y1="${T}" y2="${H - B}" stroke="${C.text2}" stroke-dasharray="4 4"/>`,
     txt(tx + 6, H - B - 8, 'Fast enough for 1,000 sims →', { fill: C.text2 }));
   out.push(legend(W - R - 300, 20, [[C.s1, 'Mac M3 Pro (MLX)'], [C.s2, 'RTX 4070 Super (Ollama)']]));
-  for (const m of ['kev-0.8b', 'kev-4b', 'd3-2b', 'd3-4b']) {
+  for (const m of ['kev-0.8b', 'kev-4b', 'd3-2b', 'd3-4b', 'e07m-4b']) {
     const r = best.get(m), s = speed[m];
     if (!r || !s) continue;
     const cx = xs(s.callsPerSec), cy = ys(r.summary.overall), color = s.host.startsWith('Mac') ? C.s1 : C.s2;
