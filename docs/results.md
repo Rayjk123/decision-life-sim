@@ -10,7 +10,7 @@ Which decision model best plays a sim "in character"? Every model here is graded
 {: .fs-5 .fw-300 }
 
 {: .warning }
-> **The town is now medieval (2026-11-22).** **d3:4b `words` is current** (68% overall, 43% pairs on the medieval wording; the modern wording scored 72% / 48%, so the re-theme cost about 4 points, recovered from 8 with plain glosses like "the Guild Fund, a broad index fund"). The other model rows (Kev, d3:2b, `focused`) were measured on earlier wording and are kept for history.
+> **The town is now medieval (2026-11-22).** **d3:4b `words` is current** (70% overall, 48% pairs on the medieval wording; the modern wording scored 72% / 48%, so the re-theme cost about 4 points, recovered from 8 with plain glosses like "the Guild Fund, a broad index fund"). The other model rows (Kev, d3:2b, `focused`) were measured on earlier wording and are kept for history.
 
 <details open markdown="block">
 <summary>Contents</summary>
@@ -54,7 +54,7 @@ Which decision model best plays a sim "in character"? Every model here is graded
 | **d3:2b** | 2.4B Q8_0 | RTX 4070 Super (Ollama) | focused ★ | **66%** | 80% | 73% | 93% | 75% | **44%** |
 | d3:2b | 2.4B Q8_0 | RTX 4070 Super (Ollama) | words | 61% | 72% | 60% | 93% | 50% | 44% |
 | **d3:4b** | 4.8B Q8_0 | RTX 4070 Super (Ollama) | focused ★ | **72%** | 90% | 90% | 93% | 94% | **44%** |
-| d3:4b | 4.8B Q8_0 | RTX 4070 Super (Ollama) | words | 68% | 85% | 87% | 93% | 88% | 43% |
+| d3:4b | 4.8B Q8_0 | RTX 4070 Super (Ollama) | words | 70% | 85% | 87% | 93% | 88% | 48% |
 
 <!-- /generated:leaderboard -->
 

@@ -24,7 +24,7 @@ export async function runWorld(o: RunOptions): Promise<{ world: World; decisions
   let world: World;
   let resumedFrom: number | null = null;
   if (o.resume && (resumedFrom = store.latestSnapshot()) !== null) world = store.resume(resumedFrom);
-  else world = await growHistory(createWorld(o.seed, o.pop), o.historyYears ?? HISTORY_YEARS);
+  else { world = await growHistory(createWorld(o.seed, o.pop), o.historyYears ?? HISTORY_YEARS); if (world.pastMilestones) store.seedPast(world.pastMilestones); }
   const decisions: DecisionRecord[] = [];
   let calls = 0, fallbacks = 0;
   while (world.month < o.months) {

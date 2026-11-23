@@ -2,9 +2,12 @@
 // cohort (by year 50, 86 of 200 sims are in their 60s and 3 in their 40s). growHistory runs the town for decades with
 // the rules before the visible start, then re-bases the clock so month 0 is "today": every age is present, and
 // wealth, homes, debts and businesses come out of the same rules that run the visible era.
-import type { Decider, World } from './types.ts';
+import type { Decider, SimEvent, World } from './types.ts';
 import { runMonth } from './tick.ts';
 import { heuristicDecider } from './heuristic.ts';
+
+/** Event types kept from the history as life milestones (so an older resident's story doesn't start at month 0). */
+export const HISTORY_MILESTONES = new Set(['arrived', 'inherited', 'started_career', 'bought_home', 'bought_rental', 'sold_rental', 'started_business', 'business_exit', 'business_failed', 'laid_off', 'retired', 'bankrupt']);
 
 /** Years of history a new town gets by default (long enough that the first arrivals have mostly died and been replaced). */
 export const HISTORY_YEARS = 70;
@@ -24,7 +27,11 @@ export async function growHistory(world: World, years = HISTORY_YEARS, decider: 
   const seed = world.seed;
   world.seed = historySeed(seed);
   const months = Math.round(years * 12);
-  while (world.month < months) await runMonth(world, decider);
+  const past: SimEvent[] = [];
+  while (world.month < months) {
+    const r = await runMonth(world, decider);
+    for (const e of r.events) if (e.simId && HISTORY_MILESTONES.has(e.type)) past.push({ month: e.month, simId: e.simId, type: e.type, text: e.text });
+  }
   const shift = world.month;
   // Asset ids embed the month they were bought (`<sim>-<kind>-<month>`); after the clock restarts, a purchase in the
   // visible era could reuse one. Tag every history-era id with "-h" and follow it through loans and tenancies.
@@ -45,6 +52,8 @@ export async function growHistory(world: World, years = HISTORY_YEARS, decider: 
     for (const l of s.loans) if (l.deferredUntil !== undefined) l.deferredUntil -= shift;
     for (const a of s.assets) a.boughtMonth -= shift;
   }
+  const alive = new Set(world.sims.map((x) => x.id));
+  world.pastMilestones = past.filter((e) => alive.has(e.simId!)).map((e) => ({ ...e, month: e.month - shift }));
   world.month = 0;
   world.hallOfFame = [];
   world.seed = seed;

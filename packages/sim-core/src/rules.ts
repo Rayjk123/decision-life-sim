@@ -10,6 +10,8 @@ import {
 } from './finance.ts';
 
 export const MAX_DTI = 0.43;
+/** Rental purchases: lenders accept up to ~50% debt-to-income when the property's rent backs the loan (at 43%, most would-be landlords who own a home were never offered a rental). */
+export const MAX_DTI_RENTAL = 0.5;
 const roundTo = (c: number, step: number) => Math.round(c / step) * step;
 
 export interface HomeQuote { price: number; down: number; closing: number; loan: number; payment: number; carry: number; rate: number }
@@ -47,6 +49,16 @@ export function quoteRental(sim: Sim, world: World): HomeQuote & { rent: number;
 
 const signed = (c: number) => (c >= 0 ? `+${fmt(c)}` : fmt(c));
 
+/** How empty the town's cottages are, said as a consequence for a would-be landlord. */
+function vacancyNote(world: World, monthlyWhileEmpty: number): string {
+  const { vacantUnits: v, rentalUnits: n } = world.economy;
+  if (!v) return '';
+  const share = n ? v / n : 0;
+  return share >= 0.15
+    ? `, but ${v} of ${n} cottages to let in town stand empty, so it may sit empty for months, costing ${fmt(monthlyWhileEmpty)} a month while it does`
+    : ` (${v} of ${n} cottages to let in town stand empty)`;
+}
+
 export function legalMoves(sim: Sim, world: World): Move[] {
   const m = world.month;
   const moves: Move[] = [{ id: 'nothing', kind: 'nothing', description: 'Change nothing this month' }];
@@ -56,9 +68,12 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   const spare = sim.cash - cashCushion(sim, m);   // savings already holding part of the cushion frees that much cash
   const liquid = liquidAbove(sim, m); // purchases can sell investments for the down payment
 
+  // Consequences belong in the options themselves: the model scores moves, and red flags elsewhere in the state didn't move it (M-TOP 6).
+  const noWages = !sim.employed && !sim.selfEmployed && !sim.retired;
+  const riskNote = noWages ? '; with no wages coming in, this coin may be needed for bread and rent' : '';
   if (spare > dollars(2000)) {
-    moves.push({ id: 'invest_index', kind: 'invest_index', description: `Put spare coin in the ${FUND}, a broad index fund (up to ${fmt(spare)} available)` });
-    moves.push({ id: 'trade_stocks', kind: 'trade_stocks', description: `Buy stakes in ${VENTURES}, like single stocks: bigger swings than the ${FUND} (up to ${fmt(spare)})` });
+    moves.push({ id: 'invest_index', kind: 'invest_index', description: `Put spare coin in the ${FUND}, a broad index fund (up to ${fmt(spare)} available)${riskNote}` });
+    moves.push({ id: 'trade_stocks', kind: 'trade_stocks', description: `Buy stakes in ${VENTURES}, like single stocks: bigger swings than the ${FUND} (up to ${fmt(spare)})${riskNote}` });
     moves.push({ id: 'save_cash', kind: 'save_cash', description: `Put spare coin in the ${VAULT}, a high-yield savings account: safe, about +0.5%/yr after rising prices (up to ${fmt(spare)})` });
   }
 
@@ -90,10 +105,10 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   if (borrow && rentals(sim).length < 12) {
     const q = quoteRental(sim, world);
     const cashNeeded = q.down + q.closing;
-    if (liquid >= cashNeeded && dti(sim, m, q.payment + q.carry, q.rent) <= MAX_DTI) {
+    if (liquid >= cashNeeded && dti(sim, m, q.payment + q.carry, q.rent) <= MAX_DTI_RENTAL) {
       moves.push({
         id: 'buy_rental', kind: 'buy_rental', price: q.price, cashNeeded,
-        description: `Buy a ${RENTAL} for ${fmt(q.price)}: ${fmt(cashNeeded)} down and fees, about ${signed(q.netMonthly)} a month after the loan and upkeep once a tenant moves in${world.economy.vacantUnits > 0 ? ` (${world.economy.vacantUnits} of ${world.economy.rentalUnits} cottages to let in town stand empty)` : ''}`,
+        description: `Buy a ${RENTAL} for ${fmt(q.price)}: ${fmt(cashNeeded)} down and fees, about ${signed(q.netMonthly)} a month after the loan and upkeep once a tenant moves in${vacancyNote(world, q.payment + q.carry)}`,
       });
     }
   }

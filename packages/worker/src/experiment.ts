@@ -20,6 +20,7 @@ const { values: a } = parseArgs({
     'kev-url': { type: 'string' },
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
     out: { type: 'string', default: 'experiments' },
+    concurrency: { type: 'string', default: '8' },   // decisions sent to the model at once (d3 on Ollama: ~8.5/s at 8, ~2/s at 1)
   },
 });
 // `--decider model` is the documented name for "any /v1/systemone decision model" (Kev, d3, a fine-tuned model); `kev` is its
@@ -80,7 +81,7 @@ for (const name of a.deciders!.split(',')) {
   for (const seed of a.seeds!.split(',').map(Number)) {
     const t0 = Date.now();
     const dir = join(a.out!, `seed-${seed}-${name}`);
-    const res = await runWorld({ seed, pop: Number(a.pop), months, decider: deciderFor(name), outDir: dir });
+    const res = await runWorld({ seed, pop: Number(a.pop), months, decider: deciderFor(name), outDir: dir, concurrency: Number(a.concurrency) });
     const arch = new Map<string, string>();
     for (const s of res.world.sims) arch.set(s.id, s.archetype);
     for (const h of res.world.hallOfFame) arch.set(h.simId, h.archetype);

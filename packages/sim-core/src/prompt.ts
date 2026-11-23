@@ -6,7 +6,7 @@
 //   terse   - minimal labels, archetype name instead of the persona sentence
 import type { Move, Sim, StateStyle, World } from './types.ts';
 import { ARCHETYPE, BUSINESS, SPEND_LEVELS } from './data.ts';
-import { FUND, HOME_PRICES, JOBS_NAME, LOAN_NAME, RATE_NAME, VAULT, VENTURES } from './theme.ts';
+import { FUND, HOME_PRICES, JOBS_NAME, LOAN_NAME, marketNews, RATE_NAME, VAULT, VENTURES } from './theme.ts';
 import { fmt } from './money.ts';
 import { SHARE_LABELS } from './executor.ts';
 import {
@@ -70,7 +70,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
   const h = home(sim);
   const mk = world.market;
   const econ = world.economy;
-  const homeDir = mk.lastHomeReturn > 0.002 ? 'rising' : mk.lastHomeReturn < -0.002 ? 'falling' : 'flat';
+  const homeDir: 'rising' | 'falling' | 'flat' = mk.lastHomeReturn > 0.002 ? 'rising' : mk.lastHomeReturn < -0.002 ? 'falling' : 'flat';
 
   if (style === 'terse') {
     return {
@@ -95,7 +95,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     s.home = h ? `owns a home worth ${fmt(h.value)}` : `rents for ${fmt(housingCost(sim, m))} a month`;
     if (rs.length) s.cottages_let = `${rs.length} worth ${fmt(rs.reduce((sum, r) => sum + r.value, 0))}${empty ? `, ${empty} empty` : ''}`;
     if (biz.length) s.business = biz.map((b) => bizName(b.businessType)).join(', ');
-    s.economy = `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${homeDir}, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(1)}%, ${JOBS_NAME[mk.jobsSignal]}; ${econ.vacantUnits} of ${econ.rentalUnits} cottages to let stand empty`;
+    s.economy = `${marketNews(mk.lastIndexReturn, homeDir, mk.mortgageRate, mk.jobsSignal)}; ${econ.vacantUnits} of ${econ.rentalUnits} cottages to let stand empty`;
     const recent = dedupe(sim.memory).slice(0, 4);
     if (recent.length) s.recent = recent.join('; ');
     return s;
@@ -106,11 +106,21 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     : `risk taking ${level(t.risk)}, comfort with debt ${level(t.debt)}, status seeking ${level(t.status)}, patience ${level(t.patience)}, discipline ${level(t.discipline)}, follows the crowd ${level(t.herding)}`;
   const market = style === 'numbers'
     ? `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${pct(mk.lastHomeReturn)} last month, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(2)}%, ${JOBS_NAME[mk.jobsSignal]}`
-    : `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${homeDir}, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(1)}%, ${JOBS_NAME[mk.jobsSignal]}`;
+    : marketNews(mk.lastIndexReturn, homeDir, mk.mortgageRate, mk.jobsSignal);
 
+  // Red flags as consequences, near the top (backlog M-TOP 6: an unemployed sim still invested, investors bought into vacancies).
+  const warnings: string[] = [];
+  if (!inSchool(sim, m) && !sim.retired && !sim.selfEmployed && !sim.employed) warnings.push(`out of work for ${sim.monthsUnemployed} month${sim.monthsUnemployed === 1 ? '' : 's'}: no wages coming in`);
+  for (const l of sim.loans) if (l.balance >= 50_000 && l.annualRate >= 0.2) warnings.push(`owes ${fmt(l.balance)} to the moneylender at ${(l.annualRate * 100).toFixed(0)}%, costing about ${fmt(Math.round((l.balance * l.annualRate) / 12))} a month in interest`);
+  if (sim.missedPayments > 0) warnings.push('behind on payments');
+  if (sim.cash + (sim.savings ?? 0) < emergencyFloor(sim, m)) warnings.push(`coin is below the reserve ${firstName(sim)} likes to keep`);
+  if (econ.rentalUnits > 0 && econ.vacantUnits / econ.rentalUnits >= 0.15) warnings.push(`${Math.round((econ.vacantUnits / econ.rentalUnits) * 100)}% of the cottages to let in town stand empty`);
   return {
     person: `${sim.name}, ${age}, ${workLine(sim, world)}`,
     personality: sim.persona,
+    ...(warnings.length ? { warnings: warnings.join('; ') } : {}),
+    // Memories right after who they are (M-TOP 7: at the end of a long state they barely moved the model).
+    recent: sim.memory.length ? sim.memory.join('; ') : 'nothing notable lately',
     traits,
     money: `coin ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} in reserve)${sim.savings ? `, ${VAULT} ${fmt(sim.savings)}` : ''}, ${FUND} ${fmt(sim.index)}, ${VENTURES} ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
     debts: debts.length ? debts.join('; ') : 'no debt',
@@ -120,7 +130,6 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     business: biz.length ? biz.map((b) => bizName(b.businessType)).join(', ') : 'no business',
     market,
     town: `${econ.businessCount} shops and trades in town (${econ.demandIndex >= 1.1 ? 'busy' : econ.demandIndex >= 0.8 ? 'healthy' : 'crowded'}), ${econ.vacantUnits} of ${econ.rentalUnits} cottages to let stand empty`,
-    recent: sim.memory.length ? sim.memory.join('; ') : 'nothing notable lately',
   };
 }
 

@@ -190,6 +190,8 @@ export interface World {
   sims: Sim[];
   hallOfFame: HallOfFameEntry[];
   pendingEstates: Array<{ fromId: SimId; fromName: string; amount: Cents; heirs?: number }>;
+  /** Life milestones from the town's history (before month 0), for sims alive when it ended; see growHistory. */
+  pastMilestones?: SimEvent[];
 }
 
 /** Anything that turns (state, questions) into probabilities: Kev, Jev or the heuristic. */

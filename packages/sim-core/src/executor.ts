@@ -33,7 +33,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       post(sim, 'to_savings', -amt);
       sim.savings = (sim.savings ?? 0) + amt;
       remember(sim, `Put ${fmt(amt)} in the ${VAULT}`);
-      return { valid: true, events: [ev('saved', `Put ${fmt(amt)} into a savings account`, { amount: amt })] };
+      return { valid: true, events: [ev('saved', `Put ${fmt(amt)} in the ${VAULT}`, { amount: amt })] };
     }
 
     case 'invest_index':
@@ -76,7 +76,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets.push({ id, kind: 'home', value: q.price, boughtMonth: m });
       sim.loans.push({ id: `${id}-loan`, kind: 'mortgage', balance: q.loan, annualRate: q.rate, payment: q.payment, assetId: id });
       remember(sim, `Bought a ${q.tierLabel} for ${fmt(q.price)}`);
-      const events = [ev('bought_home', `Bought a ${fmt(q.price)} ${q.tierLabel} home`, { price: q.price, assetId: id, tier: q.tierLabel })];
+      const events = [ev('bought_home', `Bought a ${q.tierLabel} for ${fmt(q.price)}`, { price: q.price, assetId: id, tier: q.tierLabel })];
       // Moving into the new home ends any tenancy now, so no snapshot shows a sim both owning a home and renting
       // (found by the adversarial property test; settleRentals used to clean this up a month later).
       if (sim.rentsUnit) {
@@ -103,7 +103,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets.push({ id, kind: 'rental', value: q.price, boughtMonth: m, rent: q.rent, vacantMonths: 0 });
       sim.loans.push({ id: `${id}-loan`, kind: 'mortgage', balance: q.loan, annualRate: q.rate, payment: q.payment, assetId: id });
       remember(sim, `Bought a ${RENTAL} for ${fmt(q.price)}`);
-      return { valid: true, events: [ev('bought_rental', `Bought a ${fmt(q.price)} rental`, { price: q.price, assetId: id })] };
+      return { valid: true, events: [ev('bought_rental', `Bought a ${RENTAL} for ${fmt(q.price)}`, { price: q.price, assetId: id })] };
     }
 
     case 'sell_rental': {
@@ -120,7 +120,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets = sim.assets.filter((x) => x !== a);
       pruneLoans(sim, m);
       remember(sim, `Sold a ${RENTAL} for ${fmt(a.value)}`);
-      return { valid: true, events: [ev('sold_rental', `Sold a rental (${proceeds >= 0 ? '+' : ''}${fmt(proceeds)} cash)`, { proceeds })] };
+      return { valid: true, events: [ev('sold_rental', `Sold a ${RENTAL} (${proceeds >= 0 ? '+' : ''}${fmt(proceeds)} in coin)`, { proceeds })] };
     }
 
     case 'buy_car': {
@@ -144,7 +144,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.loans.push({ id: `${id}-loan`, kind: 'auto', balance: loanAmt, annualRate: rate, payment: amortizedPayment(loanAmt, rate, 60), assetId: id });
       pruneLoans(sim, m);
       remember(sim, `Bought a ${price >= CARRIAGE_FROM ? CARRIAGE : CART} for ${fmt(price)}`);
-      return { valid: true, events: [ev('bought_car', `Bought a ${fmt(price)} car`, { price })] };
+      return { valid: true, events: [ev('bought_car', `Bought a ${price >= CARRIAGE_FROM ? CARRIAGE : CART} for ${fmt(price)}`, { price })] };
     }
 
     case 'start_business': {
@@ -168,7 +168,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       const fullTime = isFullTimeBusiness(b) && sim.employed;
       if (fullTime) { sim.employed = false; sim.selfEmployed = true; sim.salary = 0; }
       remember(sim, `Started a ${b.label.toLowerCase()}${fullTime ? ' and left the craft to run it' : ''}`);
-      return { valid: true, events: [ev('started_business', `Started a ${b.label.toLowerCase()}${fullTime ? ' and quit the job to run it' : ' on the side'}`, { businessType: b.key, startup: b.startup, fullTime })] };
+      return { valid: true, events: [ev('started_business', `Started a ${b.label.toLowerCase()}${fullTime ? ' and left the craft to run it' : ' on the side'}`, { businessType: b.key, startup: b.startup, fullTime })] };
     }
   }
 }

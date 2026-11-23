@@ -175,6 +175,16 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### Iteration 34 · P1 behaviour: market news, red flags, memories, rentals, a bankruptcy bug, and older residents' life stories
+- **Market news as consequences** (`theme.marketNews`): "the Guild Fund crashed 9.4% last month, the worst fall in years; work is scarce and people are being let go" instead of bare percentages (public facts only; the regime stays hidden).
+- **Red flags**: a `warnings` line near the top (out of work, moneylender's debt and its monthly interest, behind on payments, below the reserve, many empty cottages), and the consequence inside the options themselves (investing with no wages: "this coin may be needed for bread and rent"; a rental in an emptying town: "may sit empty for months, costing X a month"). **d3 ignored all of it**: S-unemployed still invests 47-53%, S-rentals-empty still buys at 95%, wherever the warning sits. That's a d3 limit, not wording; the fine-tuned E06 passed exactly these (see docs/finetune).
+- **Memories** moved up, right after the personality.
+- **Rentals were rarely legal, not rarely chosen**: real estate investors were offered a rental in 3% of decisions; 56% failed the 43% debt-to-income cap (most own a home already). Rental purchases now allow 50% (rent counts at 75%): offers 3% → 5%. Business owners: 87% already own a business (one at a time), so few start another; realistic. New tool `scripts/decision-mix.ts` (per archetype: what they pick, signature offered vs picked-when-offered).
+- **Bug**: bankruptcy seized cottages but left their tenants pointing at them until next month (more rentals exposed it); tenants now move out at once. The resume test compares worlds with sorted keys (an `undefined` field keeps its slot; a snapshot-reloaded one is absent).
+- **Older residents' stories**: `growHistory` keeps history-era milestones (`world.pastMilestones`) and the store seeds them, so the life panel shows a 73-year-old's whole life, not just month 0 on (the UX smoke caught a one-line timeline).
+- d3:4b `words`: **70% overall, 48% pairs** (was 68/43 after the re-theme; modern 72/48). Published.
+
+
 ### Iteration 33 · P0.1: d3 re-measured on the medieval wording, wording tuned (user: "stick with d3"; handle P0 and P1)
 - First medieval run: d3:4b `words` **64% overall, 38% pairs** (modern: 72% / 48%). Failures pointed at words: the entrepreneur's persona said "ventures" (= the risky investment's name) → A-biz picked it; "tavern tab" didn't read as 24% debt; "horse and cart" doesn't tempt a status seeker; golden memories were still modern ("Lost $20k on individual stocks").
 - Fixes, each re-measured: golden memories re-themed; stocks → **trading voyages** ("venture" means starting a business in plain English); expensive vehicles are a **fine carriage**; the card is "moneylender's debt (like a credit card)"; persona fixes (biz, status); **plain glosses for the model** ("the Guild Fund, a broad index fund"; "trading voyages, like single stocks"; "the counting-house vault, a high-yield savings account"); pay-debt says what the debt costs a year. Runs: 64/38 → 66/43 → 65/38 → 68/43 → **68/43** (plateau).

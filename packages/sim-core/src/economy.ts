@@ -76,8 +76,8 @@ export function releaseTenancies(world: World, dead: Sim, m: number): SimEvent[]
     if (landlord && unit && unit.tenantId === dead.id) {
       unit.tenantId = undefined;
       unit.vacantMonths = 0;
-      remember(landlord, 'A rental went vacant');
-      out.push({ month: m, simId: landlord.id, type: 'vacancy', text: 'A rental went vacant (the tenant passed away)' });
+      remember(landlord, 'A tenant died and a cottage stands empty');
+      out.push({ month: m, simId: landlord.id, type: 'vacancy', text: 'A cottage to let went vacant (the tenant passed away)' });
     }
     dead.rentsUnit = undefined; dead.landlordId = undefined; dead.unitRent = undefined;
   }
@@ -98,7 +98,7 @@ export function settleRentals(world: World): SimEvent[] {
   for (const s of world.sims) {
     if (s.rentsUnit && !unitIds.has(s.rentsUnit)) {
       s.rentsUnit = undefined; s.landlordId = undefined; s.unitRent = undefined;
-      out.push({ month: m, simId: s.id, type: 'moved_out', text: 'Had to move out: the rental was sold' });
+      out.push({ month: m, simId: s.id, type: 'moved_out', text: 'Had to move out: the cottage was sold' });
     }
   }
 
@@ -106,8 +106,8 @@ export function settleRentals(world: World): SimEvent[] {
     unit.tenantId = undefined;
     unit.vacantMonths = 0;
     if (tenant) { tenant.rentsUnit = undefined; tenant.landlordId = undefined; tenant.unitRent = undefined; }
-    out.push({ month: m, simId: owner.id, type: 'vacancy', text: `A rental went vacant (${why})` });
-    remember(owner, 'A rental went vacant');
+    out.push({ month: m, simId: owner.id, type: 'vacancy', text: `A cottage to let went vacant (${why})` });
+    remember(owner, 'A tenant moved out and a cottage stands empty');
   };
 
   // 1. Departures: the tenant died, bought a home, or moved away.

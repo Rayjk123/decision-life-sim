@@ -47,3 +47,20 @@ export const JOBS_NAME = { strong: 'work is plentiful', steady: 'work is steady'
 /** Rates and prices in the market line. */
 export const RATE_NAME = "moneylender's rate";
 export const HOME_PRICES = 'house prices';
+
+/**
+ * The market as townsfolk hear it: size and consequence, not just a percentage (backlog M-TOP 5: bare numbers
+ * didn't move the model). Uses only public facts: the fund's last month, house prices, the rate and the job news.
+ */
+export function marketNews(indexReturn: number, homeDir: 'rising' | 'falling' | 'flat', rate: number, jobs: 'strong' | 'steady' | 'weak'): string {
+  const pctTxt = `${Math.abs(indexReturn * 100).toFixed(1)}%`;
+  const fund = indexReturn <= -0.07 ? `the ${FUND} crashed ${pctTxt} last month, the worst fall in years`
+    : indexReturn <= -0.03 ? `the ${FUND} fell sharply, ${pctTxt} last month`
+    : indexReturn <= -0.01 ? `the ${FUND} slipped ${pctTxt} last month`
+    : indexReturn >= 0.06 ? `the ${FUND} soared ${pctTxt} last month and everyone is talking about it`
+    : indexReturn >= 0.03 ? `the ${FUND} rose strongly, ${pctTxt} last month`
+    : indexReturn >= 0.01 ? `the ${FUND} rose ${pctTxt} last month`
+    : `the ${FUND} barely moved last month`;
+  const work = jobs === 'weak' ? 'work is scarce and people are being let go' : jobs === 'strong' ? 'work is plentiful and wages are rising' : 'work is steady';
+  return `${fund}; ${work}; ${HOME_PRICES} ${homeDir}; ${RATE_NAME} ${(rate * 100).toFixed(1)}%`;
+}

@@ -40,7 +40,9 @@ test('resuming from a snapshot gives exactly the same world as running straight 
   await runWorld({ seed: 4, pop: 50, months: 24, decider: heuristicDecider, outDir: b });
   const resumed = await runWorld({ seed: 4, pop: 50, months: 36, decider: heuristicDecider, outDir: b, resume: true });
   assert.equal(resumed.resumedFrom, 24);
-  assert.equal(JSON.stringify(resumed.world), JSON.stringify(straight.world));
+  // Same values, key order aside (a field set to undefined keeps its slot; one reloaded from a snapshot is absent).
+  const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.keys(x).sort().map((k) => [k, (x as Record<string, unknown>)[k]])) : x));
+  assert.equal(canon(resumed.world), canon(straight.world));
   const months = readFileSync(join(b, 'log/events.ndjson'), 'utf8').trim().split('\n').map((l) => JSON.parse(l).month);
   assert.equal(Math.max(...months), 36);
 });

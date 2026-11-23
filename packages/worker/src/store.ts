@@ -233,6 +233,9 @@ export class WorldStore {
   /** Write every living sim's journey (end of a run). */
   flush(world: World) { for (const s of world.sims) this.writeJourney(s.id); }
 
+  /** Milestones from the town's history (negative months), so older residents' stories start before month 0. */
+  seedPast(events: SimEvent[]) { for (const e of events) this.addLife(e); }
+
   /** Recent events (newest first, capped) plus a separate, chronological list of life milestones. */
   private addLife(e: SimEvent) {
     const list = this.life.get(e.simId!) ?? [];

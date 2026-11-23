@@ -313,6 +313,12 @@ export function bankrupt(world: World, sim: Sim): SimEvent[] {
   // Sell property and investments; secured loans are paid from their collateral where possible.
   let recovered = 0;
   for (const a of [...sim.assets]) {
+    // A seized cottage's tenant moves out now, as on a sale (otherwise they point at a unit that no longer exists until next month).
+    if (a.kind === 'rental' && a.tenantId) {
+      const t = world.sims.find((x) => x.id === a.tenantId);
+      // delete (not = undefined): a snapshot-resumed world has no such keys, and replays must be byte-identical
+      if (t && t.rentsUnit === a.id) { delete t.rentsUnit; delete t.landlordId; delete t.unitRent; }
+    }
     const loan = sim.loans.find((l) => l.assetId === a.id);
     if (a.kind === 'home' || a.kind === 'rental') recovered += Math.max(0, Math.round(a.value * 0.9) - (loan?.balance ?? 0));
     if (loan) loan.balance = 0;
