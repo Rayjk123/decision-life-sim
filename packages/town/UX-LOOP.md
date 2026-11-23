@@ -59,3 +59,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The current view is marked on its button. A visitor who stopped following stays unfollowed when switching views.
 - Isolated Chrome passed at 1440 × 900 and 320 × 640, including switching from a paused workplace visit, preserving its outside state, restoring distinct zoom levels, and keeping the profile open.
 - Round 9 should add a little motion to quiet stops and commission the next independent review.
+
+## Round 9
+
+- At rest, residents occasionally shift their weight. Their feet stay planted, and the gesture varies by scene. The cottage hearth has a few slow sparks. Both effects respect reduced motion and use the local playhead.
+- The town clock describes the time of day. The resident caption alone describes the resident's activity.
+- Isolated Chrome verified changing cottage pixels and a workplace posture shift at 1440 × 900. At 320 × 640 with reduced motion, the same settled cottage stayed pixel-identical as time advanced.
+- The independent review is running against the prior build. Round 10 should address its highest-impact remaining watch issue before moving into the deeper data phase.

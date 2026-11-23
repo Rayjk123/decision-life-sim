@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 9
+
+- Cottage hearth sparks and small shifts in posture add motion to quiet stops. Reduced motion leaves settled interiors still. The town clock shows time of day alongside the resident’s individual activity.
+- Isolated Chrome checked the animated cottage and workplace on desktop and a still reduced-motion interior on a narrow phone. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 8
 
 - Street and Overview remember separate camera settings. Switching views keeps the profile, open Advanced section, Follow state and playhead. The selected map view is visibly marked.

@@ -388,9 +388,15 @@ function drawInterior(placeKey,person,progress,w,h,p,animated){
   const edge=!animated?1:atHome?(morning?1-progress:progress):Math.min(progress,1-progress);
   const acrossFloor=clamp(edge/.16,0,1);
   const leaving=acrossFloor<1&&(atHome?morning:progress>.5);
-  const stride=acrossFloor<1?p*frame.duration*Math.PI/240:null;
+  const clock=p*frame.duration;
+  const stride=acrossFloor<1?clock*Math.PI/240:null;
   const transition=1-clamp(edge/.06,0,1);
   const workplace=workplaceScenes[placeKey];
+  const idlePeriod=atHome ? 7200 : workplace ? 4400 : 5600;
+  const idleTime=(clock+hash(person.id)%1200)%idlePeriod;
+  const lean=workplace ? .055 : placeKey==='bakery' ? -.04 : .025;
+  const shift=animated&&stride===null&&idleTime<1000
+    ?Math.sin(idleTime/1000*Math.PI)**2*lean:0;
   const imageName=workplace?'work-'+workplace.art
     :{home:eveningAmount(p)<.5?'cottage-day':'cottage',bakery:'bakery',realtor:'work-land-office'}[placeKey];
   const variant=imageName&&sceneArt(imageName);
@@ -409,7 +415,8 @@ function drawInterior(placeKey,person,progress,w,h,p,animated){
     if(!atHome&&eveningAmount(p)<1){
       ctx.globalAlpha=.12*(1-eveningAmount(p));draw(ctx,x,y,width,height,'#ffd7a1');ctx.globalAlpha=1;
     }
-    drawPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
+    if(atHome&&animated)drawHearth(x,y,width,height,clock);
+    drawPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1,shift);
     shadeDoorway(w,h,transition);
     hits=[];scene=null;
     return;
@@ -446,12 +453,23 @@ function drawInterior(placeKey,person,progress,w,h,p,animated){
   }
   const y=140-31*acrossFloor;
   draw(ctx,113,y+1,14,3,'#fbd15a');
-  drawPerson(person,120,y,32,stride,true,leaving?-1:1);
+  drawPerson(person,120,y,32,stride,true,leaving?-1:1,shift);
   label(ctx,120,y-17,person.name);
   label(ctx,120,39,room.name,room.trim);
   ctx.resetTransform();
   shadeDoorway(w,h,transition);
   hits=[];scene=null;
+}
+function drawHearth(x,y,w,h,clock){
+  const size=Math.max(1,Math.round(h*.004));
+  for(let i=0;i<3;i++){
+    const rise=((clock+i*480)%1600)/1600;
+    ctx.globalAlpha=.6*Math.sin(rise*Math.PI);
+    const left=x+w*(.827+i*.009+rise*.008);
+    const top=y+h*(.585-rise*.085);
+    draw(ctx,Math.round(left),Math.round(top),size,size,'#ffd082');
+  }
+  ctx.globalAlpha=1;
 }
 function shadeDoorway(w,h,amount){
   if(amount<=0)return;
@@ -513,7 +531,7 @@ function streetPosition(person,p){
   }
   return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing,walking};
 }
-function drawPerson(person,x,y,height,phase,focused,facing=1){
+function drawPerson(person,x,y,height,phase,focused,facing=1,lean=0){
   const cycle=lookIndex(person.id)===0&&redCoatFrames.length===9;
   const frameIndex=phase===null?8:Math.floor(phase*8/(Math.PI*4))%8;
   const sprite=cycle?redCoatFrames[frameIndex]:appearance(person.id);
@@ -526,6 +544,7 @@ function drawPerson(person,x,y,height,phase,focused,facing=1){
   ctx.save();
   ctx.translate(Math.round(x),Math.round(y-height));
   ctx.scale(facing,1);
+  if(lean)ctx.transform(1,0,-lean,1,lean*height,0);
   if(cycle||phase===null||height<24){
     ctx.drawImage(sprite,-Math.round(width/2),0,Math.round(width),Math.round(height));
   }else{
@@ -663,7 +682,7 @@ function drawFrame(time){
     $('date').textContent=frame.label+' · '+String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
     $('day').value=p;
     $('market').textContent=frame.sims.length+' residents · '+title(frame.market)+' · Mortgages '+(frame.rate*100).toFixed(1)+'%';
-    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+(p<.30?'Morning commute':p<.48?'At work':p<.78?'Afternoon errands':p<1?'Heading home':'Waiting for next month');
+    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+(p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening':'Waiting for next month');
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
     const w=Math.max(1,canvas.clientWidth), h=Math.max(1,canvas.clientHeight);
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
