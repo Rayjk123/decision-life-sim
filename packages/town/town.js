@@ -637,7 +637,7 @@ async function poll(){
     refreshNeighbors(next.sims);
     if(newMonth){
       liveProgress=0;
-      if(!paused)localProgress=speed===1?null:0;
+      if(!paused&&localProgress!==null)localProgress=0;
       if(selected&&!get()){leaveFollow(false);selected=null;advancedFor=null;}
       const living=new Set(next.sims.map(s=>s.id));
       for(const id of outfits.keys())if(!living.has(id))outfits.delete(id);
@@ -935,12 +935,40 @@ $('ranking').onclick=()=>{
 };
 $('toggle').onclick=()=>setWorld($('world').hidden);
 $('close-world').onclick=()=>setWorld(false);
-$('pause').onclick=()=>{paused=!paused;localProgress=paused||speed!==1?$('day').value:null;$('pause').textContent=paused?'Resume':'Pause';$('pause').setAttribute('aria-pressed',paused);};
-for(const button of document.querySelectorAll('[data-speed]'))button.onclick=()=>{
-  speed=Number(button.dataset.speed);localProgress=paused||speed!==1?$('day').value:null;
-  for(const b of document.querySelectorAll('[data-speed]'))b.setAttribute('aria-pressed',b===button);
+const speedButtons=document.querySelectorAll('[data-speed]');
+function updatePlaybackControls(){
+  $('pause').textContent=paused?'Resume':'Pause';
+  $('pause').setAttribute('aria-pressed',paused);
+  for(const button of speedButtons)button.setAttribute('aria-pressed',Number(button.dataset.speed)===speed);
+  $('live').disabled=localProgress===null;
+  $('live').textContent=localProgress===null?'Live':'Go live';
+}
+function keepLocalTime(){
+  localProgress??=$('day').value;
+  lastTime=performance.now();
+}
+$('pause').onclick=()=>{
+  if(!frame)return;
+  keepLocalTime();
+  paused=!paused;
+  updatePlaybackControls();
 };
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){lastTime=performance.now();if(!paused)localProgress=speed===1?null:$('day').value;poll();}});
+for(const button of speedButtons)button.onclick=()=>{
+  const next=Number(button.dataset.speed);
+  if(!frame||next===speed)return;
+  keepLocalTime();
+  speed=next;
+  updatePlaybackControls();
+};
+$('live').onclick=()=>{
+  localProgress=null;
+  paused=false;
+  speed=1;
+  // The action becomes disabled while live, so keep keyboard focus in the controls.
+  if(document.activeElement===$('live'))$('pause').focus({preventScroll:true});
+  updatePlaybackControls();
+};
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){lastTime=performance.now();poll();}});
 document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;
   if(!$('world').hidden)setWorld(false);
   else if(document.activeElement.closest('#resident, #place'))document.activeElement.closest('aside').querySelector('[data-focus-key=close]')?.click();

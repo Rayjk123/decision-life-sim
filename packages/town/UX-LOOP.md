@@ -45,4 +45,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 
 - Illustrated interiors fill more of a tall canvas. The crop follows the resident while preserving the wide illustration on desktop.
 - Chrome verified daylight cottage and infirmary framing at 320 × 640, 390 × 844, and 1440 × 900. Both phone views enlarged the interior and kept the resident visible. Opening the profile preserved Follow.
-- The independent Round 6 review was launched against the prior build and is still pending. Carry its findings into Round 7 when it returns.
+- The independent review followed one resident from the cottage through Guildhall and Maple Bakery, then back home on desktop and phone. It found that returning to 1× rewound the same day, switching Street and Overview reset parts of the viewer setup, and stationary interiors felt static. Round 7 addresses the rewind.
+
+## Round 7
+
+- Changing speed keeps the local playhead, including when switching back to 1× at dusk. Pause and Resume preserve the same local time. Go live is a separate control that joins the shared clock and restores normal speed.
+- Isolated Chrome passed at 1440 × 900 and 320 × 640. It checked 12× to dusk, 1× at dusk, pause and resume, speed changes while paused, and explicitly returning to the current shared clock.
+- Round 8 should preserve the resident profile and camera settings when switching between Street and Overview. Round 9 can add restrained idle activity and review the whole route again.

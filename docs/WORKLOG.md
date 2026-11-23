@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 7
+
+- Changing playback speed or resuming preserves the playhead in the current month. Go live explicitly returns to the shared town clock at 1×.
+- The Round 6 review found this rewind, view switches resetting the profile and zoom, and idle scenes holding perfectly still. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 6
 
 - Tall phone views bring the cottage and workplaces closer while keeping the followed resident in frame. Desktop interiors retain the wide composition.
