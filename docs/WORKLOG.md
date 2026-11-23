@@ -7,6 +7,13 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · isolated pixel-town branch
+
+- Added a watch-only town with a shared 90-second month clock, resident follow mode, leaderboard, and an optional decision feed showing actual move probabilities and draws.
+- The standalone town uses its own checkpoint and port. It starts with the heuristic and can connect to a decision model through `DECISION_URL` in a separate deployment.
+- Added a standalone AWS deployment with CloudFront and S3 for static files, a throttled API Gateway route to Lambda, and a private S3 checkpoint. The next month is prepared when a viewer polls, and conditional writes keep concurrent viewers on one timeline. The clock resumes from the last observed phase after 15 minutes away.
+- See [the town runbook](../packages/town/README.md) for launch and deployment.
+
 ## Handoff to the next session (start here)
 
 **Verified**
