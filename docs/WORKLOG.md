@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 2
+
+- The resident profile keeps Follow beside the name and leaves room for the scene on small phones. Chrome verified touch scrolling and camera panning against an isolated town.
+- Next round focuses on doors and transitions. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 1
 
 - Following a working resident opens one of seven illustrated workplace scenes based on their career. The resident name opens their card from inside or outside. The overview keeps the selected resident.

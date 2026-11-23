@@ -209,6 +209,7 @@ function renderPanels(){
     panel.append(list,close);
   },canvas);
   resident.hidden=view==='street'||place!==null||(view!=='ranking'&&!sim);
+  resident.dataset.mode=view==='ranking'?'ranking':'profile';
   $('ranking').setAttribute('aria-expanded',view==='ranking'&&!resident.hidden);
   renderPanel(resident,panel=>{
     if(panel.hidden)return;
@@ -223,7 +224,10 @@ function renderPanels(){
       leaveFollow(false);selected=null;advancedFor=null;renderPanels();canvas.focus();
     };
     const header=element('div',null,'panel-heading');
-    header.append(heading,close);
+    const actions=element('div',null,'resident-actions');
+    if(view!=='ranking')actions.append(followButton());
+    actions.append(close);
+    header.append(heading,actions);
     panel.append(header);
     if(view==='ranking'){
       panel.append(element('p','Current residents ranked by net worth.'));
@@ -251,7 +255,7 @@ function renderPanels(){
     const portraitBrush=portrait.getContext('2d');portraitBrush.imageSmoothingEnabled=false;
     portraitBrush.drawImage(sprite,(24-sprite.width*portraitScale)/2,32-sprite.height*portraitScale,sprite.width*portraitScale,sprite.height*portraitScale);
     const identity=element('div',null,'resident-identity');
-    identity.append(portrait,element('p',sim.age+' · '+title(sim.career)),element('span',title(sim.arch),'badge'),followButton());
+    identity.append(portrait,element('p',sim.age+' · '+title(sim.career)),element('span',title(sim.arch),'badge'));
     panel.append(identity,statGrid([['Net worth',knownMoney(sim.nw)],['Cash',knownMoney(sim.cash)],['Debt',knownMoney(sim.debt)]]));
     panel.append(element('p','Recorded move · '+(sim.move?title(sim.move):'No decision recorded this month')),decisionDetails(sim));
     panel.append(element('h3','Recent life events'));
@@ -816,6 +820,7 @@ canvas.addEventListener('pointermove',event=>{
   if(drag.id!==event.pointerId)return;
   const dx=point.x-drag.x,dy=point.y-drag.y;
   if(!drag.moving&&Math.hypot(dx,dy)<5)return;
+  if(!drag.moving&&event.pointerType==='touch'&&Math.abs(dy)>Math.abs(dx))return;
   leaveFollow();hover=null;canvas.classList.add('dragging');
   if(scene){streetPan=clamp((streetPan??(canvas.clientWidth*.5-scene.x)/scene.width)-dx/scene.width,0,1);drag={...point,id:drag.id,moving:true};return;}
   camera.x-=dx/transform.scale;camera.y-=dy/transform.scale;

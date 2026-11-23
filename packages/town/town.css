@@ -52,7 +52,8 @@ aside{overflow-wrap:anywhere}
 .panel-heading h2{margin:0}
 .resident-identity{display:flow-root;margin-bottom:10px}
 .resident-identity p{margin:0 0 4px}
-.resident-identity .follow{display:inline-block;margin:0 0 0 6px}
+.resident-actions{display:flex;flex:none;gap:6px}
+.resident-actions .follow{margin:0}
 .stats{grid-template-columns:repeat(2,minmax(0,1fr));margin:0}
 .stats dt{font-size:12px}
 .stats dd{margin:2px 0 0;font-weight:650;font-variant-numeric:tabular-nums}
@@ -75,6 +76,11 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
   header{grid-template-columns:minmax(0,1fr) max-content;grid-template-areas:"brand clock" "actions actions" "controls market"}
   .header-actions{flex-wrap:wrap}
   #market{white-space:normal;text-align:right}
+}
+@media(max-width:570px){
+  main:has(#resident[data-mode="profile"]:not([hidden])) #map{height:clamp(215px,39dvh,340px)}
+  #town{touch-action:pan-y}
+  .resident-actions button{min-height:44px}
 }
 @media(max-width:360px){
   header{grid-template-areas:"brand clock" "actions actions" "controls controls" "market market"}

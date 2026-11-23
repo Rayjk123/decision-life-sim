@@ -12,3 +12,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Added an inspect button in follow mode and kept the selected resident when switching between the illustrated street and the overview.
 - Independent review found that interior scenes trapped first-time viewers out of the resident card, phone follow controls could sit below the fold, and the illustrated street reused the same doors. Addressed the first finding and part of the third. Next, fix phone follow controls and make doors and transitions reflect the location being visited.
 - Verified all seven workplace backgrounds in Chrome, including opening the resident card from inside, stepping back outside, and continuing to an errand and home. The full gate passed with 96 tests and 38 dashboard UX checks.
+
+## Round 2
+
+- Moved Follow beside the resident name. On phones, opening the profile makes room under the scene for the profile heading and controls. Vertical swipes scroll the page and horizontal swipes pan the scene.
+- Chrome passed at 320 × 640, 390 × 844, and 1440 × 900 against a local town with an isolated checkpoint. Verified Follow visibility and toggling, vertical swipes preserving follow, and horizontal pans leaving follow.
+- Round 3 should clarify doorway transitions and commission the next independent review.
