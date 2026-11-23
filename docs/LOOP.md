@@ -177,6 +177,10 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### P0.2 result · 20-year d3 world on the medieval town
+- Separation d3 58% vs heuristic 35%. Real estate investors: rental offered 12% of decisions, taken 91% when offered (the 50% rental DTI worked). **Trading voyages are the default for business owners (70%), spenders (37%) and status seekers (22%)**: the next P1 target (see HANDOFF.md).
+
+
 ### Iteration 35 · P1.8: "Why?" probes (the backend for the UX's "what changes the odds")
 - `sim-core/src/probe.ts`: `probe(world, simId, changeId, decider)` clones the world, changes ONE fact, rebuilds the request exactly as a month does (`buildRequest`), re-asks the decider, and returns base and variant odds, the biggest shifts, and moves that became (il)legal. Changes: wages back, just laid off, no debts, twice the coin, a 20% raise, a crash, a boom, no memories, bolder, more cautious; `probeChangesFor(sim, world)` lists only those that apply. Never mutates the world; deterministic (tests in `probe.test.ts`).
 - CLI: `npm run probe -- --world <dir> [--sim <id>] [--change <id>|all] [--decider model --decision-url … --model d3]` (latest snapshot).

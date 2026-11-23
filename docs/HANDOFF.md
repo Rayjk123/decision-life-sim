@@ -17,13 +17,19 @@ Written for the next agent picking up **decision behaviour and simulation** work
 
 ## Open tasks, in priority order
 
-### P0 · finish the d3 baseline on the medieval town
-1. **20-year world with d3** (was running when this was written; outputs in `experiments/p0-medieval/`, gitignored). Re-run if missing:
-   `npm run experiment -- --deciders heuristic,model --model d3 --decision-url http://<ollama-host>:11434 --seeds 1 --years 20 --concurrency 8 --out experiments/p0-medieval` (~25 min), then
-   `npx tsx scripts/decision-mix.ts experiments/p0-medieval/seed-1-kev` and the same for `seed-1-heuristic`. Record the per-archetype decision mix (what each picks; signature move offered vs picked-when-offered) in `docs/LOOP.md` and as a table on the results page. This is the yardstick for P1.
+### P0 · d3 baseline on the medieval town: DONE (2026-11-22)
+20-year world, seed 1, 200 sims (`experiments/p0-medieval/`, gitignored; 48 min at ~4 decisions/s even at concurrency 8). Personality separation **d3 58%** vs heuristic 35%. Decision mix (`npx tsx scripts/decision-mix.ts experiments/p0-medieval/seed-1-kev`):
+
+| Archetype | d3 top picks | Signature offered · picked when offered |
+|---|---|---|
+| Real estate | vault 45%, Guild Fund 18%, sell 12%, rental 11% | 12% · **91%** (fixed by the 50% rental DTI) |
+| Business owner | **trading voyages 70%**, rental 7% | 14% · 29% |
+| Spender | **trading voyages 37%**, nothing 25%, Guild Fund 10% | 20% · 29% |
+| Status seeker | Guild Fund 31%, **trading voyages 22%**, nothing 14% | 24% · 21% |
+| Index / early retiree / saver / balanced / picker | their signature move | 63–99% |
 
 ### P1 · decision behaviour (top priority). Measure every change with d3: `npm run eval -- --decider model --decision-url … --model d3 --style words`, then `npm run eval:compare -- <new.json> --against docs/results/data/d3-4b-words.json`. Never ship a drop > 2 points overall or on pairs without a written reason.
-2. **Business owners**: in the last modern d3 world they picked stocks 75% of the time and started a business 5%. In a heuristic town 87% of business owners already own a business (one at a time), so starts are rare by design. Use the P0 world to see what d3 business owners pick *while* running a business; if it's mostly trading voyages, fix the wording or add an in-character move (e.g. "put profits back into the business": a small, keyed boost to its value/profit), with a rule, executor flow, heuristic weight and golden scenario.
+2. **Trading voyages as everyone's default** (top P1 item, from the P0 world): business owners pick them 70%, spenders 37%, status seekers 22%. Business owners: in the last modern d3 world they picked stocks 75% of the time and started a business 5%. In a heuristic town 87% of business owners already own a business (one at a time), so starts are rare by design. Use the P0 world to see what d3 business owners pick *while* running a business; if it's mostly trading voyages, fix the wording or add an in-character move (e.g. "put profits back into the business": a small, keyed boost to its value/profit), with a rule, executor flow, heuristic weight and golden scenario.
 3. **Red flags d3 ignores** (S-unemployed still invests ~50%; S-rentals-empty buys at 95%; S-card-debt invests over paying a 24% debt). Warnings are already in the state and inside the options; d3 doesn't react. Options: (a) accept and document; (b) a rules-level nudge where it's realistic (e.g. no new rental while the town's vacancy is extreme); (c) revisit the fine-tuned model, which passes these (see "Fine-tuning" below). Ask the user before (b) or (c).
 4. **Status seekers**: P-status-lawyer picks the fine carriage over the manor house; A-status spends at level 3–4 (should be ≥ 6). Try status-flavoured spend items and house wording; measure.
 5. **Small effects that flip** (memory-raise, lossaversion-save, crash/boom pairs): deltas are near zero; look for wording that makes memories and traits matter more (probes help: `npm run probe -- --world … --decider model … --change raise|cautious|crash`).
