@@ -49,7 +49,7 @@ Written for the next agent picking up **decision behaviour and simulation** work
 - "What changes the odds" panel: `probe(world, simId, id, decider, { base: recordedDecision.answers.main })`; `probeChangesFor(sim, world)` lists the toggles that apply.
 
 ## Fine-tuning (parked; how to resume)
-- Everything is in `docs/finetune/` (lab notebook, results, labelling rubric v1.10, a nine-lesson learning guide). Desktop training box: `C:\Users\User\dls-ft`, reached with `DLS_TRAINER=user@<desktop-host> research/finetune/sync.sh …`; GPU jobs go through `desktop/queue.ps1` launched as a **scheduled task** (not over SSH; see the notebook).
+- Everything is in `docs/finetune/` (lab notebook, results, labelling rubric v1.10, a nine-lesson learning guide). Desktop training box: `C:\Users\User\dls-ft`, reached with `DLS_TRAINER=user@<desktop-host> research/finetune/sync.sh …`; GPU jobs go through `desktop/queue.ps1` launched as a **scheduled task** (not over SSH) with a **far-future trigger** (`/sc once /sd 01/01/2099 /st 00:00`), deleted when done: a same-day placeholder time fires again that night and re-runs the queue (it happened once; see `queue.ps1`).
 - To retrain on the medieval wording without new labels: `npx tsx research/finetune/sample-states.ts` (deterministic: same ids, new wording) and the `--deals` set, then `make-dataset.ts --source haiku-plus-deals …` and E06's config. Labels key on ids, so they carry over.
 - The 4B run (E07) was stopped before finishing at the user's request.
 
