@@ -24,7 +24,8 @@
     "health": "tsx scripts/health.ts",
     "eval:compare": "tsx packages/evals/src/compare.ts",
     "eval:fingerprint": "tsx packages/evals/src/fingerprint.ts",
-    "ux": "tsx scripts/ux-smoke.ts"
+    "ux": "tsx scripts/ux-smoke.ts",
+    "town": "tsx packages/town/src/server.ts"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
