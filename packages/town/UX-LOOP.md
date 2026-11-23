@@ -127,4 +127,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Each recorded move can be compared with that resident’s previous retained decision. The comparison shows dates, sources, triggers, draws, sampled and final moves, offered-option changes, and raw odds changes for shared options.
 - New frames preserve four model inputs for the comparison: reserve and portfolio, monthly finances, warnings, and market. Earlier frames mark unavailable details. These inputs travel through the on-demand timeline, outside the regular scene polling payload.
 - Isolated Chrome at 1440 × 900 and 320 × 640 compared two actual decisions with a skipped month between them and verified the legacy state. A twelve-month sample with 1,000 residents held about 5.04 MB in the checkpoint.
-- The independent Round 18 review is still running against the previous build. Carry its findings into Round 19. The next feature to build is the decision mix by archetype and source.
+- The independent review replayed 740 retained draws and verified archived and legacy evidence on desktop and phone. It found two focus issues on rollover: a removed exact-values control sent focus to Leaderboard, and an inserted month could push a retained focused control off-screen.
+
+## Round 19
+
+- A focused timeline control that was visible stays in view as a new month is inserted. If a live decision disappears, focus returns to the Advanced decision details summary.
+- Isolated Chrome at 1440 × 900 and 320 × 640 reproduced both cases using two months from the same town and verified the resulting focus and viewport position.
+- Round 20 should build the decision mix by archetype and recorded source.

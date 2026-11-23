@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 19
+
+- A retained timeline control stays visible if a new month pushes it outside the viewport. When exact sampling controls disappear, keyboard focus returns to Advanced.
+- Next up is the decision mix by archetype and recorded source. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 18
 
 - Compare with previous decision shows the two dates, outcomes, sources, triggers, draws, offered moves and raw odds changes. It uses the previous recorded decision even when no decision was recorded in an intervening month.

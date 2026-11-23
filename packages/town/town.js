@@ -163,15 +163,27 @@ function residentButton(sim,text){
   return button;
 }
 
+function visibleInPanel(control,panel){
+  const box=control.getBoundingClientRect(), bounds=panel.getBoundingClientRect();
+  return box.height>0&&box.top>=Math.max(0,bounds.top)-1&&box.bottom<=Math.min(innerHeight,bounds.bottom)+1;
+}
+
 function renderPanel(panel,render,fallback){
   const scroll=panel.scrollTop;
-  const key=panel.contains(document.activeElement)?document.activeElement.dataset.focusKey:null;
+  const active=panel.contains(document.activeElement)?document.activeElement:null;
+  const key=active?.dataset.focusKey;
+  const sectionKey=active?.closest('.decision-details')?.querySelector(':scope > summary')?.dataset.focusKey;
+  const wasVisible=active&&visibleInPanel(active,panel);
   panel.replaceChildren();
   render(panel);
   panel.scrollTop=scroll;
   if(key){
-    const target=[...panel.querySelectorAll('[data-focus-key]')].find(node=>node.dataset.focusKey===key);
-    (target??fallback)?.focus({preventScroll:true});
+    const controls=[...panel.querySelectorAll('[data-focus-key]')];
+    const target=controls.find(node=>node.dataset.focusKey===key);
+    const section=controls.find(node=>node.dataset.focusKey===sectionKey);
+    const next=target??section;
+    (next??fallback)?.focus({preventScroll:true});
+    if(next&&(wasVisible||!target)&&!visibleInPanel(next,panel))next.scrollIntoView({block:'nearest'});
   }
 }
 
@@ -403,6 +415,8 @@ function residentHistory(sim,month){
   function updateRows(visible){
     const active=document.activeElement;
     const restoreFocus=list.contains(active);
+    const panel=details.closest('#resident');
+    const wasVisible=restoreFocus&&panel&&visibleInPanel(active,panel);
     const retained=new Set(visible.map(row=>row.month));
     for(const [id,row] of rows){
       if(!retained.has(id)){row.item.remove();rows.delete(id);}
@@ -415,9 +429,11 @@ function residentHistory(sim,month){
       retainedRow.compareDecision(visible.slice(i+1).find(month=>month.move));
       if(list.children[i]!==retainedRow.item)list.insertBefore(retainedRow.item,list.children[i]??null);
     }
-    if(restoreFocus&&document.activeElement!==active){
-      if(list.contains(active))active.focus({preventScroll:true});
-      else summary.focus();
+    if(restoreFocus){
+      if(list.contains(active)){
+        if(document.activeElement!==active)active.focus({preventScroll:true});
+        if(wasVisible&&!visibleInPanel(active,panel))active.scrollIntoView({block:'nearest'});
+      }else summary.focus();
     }
   }
   async function load(){
