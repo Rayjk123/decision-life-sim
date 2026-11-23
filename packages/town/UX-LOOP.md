@@ -26,3 +26,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Chrome verified the work-to-bank-to-home route and the inside/outside control on a desktop and a 320 px phone viewport with reduced motion.
 - Independent Chrome review confirmed continued follow and inside/outside controls on desktop and phone. It found that work and non-bakery errands share one illustrated doorway, making that walk look stationary. It also found zoom controls that change the displayed number without changing the scene.
 - Round 4 should separate destinations on the street, then make zoom controls reflect the active scene.
+
+## Round 4
+
+- Civic errands now lead across the bridge. The bakery uses its storefront, and work uses the workshop-side entrance. The bridge stands in for the rest of town in the illustrated view.
+- The street zoom shows magnification relative to the fitted scene. Fixed interiors show Fit and disable both zoom buttons. The overview keeps its existing zoom range.
+- Chrome at 1440 × 900 and 320 × 640 verified distinct exterior views at work and the bank, changed canvas pixels when zooming the street, and disabled zoom in both interiors.
+- Next, give the resident a quiet scene at home so following covers the start and end of the day.

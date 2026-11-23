@@ -101,6 +101,8 @@ for(const [i,b] of blocks.entries()){
 let frame, selected, view = 'resident', paused=false, speed=1, localProgress=null, lastTime=0, offset=0;
 let hits=[], transform={scale:1,x:0,y:0}, inFlight=false, lastPoll=0;
 const camera={x:420,y:300,zoom:2,following:false};
+const streetFitZoom=6.2;
+let interiorOpen=false;
 let hover=null, drag=null, liveProgress=0, snapFollow=false;
 let streetMode=true, opened=false, place=null, storyText="";
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
@@ -359,7 +361,7 @@ function openStreet(){
   if(!frame?.sims.length)return;
   const person=get()??frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
   selected=person.id;place=null;view='street';streetMode=true;streetPan=null;
-  Object.assign(camera,{zoom:6.2,following:true});
+  Object.assign(camera,{zoom:streetFitZoom,following:true});
   snapFollow=true;updateCameraControls();renderPanels();
 }
 const interiors={
@@ -474,7 +476,8 @@ function streetPosition(person,p){
   const lane=(hash(person.id)%9)*.008;
   const destination=destinationFor(person);
   const home=.13, work=person.working?.665:.78;
-  const errand=destination==='bakery' ? .523 : destination ? .665 : .58;
+  // Civic buildings are across the bridge. Only the bakery is on this block.
+  const errand=destination==='bakery' ? .523 : destination ? .88 : .58;
   const sidewalk=.77+lane, threshold=.681;
   const workY=person.working?threshold:sidewalk;
   const errandY=destination?threshold:sidewalk;
@@ -545,7 +548,7 @@ function drawStreet(focus,p,w,h){
   if(!ready(day))return false;
   const tone=eveningAmount(p);
   const point=focus&&streetPosition(focus,p);
-  const scale=Math.max(w/day.width,h/day.height)*Math.max(1,camera.zoom/6.2);
+  const scale=Math.max(w/day.width,h/day.height)*Math.max(1,camera.zoom/streetFitZoom);
   const width=day.width*scale,height=day.height*scale;
   const target=streetPan??(camera.following?point?.x:.5)??.5;
   const x=clamp(w*.5-width*target,Math.min(0,w-width),0);
@@ -659,15 +662,19 @@ function drawFrame(time){
     const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+activity+':'+destination:null;
     const inside=$('inside');
     inside.hidden=!stopId;
+    const viewingInterior=Boolean(stopId&&outsideStop!==stopId);
+    if(viewingInterior!==interiorOpen){
+      interiorOpen=viewingInterior;
+      updateCameraControls();
+    }
     if(stopId){
-      const viewing=outsideStop!==stopId;
-      inside.textContent=viewing?'Step outside':'Go inside';
-      inside.onclick=()=>{outsideStop=viewing?stopId:null;};
-      if(viewing){
-        drawInterior(destination,focus,progress,w,canvas.height,p,!reducedMotion.matches);
-        requestAnimationFrame(drawFrame);
-        return;
-      }
+      inside.textContent=interiorOpen?'Step outside':'Go inside';
+      inside.onclick=()=>{outsideStop=interiorOpen?stopId:null;};
+    }
+    if(interiorOpen){
+      drawInterior(destination,focus,progress,w,canvas.height,p,!reducedMotion.matches);
+      requestAnimationFrame(drawFrame);
+      return;
     }
     if(streetMode&&drawStreet(focus,p,w,h)){
       requestAnimationFrame(drawFrame);
@@ -830,13 +837,16 @@ function leaveFollow(refresh=true){
   if(refresh)renderPanels();
 }
 function updateCameraControls(){
-  $('zoom-level').value=Number(camera.zoom.toFixed(1))+'×';
-  $('zoom-out').disabled=camera.zoom<=1;
-  $('zoom-in').disabled=camera.zoom>=8;
+  const fit=streetMode?streetFitZoom:1;
+  $('zoom-level').value=interiorOpen?'Fit':Number((camera.zoom/fit).toFixed(1))+'×';
+  $('zoom-out').disabled=interiorOpen||camera.zoom<=fit;
+  $('zoom-in').disabled=interiorOpen||camera.zoom>=maxZoom();
 }
+const maxZoom=()=>streetMode?streetFitZoom*2:8;
 function zoom(factor,point){
+  if(interiorOpen)return;
   const old=camera.zoom;
-  camera.zoom=clamp(old*factor,1,8);updateCameraControls();
+  camera.zoom=clamp(old*factor,streetMode?streetFitZoom:1,maxZoom());updateCameraControls();
   if(!point||camera.following||scene)return;
   const {x,y,scale}=transform;
   const next=scale*camera.zoom/old;
