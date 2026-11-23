@@ -115,5 +115,6 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .decision-mix{margin-top:10px}
 .decision-mix select{display:block;width:100%;margin-top:4px;padding:5px}
 .mix-table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}
-.mix-table th,.mix-table td{padding:5px 3px;border-top:1px solid #776781;text-align:right}
+.mix-table th,.mix-table td{padding:5px 3px;border-top:1px solid #776781;text-align:right;overflow-wrap:normal}
 .mix-table th:first-child{text-align:left}
+.mix-status:empty{display:none}

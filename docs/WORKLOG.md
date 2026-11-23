@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 23
+
+- The decision mix labels final outcomes and the outcome rate among known offers. Reopening it refreshes coverage even while the viewed scene remains paused.
+- Next, run an independent release walkthrough across watch mode, history, decision comparisons, mix, and the probe. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 22
 
 - What changes the odds? compares the recorded decision with twice the coin, showing legal moves and raw odds under both conditions. Current and archived evidence can open the probe when a capture remains available.

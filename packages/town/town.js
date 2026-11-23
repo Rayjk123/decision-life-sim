@@ -608,20 +608,24 @@ function decisionMixPanel(month){
   if(mixView?.month===month)return mixView.details;
   const wasOpen=mixView?.details.open;
   const details=element('details',null,'decision-details decision-mix');
-  mixView={month,details};
+  mixView={month,details,load};
   const summary=element('summary','Decision mix by personality');
   summary.dataset.focusKey='decision-mix';
+  const status=element('p',null,'mix-status');
+  status.setAttribute('aria-live','polite');
   const body=element('div');
-  details.append(summary,body);
-  let loading=false,loaded=false;
+  details.append(summary,status,body);
+  let loading=false;
   async function load(){
-    if(!details.open||loading||loaded)return;
+    if(!details.open||loading)return;
     loading=true;
-    body.replaceChildren(element('p','Loading recorded decisions…'));
+    status.textContent=body.childElementCount?'Refreshing retained months…':'Loading recorded decisions…';
     try{
       const response=await fetch('/api/town/mix/'+month);
       if(!response.ok)throw Error();
       const {months,decisions,missingArchetype,groups}=await response.json();
+      const focus=body.contains(document.activeElement);
+      status.textContent='';
       body.replaceChildren();
       if(months.length){
         const start=months[0].label,end=months.at(-1).label;
@@ -630,7 +634,7 @@ function decisionMixPanel(month){
       if(missingArchetype)body.append(element('p',missingArchetype.toLocaleString()+' older decisions lack personality labels and are excluded from the breakdown.'));
       if(!groups.length){
         body.append(element('p','No decisions with a recorded personality are available for these months.'));
-        loaded=true;
+        if(focus)summary.focus();
         return;
       }
       const select=element('select');
@@ -651,7 +655,7 @@ function decisionMixPanel(month){
         selectedMixGroup=select.value;
         const table=element('table',null,'mix-table');
         const header=element('tr');
-        for(const name of ['Move','Picked','Offered','Picked when offered']){
+        for(const name of ['Move','Outcomes','Offers','Outcome when offered']){
           const cell=element('th',name);cell.scope='col';header.append(cell);
         }
         const head=element('thead');head.append(header);
@@ -666,13 +670,16 @@ function decisionMixPanel(month){
         }
         table.append(head,tbody);
         result.replaceChildren(element('p',group.decisions.toLocaleString()+' decisions · Offer lists saved for '+group.knownOffers.toLocaleString()),
-          element('p','Move variants are grouped. Offered counts use saved offer lists.'),table);
+          element('p','Outcomes count final recorded moves, including Do nothing after a failed rules check.'),
+          element('p','Offers count decisions with a saved list where the move was available. The rate uses only those offers. Move variants are grouped.'),table);
       }
       select.addEventListener('change',showGroup);
       showGroup();
-      loaded=true;
+      if(focus)select.focus({preventScroll:true});
     }catch{
-      body.replaceChildren(element('p','Decision mix unavailable. Close and reopen to retry.'));
+      status.textContent=body.childElementCount
+        ?'Refresh unavailable. Showing the last received mix.'
+        :'Decision mix unavailable. Close and reopen to retry.';
     }finally{loading=false;}
   }
   details.addEventListener('toggle',load);
@@ -719,6 +726,7 @@ function setWorld(open,moveFocus=true){
   for(const id of ['resident','place'])$(id).inert=open;
   if(open){
     renderWorld();
+    mixView?.load();
     $('world').scrollTop=0;
   }
   if(moveFocus)$(open?'close-world':'toggle').focus({preventScroll:true});

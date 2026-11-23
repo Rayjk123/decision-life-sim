@@ -156,3 +156,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Heuristic and fallback results are precomputed. Model probes require a configured matching model and use a five-second timeout, one in-flight request per process, a three-second cooldown, and a bounded result cache. The probe endpoint leaves the shared checkpoint untouched.
 - Isolated Chrome verified the heuristic path at 1440 × 900 and 320 × 640 and the matching model path with a local fixture. The fixture also verified repeated requests use the cache and a different concurrent request respects the cooldown. Direct tests verified archived results and an unchanged checkpoint.
 - Round 23 should address the decision-mix review findings before the release review.
+
+## Round 23
+
+- The decision mix distinguishes final outcomes from saved offers and outcomes among those offers. Its explanation covers failed rules checks and grouped move variants. Short headings stay on one line.
+- Reopening the disclosure or World refreshes retained coverage without moving the paused scene. A failed refresh explicitly labels the last received mix.
+- Isolated Chrome at 1440 × 900 and 320 × 640 verified single-line short headers and two expired months dropping from the mix while the scene stayed paused. The selected group survived refreshes.
+- Round 24 should independently assess the release candidate across the full watch route, resident timeline, decision evidence and comparisons, decision mix, and the counterfactual.
