@@ -29,8 +29,8 @@ function eveningAmount(p){
   return Math.max(0,Math.min(1,(p-.68)/.14));
 }
 const g = map.getContext('2d');
-const blocks = ['homes','homes','HOLLOW GENERAL','OFFICES','SHOPS','FACTORY','homes','homes','BANK','BROKERAGE','REALTOR','SHOPS','homes','homes','SHOPS','CITY HALL','CAR LOT','SHOPS','homes','SCHOOL','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
-const civic = { bank: 8, brokerage: 9, realtor: 10, city_hall: 15, car_lot: 16 };
+const blocks = ['homes','homes','HOLLOW GENERAL','OFFICES','SHOPS','FACTORY','homes','homes','BANK','SHOPS','REALTOR','SHOPS','homes','homes','SHOPS','CITY HALL','CAR LOT','SHOPS','homes','SCHOOL','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
+const civic = { bank: 8, realtor: 10, city_hall: 15, car_lot: 16 };
 const shops = ['CAFE','BAKERY','BARBER','DELI','PHARMACY','BOOKS','PIZZA','FLORIST','MARKET'];
 const colors = ['#a74937','#38678e','#755091','#c2883d','#35766b'];
 const draw = (c,x,y,w,h,color) => { c.fillStyle=color; c.fillRect(x,y,w,h); };
@@ -319,7 +319,8 @@ function position(s,t){
   const h=hash(s.id), slot=(h>>>10)%39;
   const home=lot(homeBlock(s),slot);
   const work=lot(workBlock(s)??[21,22,14,20][(h>>>6)%4],slot);
-  const errand=lot(destinationFor(s)==='bakery'?4:civic[s.errand]??[4,11,21,22][(h>>>12)%4],slot);
+  const destination=destinationFor(s);
+  const errand=lot(destination==='bakery'?4:civic[destination]??[4,11,21,22][(h>>>12)%4],slot);
   function walk(a,b,p){
     if(a===b)return a;
     // Walk the two local streets and the connecting avenue.
@@ -346,7 +347,6 @@ function openStreet(){
 const interiors={
   bakery:{name:'Maple Bakery',wall:'#e6b998',trim:'#a34835',counter:'Pastries',shelf:'#d99148'},
   bank:{name:'Hollow Bank',wall:'#c2ccb0',trim:'#426952',counter:'Teller',shelf:'#a7a168'},
-  brokerage:{name:'Brokerage',wall:'#b4c9cc',trim:'#3f657c',counter:'Market desk',shelf:'#5a92a0'},
   realtor:{name:'Real Estate Office',wall:'#e1cfaa',trim:'#835840',counter:'Listings',shelf:'#b88461'},
   car_lot:{name:'Auto Showroom',wall:'#c1cbd1',trim:'#485970',counter:'Sales desk',shelf:'#7097b2'},
   city_hall:{name:'City Hall',wall:'#d9c7ab',trim:'#765b49',counter:'Permits',shelf:'#a7885e'},
@@ -354,6 +354,7 @@ const interiors={
 let outsideStop=null;
 
 function destinationFor(s){
+  if(s.errand==='brokerage')return 'bank';
   if(s.errand in interiors)return s.errand;
   return !s.errand&&(hash(s.id)>>>12)%4===0?'bakery':null;
 }
@@ -526,10 +527,11 @@ function showStory(person,p){
   box.hidden=!streetMode||!person;
   if(box.hidden)return;
   const [activity]=routine(person,p);
-  const destination=interiors[destinationFor(person)]?.name??'the neighborhood';
+  const stop=destinationFor(person);
+  const destination=interiors[stop]?.name??'the neighborhood';
   const actions={home:'At home',commute:person.working?'On the way to work':'Heading out',work:'At work',outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
   const errandActivity=activity==='outbound'||activity==='errand';
-  const recordedErrand=errandActivity&&person.move&&interiors[person.errand]&&destinationFor(person)===person.errand;
+  const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
   const message=recordedErrand?actions[activity]+' · Recorded move: '+title(person.move):'Ambient routine · '+actions[activity];
   const key=person.id+message;
   if(key===storyText)return;
