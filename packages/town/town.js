@@ -100,8 +100,11 @@ for(const [i,b] of blocks.entries()){
 }
 let frame, selected, view = 'resident', paused=false, speed=1, localProgress=null, lastTime=0, offset=0;
 let hits=[], transform={scale:1,x:0,y:0}, inFlight=false, lastPoll=0;
-const camera={x:420,y:300,zoom:2,following:false};
 const streetFitZoom=6.2;
+const streetCamera={x:420,y:300,zoom:streetFitZoom};
+const overviewCamera={x:420,y:300,zoom:1};
+let camera=streetCamera;
+let following=false;
 let interiorOpen=false;
 let hover=null, drag=null, liveProgress=0, snapFollow=false;
 let streetMode=true, opened=false, place=null, storyText="";
@@ -116,7 +119,7 @@ const percent=value=>Number.isFinite(value)?(value*100).toFixed(1)+'%':'Unavaila
 function choose(id){
   if(selected!==id||view==='street'){
     if(scene)streetPan=(canvas.clientWidth*.5-scene.x)/scene.width;
-    camera.following=false;
+    following=false;
     snapFollow=false;
     advancedFor=null;
   }
@@ -129,11 +132,11 @@ function choose(id){
 function followButton(){
   const button=element('button','Follow','follow');
   button.dataset.focusKey='follow';
-  button.setAttribute('aria-pressed',camera.following);
+  button.setAttribute('aria-pressed',following);
   button.onclick=()=>{
-    if(camera.following)leaveFollow();
+    if(following)leaveFollow();
     else{
-      camera.following=true;snapFollow=true;streetPan=null;
+      following=true;snapFollow=true;streetPan=null;
       camera.zoom=Math.max(camera.zoom,3.5);updateCameraControls();renderPanels();
     }
   };
@@ -357,12 +360,11 @@ function position(s,t){
   if(activity==='home')return home;
   return activity==='errand'?errand:work;
 }
-function openStreet(){
+function startStreet(){
   if(!frame?.sims.length)return;
   sceneArt('cottage');
   const person=get()??frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
-  selected=person.id;place=null;view='street';streetMode=true;streetPan=null;
-  Object.assign(camera,{zoom:streetFitZoom,following:true});
+  selected=person.id;place=null;view='street';following=true;
   snapFollow=true;updateCameraControls();renderPanels();
 }
 const interiors={
@@ -561,7 +563,7 @@ function drawStreet(focus,p,w,h){
   const point=focus&&streetPosition(focus,p);
   const scale=Math.max(w/day.width,h/day.height)*Math.max(1,camera.zoom/streetFitZoom);
   const width=day.width*scale,height=day.height*scale;
-  const target=streetPan??(camera.following?point?.x:.5)??.5;
+  const target=streetPan??(following?point?.x:.5)??.5;
   const x=clamp(w*.5-width*target,Math.min(0,w-width),0);
   const y=clamp(h*.76-height*.77,Math.min(0,h-height),0);
   scene={x,y,width,height};
@@ -588,7 +590,7 @@ function drawStreet(focus,p,w,h){
     }
   }
   ctx.globalAlpha=1;
-  if(focus&&camera.following&&!reducedMotion.matches){
+  if(focus&&following&&!reducedMotion.matches){
     const [activity,progress]=routine(focus,p);
     const hasErrand=Boolean(destinationFor(focus));
     const atDeparture=activity==='commute'||(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
@@ -641,7 +643,7 @@ async function poll(){
       if(selected&&!get()){leaveFollow(false);selected=null;advancedFor=null;}
       const living=new Set(next.sims.map(s=>s.id));
       for(const id of outfits.keys())if(!living.has(id))outfits.delete(id);
-      if(!opened&&next.sims.length){opened=true;if(view==='resident')openStreet();else renderPanels();}
+      if(!opened&&next.sims.length){opened=true;if(view==='resident'&&streetMode)startStreet();else renderPanels();}
       else renderPanels();
     }
     if((newMonth||reconnected)&&!$('world').hidden)renderWorld();
@@ -671,7 +673,7 @@ function drawFrame(time){
     const destination=activity==='home'?'home':activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
       :activity==='errand'?destinationFor(focus):null;
     const visit=activity==='home'?(p<.5?'morning':'evening'):activity;
-    const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+visit+':'+destination:null;
+    const stopId=destination&&streetMode&&following?frame.month+':'+focus.id+':'+visit+':'+destination:null;
     const inside=$('inside');
     inside.hidden=!stopId;
     const viewingInterior=Boolean(stopId&&outsideStop!==stopId);
@@ -694,7 +696,7 @@ function drawFrame(time){
     }
     scene=null;
     const scale=Math.min(w/840,h/600)*camera.zoom;
-    if(camera.following&&focusPoint){
+    if(following&&focusPoint){
       const blend=snapFollow?1:1-Math.exp(-Math.min(elapsed,100)/105);
       camera.x+=(focusPoint[0]-camera.x)*blend;
       camera.y+=(focusPoint[1]-camera.y)*blend;
@@ -843,9 +845,9 @@ function nearest(x,y){
   return closest;
 }
 function leaveFollow(refresh=true){
-  if(!camera.following)return;
+  if(!following)return;
   if(scene)streetPan=(canvas.clientWidth*.5-scene.x)/scene.width;
-  camera.following=false;snapFollow=false;
+  following=false;snapFollow=false;
   if(refresh)renderPanels();
 }
 function updateCameraControls(){
@@ -859,7 +861,7 @@ function zoom(factor,point){
   if(interiorOpen)return;
   const old=camera.zoom;
   camera.zoom=clamp(old*factor,streetMode?streetFitZoom:1,maxZoom());updateCameraControls();
-  if(!point||camera.following||scene)return;
+  if(!point||following||scene)return;
   const {x,y,scale}=transform;
   const next=scale*camera.zoom/old;
   camera.x=(point.x-x)/scale-(point.x-canvas.clientWidth/2)/next;
@@ -912,10 +914,25 @@ function endDrag(event){
 for(const type of ['pointerup','pointercancel','lostpointercapture'])canvas.addEventListener(type,endDrag);
 $('zoom-in').onclick=()=>zoom(1.4);
 $('zoom-out').onclick=()=>zoom(1/1.4);
-$('street').onclick=openStreet;
-$('overview').onclick=()=>{
-  streetMode=false;streetPan=null;scene=null;place=null;if(view==='street')view='resident';Object.assign(camera,{x:420,y:300,zoom:1});updateCameraControls();renderPanels();
-};
+function switchMap(showStreet){
+  if(streetMode===showStreet)return;
+  streetMode=showStreet;
+  camera=showStreet?streetCamera:overviewCamera;
+  scene=null;
+  hover=null;
+  hits=[];
+  interiorOpen=false;
+  $('inside').hidden=true;
+  $('street').setAttribute('aria-pressed',String(showStreet));
+  $('overview').setAttribute('aria-pressed',String(!showStreet));
+  updateCameraControls();
+  if(place!==null){
+    place=null;
+    renderPanels();
+  }
+}
+$('street').onclick=()=>switchMap(true);
+$('overview').onclick=()=>switchMap(false);
 canvas.addEventListener('keydown',event=>{
   if(event.key==='+'||event.key==='=')zoom(1.4);
   else if(event.key==='-')zoom(1/1.4);

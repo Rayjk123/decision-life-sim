@@ -52,3 +52,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Changing speed keeps the local playhead, including when switching back to 1× at dusk. Pause and Resume preserve the same local time. Go live is a separate control that joins the shared clock and restores normal speed.
 - Isolated Chrome passed at 1440 × 900 and 320 × 640. It checked 12× to dusk, 1× at dusk, pause and resume, speed changes while paused, and explicitly returning to the current shared clock.
 - Round 8 should preserve the resident profile and camera settings when switching between Street and Overview. Round 9 can add restrained idle activity and review the whole route again.
+
+## Round 8
+
+- Street and Overview use separate camera settings. Switching keeps the resident profile and Advanced section open, keeps Follow and the playhead, and restores the previous zoom per view.
+- The current view is marked on its button. A visitor who stopped following stays unfollowed when switching views.
+- Isolated Chrome passed at 1440 × 900 and 320 × 640, including switching from a paused workplace visit, preserving its outside state, restoring distinct zoom levels, and keeping the profile open.
+- Round 9 should add a little motion to quiet stops and commission the next independent review.

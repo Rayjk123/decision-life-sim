@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 8
+
+- Street and Overview remember separate camera settings. Switching views keeps the profile, open Advanced section, Follow state and playhead. The selected map view is visibly marked.
+- Next round adds subtle idle activity and a fresh independent review. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 7
 
 - Changing playback speed or resuming preserves the playhead in the current month. Go live explicitly returns to the shared town clock at 1×.
