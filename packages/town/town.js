@@ -92,6 +92,7 @@ const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const get = () => frame?.sims.find(s => s.id===selected);
 const element = (tag,text,className) => { const n=document.createElement(tag); if(text!=null)n.textContent=text; if(className)n.className=className; return n; };
 let advancedFor=null;
+let replayOpen=false;
 let connection='connecting';
 const knownMoney=value=>Number.isFinite(value)?money(value):'Unavailable';
 const percent=value=>Number.isFinite(value)?(value*100).toFixed(1)+'%':'Unavailable';
@@ -102,6 +103,7 @@ function choose(id){
     if(scene)streetCamera.pan=(canvas.clientWidth*.5-scene.x)/scene.width;
     following=false;
     advancedFor=null;
+    replayOpen=false;
   }
   selected=id;view='resident';place=null;
   if(!$('world').hidden)setWorld(false,false);
@@ -224,6 +226,44 @@ function decisionDetails(sim){
   return details;
 }
 
+function decisionReplay(record,model,heuristic){
+  const details=element('details',null,'decision-replay');
+  const summary=element('summary','Model vs. heuristic');
+  summary.dataset.focusKey=record.month===undefined?'current-replay':'replay-'+record.month;
+  details.open=record.month===undefined&&replayOpen;
+  const moves=Object.keys(model.odds);
+  const oddsChanged=moves.some(move=>Math.abs(model.odds[move]-heuristic.odds[move])>1e-9);
+  const takeaway=model.move!==heuristic.move?'The same draw sampled different moves.'
+    :oddsChanged?'The odds changed. The same draw sampled the same move.'
+    :'Both used the same odds and sampled the same move.';
+  const table=element('table',null,'mix-table');
+  table.append(element('caption','Sampling odds'));
+  const heading=table.createTHead().insertRow();
+  for(const name of ['Move','Model','Heuristic']){
+    const column=element('th',name);
+    column.scope='col';
+    heading.append(column);
+  }
+  const body=table.createTBody();
+  for(const move of moves){
+    const row=body.insertRow();
+    const name=element('th',moveName(move));
+    name.scope='row';
+    row.append(name);
+    for(const sample of [model,heuristic]){
+      const odds=sample.odds[move];
+      const cell=element('td',percent(odds),sample.move===move?'sampled-odds':null);
+      cell.title=String(odds);
+      row.append(cell);
+    }
+  }
+  details.append(summary,element('p',takeaway,'replay-result'),statGrid([
+    ['Model sampled',moveName(model.move)],
+    ['Heuristic would sample',moveName(heuristic.move)],
+  ]),element('p','Both use the same resident state, legal moves, discipline adjustment and random draw. Only the model’s sampled move went to the rules check.'),table);
+  return details;
+}
+
 function appendDecisionEvidence(details,record,residentId=record.id){
   if(!record.move){
     details.append(element('p','No decision recorded for this month.'));
@@ -247,7 +287,7 @@ function appendDecisionEvidence(details,record,residentId=record.id){
       details.append(element('p',moveName(sampling.move)+' was sampled. '+range,'draw-interval'));
       const exact=element('details',null,'exact-sampling');
       const summary=element('summary','Exact sampling values');
-      summary.dataset.focusKey='exact-sampling-'+(record.month??frame.month);
+      summary.dataset.focusKey='exact-sampling-'+(record.month??'current');
       exact.open=!shown.bounds;
       exact.append(summary,element('p','Values are fractions from 0 to 1.'),statGrid([
         ['Draw',String(record.draw)],['Lower bound',String(interval.lower)],['Upper bound',String(interval.upper)],
@@ -257,10 +297,15 @@ function appendDecisionEvidence(details,record,residentId=record.id){
     if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was '+moveName('nothing')+'.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
   details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));
+  if(sampling&&record.decision.heuristicReplay){
+    details.append(decisionReplay(record,sampling,record.decision.heuristicReplay));
+  }else if(record.decision?.provider==='kev'){
+    details.append(element('p','The heuristic replay was not recorded for this decision.'));
+  }
   let probe;
   function updateProbe(available){
     if(probe&&Boolean(available)===probe.matches('.counterfactual'))return;
-    const next=available?probePanel(residentId,record.month??frame.month)
+    const next=available?probePanel(residentId,record.month??frame.month,record.month??'current')
       :element('p','Counterfactual inputs are unavailable for this decision.');
     if(probe){
       const hadFocus=probe.contains(document.activeElement);
@@ -273,10 +318,10 @@ function appendDecisionEvidence(details,record,residentId=record.id){
   return updateProbe;
 }
 
-function probePanel(id,month){
+function probePanel(id,month,focusMonth){
   const details=element('details',null,'decision-details counterfactual');
   const summary=element('summary','What changes the odds?');
-  summary.dataset.focusKey='probe-'+month;
+  summary.dataset.focusKey='probe-'+focusMonth;
   const button=element('button','Try twice the coin');
   const result=element('div',null,'probe-result');
   result.setAttribute('aria-live','polite');
@@ -730,7 +775,10 @@ function renderPanels(){
   const resident=$('resident'), location=$('place'), sim=get();
   $('district-panel').hidden=streetMode||!inspectorOpen||view!=='street'||place!==null;
   const disclosure=resident.querySelector('details');
-  if(disclosure&&disclosure.dataset.residentId===sim?.id)advancedFor=disclosure.open?sim.id:null;
+  if(disclosure&&disclosure.dataset.residentId===sim?.id){
+    advancedFor=disclosure.open?sim.id:null;
+    replayOpen=Boolean(disclosure.querySelector('.decision-replay')?.open);
+  }
   location.hidden=place===null;
   renderPanel(location, panel=>{
     if(panel.hidden)return;

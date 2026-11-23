@@ -1,6 +1,58 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { drawFor, heuristicAnswers, pick, type Decider } from '../../sim-core/src/index.ts';
 import { DAY, sharedWorld, type Checkpoint, type Storage } from '../src/world.ts';
+
+test('model replay uses the original legal moves and draw and survives archival', async () => {
+  let saved: Checkpoint | undefined;
+  const storage: Storage = {
+    async load() { return saved ? { value: structuredClone(saved), version: 'test' } : null; },
+    async save(value) { saved = structuredClone(value); return true; },
+  };
+  const expected = new Map<string, { odds: Record<string, number>; move: string; draw: number }>();
+  const failed = new Set<string>();
+  const decider: Decider = {
+    name: 'kev',
+    async decide({ sim, world, moves, askRetire }) {
+      const key = world.month + '/' + sim.id;
+      assert(!expected.has(key) && !failed.has(key), 'One model call per decision');
+      if (failed.size === 0) {
+        failed.add(key);
+        throw new Error('Simulated model outage');
+      }
+      const draw = drawFor(world.seed, world.month, sim.id, 'main');
+      const replay = pick(sim, heuristicAnswers(sim, world, moves, askRetire), draw,
+        drawFor(world.seed, world.month, sim.id, 'retire'));
+      expected.set(key, { odds: replay.sharpened, move: replay.picked, draw });
+      const different = moves.find(move => move.id !== replay.picked)?.id;
+      return {
+        provider: 'kev', model: 'test-model', latencyMs: 0, tokens: 0,
+        answers: { main: Object.fromEntries(moves.map(move => [move.id, Number(move.id === different)])) },
+      };
+    },
+  };
+  const town = sharedWorld(storage, { decider, pop: 24 });
+  const first = await town(0);
+  const fallback = first.sims.find(sim => failed.has(first.month + '/' + sim.id));
+  assert.equal(fallback?.decision?.provider, 'heuristic-fallback');
+  assert.equal(fallback?.decision?.heuristicReplay, undefined);
+  const residents = first.sims.filter(sim => sim.decision?.provider === 'kev');
+  assert(residents.length > 0);
+  for (const sim of residents) {
+    const { draw, ...replay } = expected.get(first.month + '/' + sim.id)!;
+    assert.equal(sim.draw, draw);
+    assert.deepEqual(sim.decision?.heuristicReplay, replay);
+    assert.deepEqual(Object.keys(sim.decision!.sampling!.odds), Object.keys(replay.odds));
+  }
+  const different = residents.find(sim => sim.decision?.sampling?.move !== sim.decision?.heuristicReplay?.move);
+  assert(different, 'The same draw can lead to different moves');
+  await town(1000);
+  await town(DAY);
+  const restarted = sharedWorld(storage, { pop: 24 });
+  const archived = (await restarted.residentHistory(different.id)).find(row => row.month === first.month);
+  assert.deepEqual(archived?.decision?.heuristicReplay, different.decision?.heuristicReplay);
+  assert.equal(archived?.move, different.move);
+});
 
 test('viewers share one paced world, and a restart preserves its month', async () => {
   let saved: Checkpoint | undefined;

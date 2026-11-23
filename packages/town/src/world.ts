@@ -1,6 +1,6 @@
 import {
   ARCHETYPE, ARCHETYPES, ARRIVAL_MONTHS, BUSINESSES, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
-  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type DecisionResult, type FlowKind, type World,
+  drawFor, heuristicAnswers, heuristicDecider, pick, runMonth, type Decider, type DecisionRequest, type DecisionResult, type FlowKind, type World,
 } from '../../sim-core/src/index.ts';
 import { CURRENCY, FUND, LOAN_NAME, REGIME_NAME, RENTAL, VAULT, VENTURES } from '../../sim-core/src/theme.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
@@ -66,8 +66,16 @@ function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
 
 async function next(world: World, decider: Decider, archive: LifetimeArchive, captureProbes = true) {
   const probes = new Map<string, NonNullable<ReturnType<typeof captureProbe>>>();
+  const replays = new Map<string, { odds: Record<string, number>; move: string }>();
   const result = await runMonth(world, decider, {
     onDecisionRequest(request) {
+      if (decider !== heuristicDecider) {
+        // Requests are built before any resident's move can change the town economy.
+        const { sim, world, moves, askRetire } = request;
+        const replay = pick(sim, heuristicAnswers(sim, world, moves, askRetire),
+          drawFor(world.seed, world.month, sim.id, 'main'), drawFor(world.seed, world.month, sim.id, 'retire'));
+        replays.set(sim.id, { odds: replay.sharpened, move: replay.picked });
+      }
       const capture = captureProbes && captureProbe(request, decider !== heuristicDecider);
       if (capture) probes.set(request.sim.id, capture);
     },
@@ -94,6 +102,7 @@ async function next(world: World, decider: Decider, archive: LifetimeArchive, ca
       const decision = d && {
         provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling,
         reason: d.reason, offered: d.moves, context,
+        heuristicReplay: d.provider === 'kev' ? replays.get(s.id) : undefined,
       };
       return {
         id: s.id, name: s.name, arch: s.archetype, career: s.career, age: ageInt(s, world.month),
@@ -218,7 +227,9 @@ export function sharedWorld(storage: Storage, {
     const sims = value.current.sims.map(({ probe, cashFlow, events, ...sim }) => {
       const career = CAREER[sim.career];
       const d = sim.decision;
-      const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
+      const decision = d && {
+        provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling, heuristicReplay: d.heuristicReplay,
+      };
       return { ...sim, decision, hasProbe: hasProbe(probe, d?.provider), workplace: career?.workplace, occupation: career?.label };
     });
     return {

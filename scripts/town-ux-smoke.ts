@@ -144,9 +144,31 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   const exact = evidence.locator('.exact-sampling');
   if (await exact.getAttribute('open') === null) await exact.getByText('Exact sampling values', { exact: true }).click();
   await exact.getByText(String(resident.draw), { exact: true }).waitFor();
-  await profile.getByText('What changes the odds?', { exact: true }).click();
+  if (decider) {
+    const recorded = resident.decision?.sampling;
+    const heuristic = resident.decision?.heuristicReplay;
+    assert(recorded && heuristic);
+    const replay = evidence.locator('.decision-replay');
+    await replay.getByText('Model vs. heuristic', { exact: true }).click();
+    await replay.getByText('Heuristic would sample', { exact: true }).waitFor();
+    const rows = replay.locator('tbody tr');
+    const moves = Object.keys(recorded.odds);
+    assert.equal(await rows.count(), moves.length);
+    for (const [index, move] of moves.entries()) {
+      const cells = rows.nth(index).locator('td');
+      assert.equal(await cells.nth(0).getAttribute('title'), String(recorded.odds[move]));
+      assert.equal(await cells.nth(1).getAttribute('title'), String(heuristic.odds[move]));
+    }
+    const timelineEvidence = current.locator('.past-decision').filter({ hasText: 'Decision evidence' });
+    await timelineEvidence.getByText('Decision evidence', { exact: true }).click();
+    await timelineEvidence.getByText('Model vs. heuristic', { exact: true }).click();
+    await timelineEvidence.getByRole('table', { name: 'Sampling odds' }).waitFor();
+  } else {
+    assert.equal(await evidence.getByText('Model vs. heuristic', { exact: true }).count(), 0);
+  }
+  await evidence.getByText('What changes the odds?', { exact: true }).click();
   const response = page.waitForResponse(r => r.url() === `${url}/api/town/probe/${resident.id}/${frame.month}`);
-  await profile.getByRole('button', { name: 'Try twice the coin' }).click();
+  await evidence.getByRole('button', { name: 'Try twice the coin' }).click();
   const probe = await (await response).json();
   assert.equal(probe.status, 'ready');
   assert.equal(probe.afterCoin, 2 * probe.beforeCoin);
@@ -156,7 +178,7 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   const variant = Object.values(probe.variant) as number[];
   assert(variant.length > 0 && variant.every(weight => Number.isFinite(weight) && weight >= 0));
   assert(Math.abs(variant.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-8, 'The variant odds should sum to one');
-  await profile.getByText('With twice the coin', { exact: true }).waitFor();
+  await evidence.getByText('With twice the coin', { exact: true }).waitFor();
 
   await page.locator('#toggle').click();
   const world = page.locator('#world-live');

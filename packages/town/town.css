@@ -119,6 +119,9 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .sampled-odds{font-weight:700;color:#ffd68d}
 .draw-interval{border-inline-start:2px solid #d9bc91;padding-inline-start:8px}
 .exact-sampling{margin:8px 0}
+.decision-replay{margin:8px 0}
+.decision-replay caption{text-align:left;font-weight:650;padding-bottom:5px}
+.replay-result{font-weight:650}
 .decision-mix{margin-top:10px}
 .decision-mix select{display:block;width:100%;margin-top:4px;padding:5px}
 .mix-table{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums}

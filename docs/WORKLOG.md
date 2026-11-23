@@ -7,6 +7,12 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · model vs. heuristic replay
+
+- Advanced and Monthly timeline evidence now show model and heuristic sampling odds for the same resident state, legal moves, discipline adjustment and draw. The replay reports whether the sampled moves differ. The recorded outcome still reflects the rules check on the model's move.
+- The heuristic runs locally before any resident acts. Model fallback decisions and older checkpoints have no model replay to display. The feature covers main moves.
+- A local SystemOne fixture exercised the replay and the existing twice-the-coin probe in desktop and 320-pixel Chrome. Live d3 remains unverified.
+
 ## Maple Hollow · four streets and dated milestones
 
 - Resident profiles show dates on recent milestones. New towns retain the final eleven months of real warm-up decision history. Quiet months explain the difference between no recorded decision and a recorded decision to do nothing.
