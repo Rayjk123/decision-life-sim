@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · manual release follow-up
+
+- Independent desktop and phone review matched timeline cash flow and dated events to the ledger and history. The timeline now labels the figures as selected cash flows and explains what else affects cash change.
+- A direct d3 request timed out while the desktop GPU was fully occupied. The recurring loop remains paused. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 33
 
 - Expanded monthly timeline rows now show dated life events beside the resident's balances and cash flow. Chrome verified the recorded and older-history states on desktop and phone. The full verification gate passed.

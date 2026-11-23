@@ -90,6 +90,8 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   }
   await current.getByText('Income after tax', { exact: true }).waitFor();
   await current.getByText('Discretionary spending', { exact: true }).waitFor();
+  await current.getByRole('heading', { name: 'Selected cash flows', exact: true }).waitFor();
+  await current.getByText('Cash change also reflects purchases, investments, and transfers between accounts.', { exact: true }).waitFor();
   assert.equal(await rows.count(), 2, 'Timeline should show both retained months');
   const earlier = rows.last();
   await earlier.locator(':scope > details > summary').click();

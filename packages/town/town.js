@@ -445,10 +445,10 @@ function timelineRow(row,residentId){
   details.append(element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
   if(row.cashFlow){
     const {income,costs,discretionary,debtPayments}=row.cashFlow;
-    details.append(element('h4','Income and outgoings'),statGrid([
+    details.append(element('h4','Selected cash flows'),statGrid([
       ['Income after tax',knownMoney(income)],['Living and running costs',knownMoney(costs)],
       ['Discretionary spending',knownMoney(discretionary)],['Debt payments',knownMoney(debtPayments)],
-    ]));
+    ]),element('p','Cash change also reflects purchases, investments, and transfers between accounts.'));
   }else{
     details.append(element('p','Income and outgoings were not retained for this month.'));
   }
@@ -555,7 +555,7 @@ function residentHistory(sim,month){
       if(key!==coverageKey())return;
       const visible=months.filter(row=>row.month<=requested).reverse();
       message.textContent=visible.length
-        ?'Net worth change by month. Open a row for month-end balances.'
+        ?'Open a month for life events, balances, and selected cash flows.'
         :'No months are available for this resident yet.';
       const initial=shownKey===undefined;
       updateRows(visible);

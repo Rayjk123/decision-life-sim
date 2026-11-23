@@ -228,3 +228,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Checkpoint tests verified that events survive archival and restart. The desktop and 320-pixel phone Chrome gate checked the dated events against the checkpoint and exercised older history. The full verification suite passed.
 - The independent cash-flow review stopped at the session usage limit. The desktop GPU remained busy, so the live d3 walkthrough is still pending.
 - The user asked to pause the recurring loop after this round. Resume with the independent timeline review and the live d3 walkthrough when available.
+
+## Manual release follow-up
+
+- Independent Chrome review at 1440 × 900 and 320 × 640 checked the timeline against saved ledger and event records. It verified figures, month attribution, event order, and the distinction between a month with no events and an older record with missing data.
+- The review found that a month with a down payment and a transfer from savings made the four cash-flow categories appear to disagree with cash change. The timeline now calls them selected cash flows, explains other movements that affect the cash balance, and names the available details in its open-month hint.
+- The reviewer repeated the original reproduction after the wording change and confirmed the issue was resolved on desktop and phone. The checkpoint stayed byte-identical.
+- The desktop GPU was still fully occupied. One direct d3 request timed out after ten seconds, so live browser validation remains open. The recurring loop remains paused.
