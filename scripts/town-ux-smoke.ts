@@ -41,7 +41,7 @@ function endpoint(server: ChildProcess) {
   });
 }
 
-async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType<typeof town>>, resident: typeof frame.sims[number]) {
+async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType<typeof town>>, resident: typeof frame.sims[number], events: string[]) {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   const atlas = page.waitForResponse(response => response.url() === url + '/art/resident-walk.png');
@@ -82,12 +82,19 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   const rows = profile.locator('.timeline > li');
   const current = rows.filter({ hasText: frame.label });
   await current.getByText(frame.label, { exact: true }).click();
+  if (events.length) {
+    await current.getByText('Life events', { exact: true }).waitFor();
+    assert.deepEqual(await current.locator('.month-events > li').allTextContents(), events);
+  } else {
+    await current.getByText('No life events recorded this month.', { exact: true }).waitFor();
+  }
   await current.getByText('Income after tax', { exact: true }).waitFor();
   await current.getByText('Discretionary spending', { exact: true }).waitFor();
   assert.equal(await rows.count(), 2, 'Timeline should show both retained months');
   const earlier = rows.last();
   await earlier.locator(':scope > details > summary').click();
   await earlier.getByText('Income and outgoings were not retained for this month.', { exact: true }).waitFor();
+  await earlier.getByText('Life events were not retained for this month.', { exact: true }).waitFor();
   await profile.getByText('Advanced decision details', { exact: true }).click();
   const source = resident.decision?.model ?? 'Heuristic';
   const evidence = profile.locator('.decision-details').filter({ hasText: 'Advanced decision details' }).first();
@@ -131,11 +138,15 @@ try {
   const fixture = saved;
   assert(fixture?.pending);
   const provider = decider ? 'kev' : 'heuristic';
-  const resident = frame.sims.find(sim => sim.working && sim.hasProbe && sim.decision?.sampling
+  const candidates = frame.sims.filter(sim => sim.working && sim.hasProbe && sim.decision?.sampling
     && sim.decision.provider === provider && sim.decision.model === decider?.model && fixture.history?.[0].residents[sim.id]);
+  const eventsByResident = new Map(fixture.current.sims.map(sim => [sim.id, sim.events]));
+  const resident = candidates.find(sim => eventsByResident.get(sim.id)?.length) ?? candidates[0];
   assert(resident, `Seeded smoke world should contain a working resident with history and a ${decider?.model ?? provider} decision`);
-  // The older row represents a checkpoint written before cash-flow totals were captured.
-  delete fixture.history![0].residents[resident.id].cashFlow;
+  // The older row represents a checkpoint written before cash flow and events were captured.
+  const earlier = fixture.history![0].residents[resident.id];
+  delete earlier.cashFlow;
+  delete earlier.events;
   server = spawn(process.execPath, ['--import', 'tsx', 'packages/town/src/server.ts'], {
     cwd: ROOT,
     env: {
@@ -153,7 +164,7 @@ try {
     const page = await browser.newPage({ viewport, hasTouch: viewport.width === 320, isMobile: viewport.width === 320 });
     page.setDefaultTimeout(8000);
     try {
-      await verifyViewport(page, url, frame, resident);
+      await verifyViewport(page, url, frame, resident, eventsByResident.get(resident.id) ?? []);
     } finally {
       await page.close();
     }

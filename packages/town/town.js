@@ -434,7 +434,15 @@ function timelineRow(row,residentId){
   summary.dataset.focusKey='month-'+row.month;
   const balances=statGrid([['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)]]);
   const comparison=element('div');
-  details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
+  details.append(summary);
+  if(row.events?.length){
+    const events=element('ul',null,'month-events');
+    for(const event of row.events)events.append(element('li',event));
+    details.append(element('h4','Life events'),events);
+  }else{
+    details.append(element('p',row.events?'No life events recorded this month.':'Life events were not retained for this month.'));
+  }
+  details.append(element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
   if(row.cashFlow){
     const {income,costs,discretionary,debtPayments}=row.cashFlow;
     details.append(element('h4','Income and outgoings'),statGrid([

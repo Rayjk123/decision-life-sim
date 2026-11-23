@@ -39,6 +39,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(Object.keys(source.probe.heuristicOdds), source.probe.offered);
   assert.ok(!Object.hasOwn(original, 'probe'));
   assert.ok(!Object.hasOwn(original, 'cashFlow'));
+  assert.ok(!Object.hasOwn(original, 'events'));
   const flows = ledger.get(id)!;
   const { salary = 0, benefits = 0, pension = 0, part_time = 0, rent_received = 0, tax = 0, business_profit = 0 } = flows;
   assert.equal(source.cashFlow.income, salary + benefits + pension + part_time + rent_received + tax + Math.max(0, business_profit));
@@ -59,6 +60,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(history[0].draw, original.draw);
   assert.equal(history[0].arch, original.arch);
   assert.deepEqual(history[0].cashFlow, source.cashFlow);
+  assert.deepEqual(history[0].events, source.events);
   assert.equal(history[0].hasProbe, true);
   assert.ok(!Object.hasOwn(history[0], 'probe'));
   assert.deepEqual(saved!.history?.[0].residents[id].probe, source.probe);

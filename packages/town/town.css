@@ -105,6 +105,8 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .timeline-change[data-direction="down"]{color:#ffb7a1}
 .timeline .stats{margin-top:4px}
 .timeline li p{margin:4px 0 0}
+.timeline .month-events{margin:4px 0 8px;padding-inline-start:20px}
+.timeline .month-events li{border:0;padding:2px 0}
 .past-decision{margin-top:8px}
 .counterfactual{margin-top:8px}
 .probe-result{margin-top:7px}

@@ -221,3 +221,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Expanded timeline months now show after-tax income, living and running costs, discretionary spending, and debt payments from the resident's ledger. The history endpoint carries the totals, keeping the regular town frame focused on playback. Older rows explain when totals are unavailable.
 - The checkpoint test checks ledger values and retention after restart. The desktop and 320-pixel Chrome gate opens a recorded month with ledger totals and an older month with the unavailable state.
 - The desktop GPU remains occupied. Next round should commission an independent review of the new timeline details and run the opt-in d3 check when capacity returns.
+
+## Round 33
+
+- Each expanded timeline month now shows the resident's life events recorded by the simulation for that month, in their original order. Months with an empty event list and older records without events have distinct messages.
+- Checkpoint tests verified that events survive archival and restart. The desktop and 320-pixel phone Chrome gate checked the dated events against the checkpoint and exercised older history. The full verification suite passed.
+- The independent cash-flow review stopped at the session usage limit. The desktop GPU remained busy, so the live d3 walkthrough is still pending.
+- The user asked to pause the recurring loop after this round. Resume with the independent timeline review and the live d3 walkthrough when available.

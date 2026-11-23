@@ -72,6 +72,13 @@ async function next(world: World, decider: Decider) {
     },
   });
   const decisions = new Map(result.decisions.map(d => [d.simId, d]));
+  const eventsByResident = new Map<string, string[]>();
+  for (const event of result.events) {
+    if (!event.simId || event.type === 'decision') continue;
+    const events = eventsByResident.get(event.simId) ?? [];
+    events.push(event.text);
+    eventsByResident.set(event.simId, events);
+  }
   return {
     month: world.month, label: monthLabel(world.month), market: world.market.regime,
     rate: world.market.mortgageRate, change: world.market.lastIndexReturn,
@@ -91,7 +98,7 @@ async function next(world: World, decider: Decider) {
         working: s.employed || s.selfEmployed, nw: sheet.netWorth, cash: sheet.cash, debt: sheet.debt,
         memories: s.memory, move: d?.picked, errand: d ? ERRAND[moveKindOf(d.picked)] : null,
         probabilities: d?.answers.main, draw: d?.draw, decision, spend: s.spendLevel, persona: s.persona,
-        probe: probes.get(s.id), cashFlow: monthlyCashFlow(s.flows),
+        probe: probes.get(s.id), cashFlow: monthlyCashFlow(s.flows), events: eventsByResident.get(s.id) ?? [],
       };
     }),
   };
@@ -100,11 +107,11 @@ async function next(world: World, decider: Decider) {
 type Frame = Awaited<ReturnType<typeof next>>;
 type ResidentFrame = Frame['sims'][number];
 type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
-  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe' | 'cashFlow'>>;
+  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe' | 'cashFlow' | 'events'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow }: ResidentFrame): ResidentMonth {
-  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow };
+function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow, events }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow, events };
 }
 
 function publicMonthRecord(resident: ResidentMonth) {
@@ -179,7 +186,7 @@ export function sharedWorld(storage: Storage, {
   }
 
   function response(value: Checkpoint, now: number) {
-    const sims = value.current.sims.map(({ probe, cashFlow, ...sim }) => {
+    const sims = value.current.sims.map(({ probe, cashFlow, events, ...sim }) => {
       const career = CAREER[sim.career];
       const d = sim.decision;
       const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };

@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 33
+
+- Expanded monthly timeline rows now show dated life events beside the resident's balances and cash flow. Chrome verified the recorded and older-history states on desktop and phone. The full verification gate passed.
+- The user requested a pause after this round. The independent timeline review and live d3 walkthrough remain open. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 32
 
 - Expanded monthly timeline rows show recorded income after tax, living and running costs, discretionary spending, and debt payments in crowns. Older rows explain when totals are unavailable.
