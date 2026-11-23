@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const canvas = $('town');
 const ctx = canvas.getContext('2d');
+const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const map = document.createElement('canvas');
 map.width = 840;
 map.height = 600;
@@ -322,13 +323,13 @@ const workBlock=s=>workplaceFor(s)?.block;
 function routine(s,t){
   const h=hash(s.id), stagger=(h%101)/100;
   const morning=.04+stagger*.20, arriving=morning+.09+(h%7)/100;
-  const midday=.35+((h>>>8)%100)/480, errandDone=midday+.09;
+  const midday=Math.max(arriving+.03,.35+((h>>>8)%100)/480), errandDone=midday+.09;
   const evening=Math.max(errandDone+.015,.64+((h>>>16)%100)/470), end=Math.min(.98,evening+.13);
   if(t<morning)return ['home',0];
   if(t<arriving)return ['commute',(t-morning)/(arriving-morning)];
-  if(t<midday)return [s.working?'work':'outside',0];
+  if(t<midday)return [s.working?'work':'outside',(t-arriving)/(midday-arriving)];
   if(t<errandDone)return ['outbound',(t-midday)/(errandDone-midday)];
-  if(t<evening)return ['errand',0];
+  if(t<evening)return ['errand',(t-errandDone)/(evening-errandDone)];
   if(t<end)return ['returning',(t-evening)/(end-evening)];
   return ['home',0];
 }
@@ -375,7 +376,12 @@ function destinationFor(s){
   if(s.errand in interiors)return s.errand;
   return !s.errand&&(hash(s.id)>>>12)%4===0?'bakery':null;
 }
-function drawInterior(placeKey,person,progress,w,h,p){
+function drawInterior(placeKey,person,progress,w,h,p,animated){
+  const edge=animated?Math.min(progress,1-progress):1;
+  const acrossFloor=clamp(edge/.16,0,1);
+  const leaving=acrossFloor<1&&progress>.5;
+  const stride=acrossFloor<1?p*frame.duration*Math.PI/240:null;
+  const transition=1-clamp(edge/.06,0,1);
   const workplace=workplaceScenes[placeKey];
   const imageName=workplace?'work-'+workplace.art:placeKey==='bakery'?'bakery':placeKey==='realtor'?'work-land-office':null;
   const artwork=imageName&&sceneArt(imageName);
@@ -388,8 +394,8 @@ function drawInterior(placeKey,person,progress,w,h,p){
     if(eveningAmount(p)<1){
       ctx.globalAlpha=.12*(1-eveningAmount(p));draw(ctx,x,y,width,height,'#ffd7a1');ctx.globalAlpha=1;
     }
-    const entering=Math.min(1,progress*5);
-    drawPerson(person,x+width*(.28+.23*entering),y+height*(.89-.09*entering),height*.23,progress<.2?progress*95:null,true);
+    drawPerson(person,x+width*(.16+.35*acrossFloor),y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
+    shadeDoorway(w,h,transition);
     hits=[];scene=null;
     return;
   }
@@ -423,13 +429,20 @@ function drawInterior(placeKey,person,progress,w,h,p){
     draw(ctx,x,111,19,16,room.trim);draw(ctx,x-2,107,23,7,'#e6c39b');
     draw(ctx,x+7,105,4,4,room.shelf);
   }
-  const y=140-31*Math.min(1,progress*5);
+  const y=140-31*acrossFloor;
   draw(ctx,113,y+1,14,3,'#fbd15a');
-  drawPerson(person,120,y,32,progress<.2?progress*95:null,true);
+  drawPerson(person,120,y,32,stride,true,leaving?-1:1);
   label(ctx,120,y-17,person.name);
   label(ctx,120,39,room.name,room.trim);
   ctx.resetTransform();
-  hits=[];
+  shadeDoorway(w,h,transition);
+  hits=[];scene=null;
+}
+function shadeDoorway(w,h,amount){
+  if(amount<=0)return;
+  ctx.globalAlpha=amount;
+  draw(ctx,0,0,w,h,'#171e35');
+  ctx.globalAlpha=1;
 }
 // Reserve one neighbor per illustrated look. A new snapshot refreshes their
 // finances and routines while keeping their place in this neighborhood.
@@ -459,10 +472,30 @@ function doorwayVisibility(activity,t,working){
 function streetPosition(person,p){
   const [activity,progress]=routine(person,p);
   const lane=(hash(person.id)%9)*.008;
-  const counter=destinationFor(person)==='bakery'?.526:.674;
-  const lerp=(a,b)=>a+(b-a)*progress;
-  const x={home:.13,commute:lerp(.13,.78),work:.78,outside:.78,outbound:lerp(.78,counter),errand:counter,returning:lerp(counter,.13)}[activity];
-  return {x,y:.75+lane,visibility:doorwayVisibility(activity,progress,person.working),facing:activity==='returning'||activity==='outbound'?-1:1,walking:['commute','outbound','returning'].includes(activity)};
+  const destination=destinationFor(person);
+  const home=.13, work=person.working?.665:.78;
+  const errand=destination==='bakery' ? .523 : destination ? .665 : .58;
+  const sidewalk=.77+lane, threshold=.681;
+  const workY=person.working?threshold:sidewalk;
+  const errandY=destination?threshold:sidewalk;
+  const routes={
+    commute:[home,threshold,work,workY],
+    outbound:[work,workY,errand,errandY],
+    returning:[errand,errandY,home,threshold],
+  };
+  const walking=activity in routes;
+  let x={home,work,outside:work,errand}[activity];
+  let y={home:threshold,work:workY,outside:workY,errand:errandY}[activity];
+  let facing=1;
+  if(walking){
+    const [from,fromY,to,toY]=routes[activity];
+    const across=clamp((progress-.16)/.68,0,1);
+    x=from+(to-from)*across;
+    y=progress<.16?fromY+(sidewalk-fromY)*progress/.16
+      :sidewalk+(toY-sidewalk)*clamp((progress-.84)/.16,0,1);
+    facing=to<from?-1:1;
+  }
+  return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing,walking};
 }
 function drawPerson(person,x,y,height,phase,focused,facing=1){
   const cycle=lookIndex(person.id)===0&&redCoatFrames.length===9;
@@ -541,6 +574,14 @@ function drawStreet(focus,p,w,h){
     }
   }
   ctx.globalAlpha=1;
+  if(focus&&camera.following&&!reducedMotion.matches){
+    const [activity,progress]=routine(focus,p);
+    const hasErrand=Boolean(destinationFor(focus));
+    const atDeparture=(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
+    const atArrival=(activity==='commute'&&focus.working)||(activity==='outbound'&&hasErrand);
+    const edge=Math.min(atDeparture?progress:1,atArrival?1-progress:1);
+    shadeDoorway(w,h,1-clamp(edge/.06,0,1));
+  }
   return true;
 }
 function showStory(person,p){
@@ -612,7 +653,7 @@ function drawFrame(time){
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
     const focus=get(), focusPoint=focus&&position(focus,p);
     showStory(focus,p);
-    const activity=focus&&routine(focus,p)[0];
+    const [activity,progress]=focus?routine(focus,p):[];
     const destination=activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
       :activity==='errand'?destinationFor(focus):null;
     const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+activity+':'+destination:null;
@@ -623,9 +664,7 @@ function drawFrame(time){
       inside.textContent=viewing?'Step outside':'Go inside';
       inside.onclick=()=>{outsideStop=viewing?stopId:null;};
       if(viewing){
-        const h=hash(focus.id);
-        const arrived=activity==='work'?.13+(h%101)/500+(h%7)/100:.44+((h>>>8)%100)/480;
-        drawInterior(destination,focus,Math.max(0,(p-arrived)/.14),w,canvas.height,p);
+        drawInterior(destination,focus,progress,w,canvas.height,p,!reducedMotion.matches);
         requestAnimationFrame(drawFrame);
         return;
       }

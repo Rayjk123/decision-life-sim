@@ -18,3 +18,11 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Moved Follow beside the resident name. On phones, opening the profile makes room under the scene for the profile heading and controls. Vertical swipes scroll the page and horizontal swipes pan the scene.
 - Chrome passed at 320 × 640, 390 × 844, and 1440 × 900 against a local town with an isolated checkpoint. Verified Follow visibility and toggling, vertical swipes preserving follow, and horizontal pans leaving follow.
 - Round 3 should clarify doorway transitions and commission the next independent review.
+
+## Round 3
+
+- Residents turn from the sidewalk toward the doorway. Follow view softens the cut into work and errand interiors and shows the resident walking back out before returning to the street. Reduced motion skips the automatic shade and indoor walk.
+- A continuity check caught late commuters whose errand could start before they arrived at work. Midday now leaves a minimum stop after arrival. The check passed for 480 combinations of resident, job status and errand.
+- Chrome verified the work-to-bank-to-home route and the inside/outside control on a desktop and a 320 px phone viewport with reduced motion.
+- Independent Chrome review confirmed continued follow and inside/outside controls on desktop and phone. It found that work and non-bakery errands share one illustrated doorway, making that walk look stationary. It also found zoom controls that change the displayed number without changing the scene.
+- Round 4 should separate destinations on the street, then make zoom controls reflect the active scene.

@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 3
+
+- Follow view now bridges the street and indoors with a doorway approach and brief fade. Reduced motion skips those interior animations. Late commuters still have a work stop before their errand.
+- Desktop and narrow-phone Chrome checks walked a resident from work to the bank and home. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 2
 
 - The resident profile keeps Follow beside the name and leaves room for the scene on small phones. Chrome verified touch scrolling and camera panning against an isolated town.
