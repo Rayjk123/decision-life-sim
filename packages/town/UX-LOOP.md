@@ -203,3 +203,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Playback and connection status now sit under the header clock. Phone camera controls sit below the scene, including while the resident profile is open.
 - Isolated Chrome at 1440 × 900 and 320 × 640 reproduced the paused walk with visible boots and confirmed the scene stayed frozen. Phone checks covered the camera rail with a profile open and the doorway control. Chrome also verified that the reconnecting status persists across animation frames.
 - The desktop GPU remained fully occupied. Next, verify the live d3 decision and counterfactual when inference can run, and commission the next release recheck.
+
+## Round 30
+
+- Added `npm run town:smoke` to the full verification gate alongside the legacy dashboard smoke test. It starts the actual town server on an OS-assigned loopback port with a temporary two-month heuristic checkpoint.
+- Chrome at 1440 × 900 and 320 × 640 verifies the walk atlas loads, following reaches a walking scene, Pause freezes the canvas, the phone controls stay clear of the scene, and the history, recorded source, double-coin comparison and decision mix work together.
+- Independent review passed the phone camera rail and paused walk with visible boots. On desktop and phone it opened a resident's exact draw, visited World, and confirmed the same profile, disclosures, Follow state and paused clock on return. It found no blockers in that flow. The live d3 walkthrough remains pending while the desktop GPU is occupied.

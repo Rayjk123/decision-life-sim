@@ -97,10 +97,14 @@ export async function handler(event: { rawPath: string; requestContext?: { http?
 
 if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
   const port = Number(process.env.TOWN_PORT ?? 5192);
-  createServer(async (req, res) => {
+  const server = createServer(async (req, res) => {
     try {
       const reply = await handler({ rawPath: new URL(req.url ?? '/', 'http://localhost').pathname, requestContext: { http: { method: req.method } } });
       res.writeHead(reply.statusCode, reply.headers).end(reply.isBase64Encoded ? Buffer.from(reply.body, 'base64') : reply.body);
     } catch (error) { console.error(error); res.writeHead(500).end('Town temporarily unavailable'); }
-  }).listen(port, process.env.TOWN_HOST ?? '127.0.0.1', () => console.log(`Maple Hollow on port ${port}`));
+  });
+  server.listen(port, process.env.TOWN_HOST ?? '127.0.0.1', () => {
+    const address = server.address();
+    if (address && typeof address !== 'string') console.log(`Maple Hollow on port ${address.port}`);
+  });
 }

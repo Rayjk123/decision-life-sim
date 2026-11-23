@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 30
+
+- The full verification gate now runs a repeatable Maple Hollow walkthrough in real desktop and phone Chrome. It covers following, pause and phone layout, retained history, the heuristic double-coin comparison, and World.
+- Independent Chrome review passed the phone layout and navigation between Watch, Resident, Advanced and World. Live d3 verification remains open while the desktop GPU is occupied. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 29
 
 - Moved playback status to the header and phone camera controls below the canvas after independent review found the pause banner covering the resident's boots. Real Chrome verified the fix on desktop and at 320 pixels, including the resident profile and doorway controls.

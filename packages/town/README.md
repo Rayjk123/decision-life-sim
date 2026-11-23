@@ -8,6 +8,8 @@ The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspec
 
 From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. Set `DECISION_URL` to a server that supports `/v1/systemone` and `DECISION_MODEL` to its model name, such as `d3`. Without a URL, the town uses the heuristic. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.
 
+Run `npm run town:smoke` to check the watch-to-decision flow in Chrome at desktop and 320-pixel phone widths. The test starts a temporary heuristic town on a free loopback port. Set `CHROMIUM_PATH` to use a specific Chromium executable. The full verification gate runs this check as well.
+
 ## Host a shared town
 
 Run `bash packages/town/deploy/aws.sh` from an AWS profile with CloudFormation, CloudFront, API Gateway, Lambda, IAM, and S3 deployment access. It prints a public HTTPS URL. The stack stores the private checkpoint in S3, writes with an ETag precondition, and retains the checkpoint bucket on stack deletion. The deployment artifacts have a separate private bucket. CloudFront serves the static app from a private S3 bucket. Only the town API reaches Lambda, through API Gateway with a best-effort throttle of 5 requests per second and a burst of 10. Static delivery and API requests are metered. This throttle limits downstream work and is not a hard billing cap.

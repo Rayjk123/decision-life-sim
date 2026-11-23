@@ -57,6 +57,11 @@ const gates: Gate[] = [
     if (!r.ok) throw new Error(r.out.trim().split('\n').filter((l) => /❌|FAILED|Error/.test(l)).join('\n') || r.out.slice(-2000));
     return r.out.trim().split('\n').pop()?.replace(/; screenshots in .*/, '') ?? '';
   } },
+  { name: 'G10 Maple Hollow smoke (real browser)', run: () => {
+    const r = sh('npx', ['tsx', 'scripts/town-ux-smoke.ts']);
+    if (!r.ok) throw new Error(r.out.trim().slice(-3000));
+    return r.out.trim().split('\n').pop() ?? '';
+  } },
   { name: 'G9 docs in sync', run: () => {
     const r = sh('npx', ['tsx', 'scripts/results-page.ts', '--check']);
     if (!r.ok) throw new Error(r.out.trim());
