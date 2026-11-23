@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 14
+
+- The monthly timeline now shows the recorded move and net-worth change at a glance. Expand a month for its ending balances and cash and debt changes. Comparisons require the immediately preceding month.
+- Next, keep decision evidence accessible from historical timeline rows and commission the next independent review. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 13
 
 - Advanced now shows raw odds separately from the ordered sampling odds, marks the sampled move, and reports the final outcome and recorded decision source. Older frames show that sampling evidence was unavailable.

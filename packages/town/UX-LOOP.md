@@ -94,3 +94,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Older frames retain whatever raw odds they recorded and explicitly mark the missing source and sampling evidence. Historical timeline rows still retain outcomes rather than full decision records.
 - Isolated Chrome at 1440 × 900 and 320 × 640 checked a real decision where the raw odds and sampled odds led to different moves. It also checked the older frame state. Engine tests replay the draw and check fallback provenance.
 - Round 14 should give the timeline compact month-end rows and balance changes between adjacent months.
+
+## Round 14
+
+- Monthly timeline rows show the month, recorded move, and signed net-worth change before expansion. Opening a row reveals month-end balances and cash and debt changes. Gaps and the oldest retained month show that a comparison is unavailable.
+- On narrow screens, opening the timeline brings the first row into view when the disclosure has focus. The closed rows make twelve months much easier to scan.
+- Isolated Chrome at 1440 × 900 and 320 × 640 verified 12 real months, correct adjacent-month changes, and expandable balances. The phone check also verified a missing preceding month.
+- Round 15 should let visitors inspect retained decision evidence from timeline rows and commission the next independent review.

@@ -223,6 +223,37 @@ function decisionDetails(sim){
   return details;
 }
 
+function balanceChange(current,previous){
+  if(!Number.isFinite(current)||!Number.isFinite(previous))return 'Change unavailable';
+  const change=current-previous;
+  return change===0?'No change':(change>0?'+':'−')+money(Math.abs(change));
+}
+
+function timelineRow(row,previous){
+  const item=element('li');
+  const details=element('details');
+  const summary=element('summary');
+  const heading=element('span',null,'timeline-heading');
+  const outcome=row.move?title(row.move):'No recorded move';
+  heading.append(element('strong',row.label),element('small',outcome));
+  const change=row.nw-previous?.nw;
+  const delta=element('span',
+    previous?balanceChange(row.nw,previous.nw):'No comparison',
+    'timeline-change');
+  delta.dataset.direction=change>0?'up':change<0?'down':'flat';
+  summary.setAttribute('aria-label',row.label+' · '+outcome+' · Net worth change: '+delta.textContent);
+  summary.append(heading,delta);
+  summary.dataset.focusKey='month-'+row.month;
+  const balances=statGrid([['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)]]);
+  details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances);
+  if(previous)details.append(statGrid([
+    ['Cash change',balanceChange(row.cash,previous.cash)],['Debt change',balanceChange(row.debt,previous.debt)],
+  ]));
+  else details.append(element('p','No preceding month was recorded for comparison.'));
+  item.append(details);
+  return item;
+}
+
 let historyDisclosure;
 function residentHistory(sim,month){
   const key=sim.id+':'+month;
@@ -245,18 +276,18 @@ function residentHistory(sim,month){
       const {months}=await response.json();
       const visible=months.filter(row=>row.month<=month).reverse();
       body.replaceChildren(element('p',visible.length
-        ?'Up to 12 months recorded in this town.'
+        ?'Net worth change by month. Open a row for month-end balances.'
         :'No months are available for this resident yet.'));
       if(visible.length){
         const list=element('ol',null,'timeline');
-        for(const row of visible){
-          const item=element('li');
-          item.append(element('strong',row.label+' · Age '+row.age),statGrid([
-            ['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)],
-          ]),element('p',row.move?'Recorded move · '+title(row.move):'No decision recorded.'));
-          list.append(item);
+        for(const [i,row] of visible.entries()){
+          const previous=visible[i+1];
+          list.append(timelineRow(row,previous?.month===row.month-1?previous:undefined));
         }
         body.append(list);
+        if(document.activeElement===summary&&matchMedia('(max-width: 570px)').matches){
+          list.firstElementChild?.scrollIntoView({block:'nearest'});
+        }
       }
       loaded=true;
     }catch{
