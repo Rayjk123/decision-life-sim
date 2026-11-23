@@ -121,3 +121,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Month deltas update when their preceding month expires. A failed refresh leaves the existing rows available to read.
 - Isolated Chrome at 1440 × 900 and 320 × 640 used a real 12-month record set. The first rollover retained the focused evidence and removed the expired comparison. The second expired the focused month and returned focus to the timeline.
 - Round 18 should compare decisions from two recorded months and commission the next independent review.
+
+## Round 18
+
+- Each recorded move can be compared with that resident’s previous retained decision. The comparison shows dates, sources, triggers, draws, sampled and final moves, offered-option changes, and raw odds changes for shared options.
+- New frames preserve four model inputs for the comparison: reserve and portfolio, monthly finances, warnings, and market. Earlier frames mark unavailable details. These inputs travel through the on-demand timeline, outside the regular scene polling payload.
+- Isolated Chrome at 1440 × 900 and 320 × 640 compared two actual decisions with a skipped month between them and verified the legacy state. A twelve-month sample with 1,000 residents held about 5.04 MB in the checkpoint.
+- The independent Round 18 review is still running against the previous build. Carry its findings into Round 19. The next feature to build is the decision mix by archetype and source.

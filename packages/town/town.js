@@ -274,6 +274,58 @@ function balanceChange(current,previous){
   return change===0?'No change':(change>0?'+':'−')+money(Math.abs(change));
 }
 
+function decisionComparison(row,prior){
+  const body=document.createDocumentFragment();
+  if(!prior){
+    body.append(element('p','No earlier decision remains in this resident’s timeline.'));
+    return body;
+  }
+  for(const record of [prior,row]){
+    const decision=record.decision;
+    body.append(element('h3',record.label),statGrid([
+      ['Outcome',title(record.move)],['Source',decisionSource(decision)],
+      ['Trigger',decision?.reason?title(decision.reason):'Not retained'],
+      ['Sampled move',decision?.sampling?.move?title(decision.sampling.move):'Not retained'],
+      ['Draw',displayDraw(record.draw,drawInterval(decision?.sampling,record.draw)).draw],
+    ]));
+  }
+  const before=prior.decision?.offered, after=row.decision?.offered;
+  body.append(element('h3','Available moves'));
+  if(before&&after){
+    const added=after.filter(move=>!before.includes(move));
+    const removed=before.filter(move=>!after.includes(move));
+    const names=moves=>moves.map(title).join(', ')||'None';
+    body.append(statGrid([['Added',names(added)],['Removed',names(removed)]]));
+  }else body.append(element('p','The offered moves were not retained for both decisions.'));
+
+  const older=prior.probabilities??{}, newer=row.probabilities??{};
+  const common=Object.keys(newer).filter(move=>Object.hasOwn(older,move)&&Number.isFinite(newer[move])&&Number.isFinite(older[move]));
+  body.append(element('h3','Raw odds for shared moves'));
+  if(common.length){
+    const odds=element('dl',null,'odds');
+    for(const move of common){
+      const delta=Number(((newer[move]-older[move])*100).toFixed(1));
+      const change=(delta>0?'+':'')+delta.toFixed(1)+' pp';
+      odds.append(element('dt',title(move)),element('dd',percent(older[move])+' → '+percent(newer[move])+' ('+change+')'));
+    }
+    body.append(odds);
+  }else body.append(element('p','No comparable raw odds were retained.'));
+
+  const oldContext=prior.decision?.context, newContext=row.decision?.context;
+  body.append(element('h3','Before the decisions'));
+  if(oldContext&&newContext){
+    const labels={money:'Reserve and portfolio',monthly:'Monthly finances',warnings:'Warnings',market:'Market'};
+    const changes=Object.entries(labels).filter(([key])=>oldContext[key]!==newContext[key]);
+    if(changes.length){
+      for(const [key,label] of changes){
+        body.append(element('h4',label),statGrid([['Earlier',oldContext[key]??'None recorded'],['Later',newContext[key]??'None recorded']]));
+      }
+      body.append(element('p','These are differences in the recorded inputs. Several facts can change between decisions.'));
+    }else body.append(element('p','The retained inputs match.'));
+  }else body.append(element('p','Pre-decision inputs were not retained for both decisions.'));
+  return body;
+}
+
 function timelineRow(row){
   const item=element('li');
   const details=element('details');
@@ -299,6 +351,14 @@ function timelineRow(row){
   }else if(row.move){
     details.append(element('p','Only the outcome was retained for this decision.'));
   }
+  let compareWith;
+  if(row.move){
+    compareWith=element('details',null,'decision-details past-decision');
+    const compareSummary=element('summary','Compare with previous decision');
+    compareSummary.dataset.focusKey='compare-'+row.month;
+    compareWith.append(compareSummary,element('div'));
+    details.append(compareWith);
+  }
   item.append(details);
   let comparedMonth=null;
   function compare(previous){
@@ -312,7 +372,18 @@ function timelineRow(row){
       ['Cash change',balanceChange(row.cash,previous.cash)],['Debt change',balanceChange(row.debt,previous.debt)],
     ]):element('p','No preceding month was recorded for comparison.'));
   }
-  return {item,compare};
+  let previousDecision, previousDecisionMonth=null;
+  function renderComparison(){
+    if(compareWith?.open)compareWith.lastElementChild.replaceChildren(decisionComparison(row,previousDecision));
+  }
+  compareWith?.addEventListener('toggle',renderComparison);
+  function compareDecision(previous){
+    if(!compareWith||previousDecisionMonth===previous?.month)return;
+    previousDecisionMonth=previous?.month;
+    previousDecision=previous;
+    renderComparison();
+  }
+  return {item,compare,compareDecision};
 }
 
 let historyDisclosure;
@@ -341,6 +412,7 @@ function residentHistory(sim,month){
       const retainedRow=rows.get(row.month);
       const previous=visible[i+1];
       retainedRow.compare(previous?.month===row.month-1?previous:undefined);
+      retainedRow.compareDecision(visible.slice(i+1).find(month=>month.move));
       if(list.children[i]!==retainedRow.item)list.insertBefore(retainedRow.item,list.children[i]??null);
     }
     if(restoreFocus&&document.activeElement!==active){

@@ -24,6 +24,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(saved!.pending?.month, 122);
   const original = first.sims.find(sim => sim.decision?.sampling && saved!.pending!.sims.some(next => next.id === sim.id))!;
   const id = original.id;
+  const recorded = saved!.current.sims.find(sim => sim.id === id)!.decision;
   assert.deepEqual((await town.residentHistory(id)).map(row => row.month), [121]);
   assert.equal((await store.load())!.value.history, undefined);
   const restarted = sharedWorld(store, { pop: 12 });
@@ -31,7 +32,10 @@ test('viewers share one paced world, and a restart preserves its month', async (
   const history = await restarted.residentHistory(id);
   assert.deepEqual(history.map(row => row.month), [121, 122]);
   assert.equal(history[0].nw, original.nw);
-  assert.deepEqual(history[0].decision, original.decision);
+  assert.ok(recorded?.reason);
+  assert.ok(recorded?.offered.includes(original.move!));
+  assert.equal(typeof recorded?.context?.money, 'string');
+  assert.deepEqual(history[0].decision, recorded);
   assert.deepEqual(history[0].probabilities, original.probabilities);
   assert.equal(history[0].draw, original.draw);
   assert.deepEqual(await restarted.residentHistory('toString'), []);

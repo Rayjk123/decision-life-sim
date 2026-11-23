@@ -4,6 +4,7 @@ import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 export const DAY = 90_000;
 const IDLE = 15 * 60_000;
 const HISTORY_MONTHS = 12;
+const COMPARED_INPUTS = ['money', 'monthly', 'warnings', 'market'] as const;
 
 async function next(world: World, decider: Decider) {
   const result = await runMonth(world, decider);
@@ -14,7 +15,14 @@ async function next(world: World, decider: Decider) {
     sims: world.sims.map(s => {
       const d = decisions.get(s.id);
       const sheet = balanceSheet(s);
-      const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
+      const context = d?.state && Object.fromEntries(COMPARED_INPUTS.flatMap(key => {
+        const value = d.state?.[key];
+        return typeof value === 'string' ? [[key, value]] : [];
+      }));
+      const decision = d && {
+        provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling,
+        reason: d.reason, offered: d.moves, context,
+      };
       return {
         id: s.id, name: s.name, arch: s.archetype, career: s.career, age: ageInt(s, world.month),
         working: s.employed || s.selfEmployed, nw: sheet.netWorth, cash: sheet.cash, debt: sheet.debt,
@@ -85,7 +93,9 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
   function response(value: Checkpoint, now: number) {
     const sims = value.current.sims.map(sim => {
       const career = CAREER[sim.career];
-      return { ...sim, workplace: career?.workplace, occupation: career?.label };
+      const d = sim.decision;
+      const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
+      return { ...sim, decision, workplace: career?.workplace, occupation: career?.label };
     });
     return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }

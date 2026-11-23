@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 18
+
+- Compare with previous decision shows the two dates, outcomes, sources, triggers, draws, offered moves and raw odds changes. It uses the previous recorded decision even when no decision was recorded in an intervening month.
+- New town records capture selected pre-decision inputs for the comparison. These inputs load with the resident’s timeline. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 17
 
 - A live month update preserves open timeline rows, nested decision details, and keyboard focus. If the inspected month drops out of retention, focus returns to the timeline heading.
