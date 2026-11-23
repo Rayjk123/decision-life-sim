@@ -126,7 +126,7 @@ type ModelProbe = {
 
 export function sharedWorld(storage: Storage, {
   pop = 1000, decider = heuristicDecider, modelProbe,
-}: { pop?: number; decider?: Decider; modelProbe?: ModelProbe } = {}) {
+}: { pop?: number; decider?: Decider & { model?: string }; modelProbe?: ModelProbe } = {}) {
   let inFlight: ReturnType<typeof read> | undefined;
   let modelProbeRunning = false, lastModelProbe = -Infinity;
   const probeCache = new Map<string, Record<string, number>>();
@@ -174,7 +174,10 @@ export function sharedWorld(storage: Storage, {
       const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
       return { ...sim, decision, hasProbe: hasProbe(probe, d?.provider), workplace: career?.workplace, occupation: career?.label };
     });
-    return { ...value.current, sims, presentation, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
+    return {
+      ...value.current, sims, presentation, startedAt: value.startedAt, serverTime: now, duration: DAY,
+      decider: decider.name, deciderModel: decider.model,
+    };
   }
 
   async function residentHistory(id: string) {

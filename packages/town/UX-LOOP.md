@@ -177,3 +177,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The old bank and vehicle lot are now the Counting House and Carriage Yard in the overview and follow captions. Saved records and the model still use the same move IDs.
 - Isolated Chrome at 1440 × 900 and 320 × 640 inspected a real recorded Guild Fund investment across the leaderboard, resident profile, timeline, evidence, double-coin probe and decision mix. Both layouts fit the viewport. The frame and history retained the original move ID.
 - Next, walk through a featured decision and its counterfactual against live d3 in an isolated town.
+
+## Round 26
+
+- World displays the configured decision model's identifier. Resident evidence and the mix continue to label the recorded source, including fallbacks. Isolated Chrome at 1440 × 900 and 320 × 640 verified both labels against a local response fixture with successful decisions and deliberate fallbacks.
+- The desktop Ollama tags endpoint listed the 4.8B and 2.4B d3 models, but the initial live town frame and a direct inference both timed out after 25 seconds. The GPU was at 100% utilization with approximately 11.7 GiB of its 12 GiB in use. Existing desktop processes were left running.
+- The full repository gate passed. The live d3 release check still needs one successful recorded decision and double-coin comparison in an isolated town.

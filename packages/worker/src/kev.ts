@@ -61,6 +61,7 @@ export function kevDecider(opts: KevOptions) {
 
   return {
     name: 'kev',
+    model,
     stats,
     async decide(req: ModelRequest): Promise<DecisionResult> {
       const body = { model, state: req.state, questions: req.questions };

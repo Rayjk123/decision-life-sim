@@ -740,7 +740,7 @@ function renderWorld(){
       ['Market',marketName(frame.market)],
       [loanName()+' rate',percent(frame.rate)],
       [(frame.presentation?.fund??'Guild Fund')+' return',percent(frame.change)],
-      ['World decider',title(frame.decider)||'Unavailable'],
+      ['Configured decider',frame.deciderModel??(frame.decider==='kev'?'Decision model':title(frame.decider)||'Unavailable')],
     ]),decisionMixPanel(frame.month),element('h3','Decision feed'));
     const active=decisions.filter(sim=>sim.move!=='nothing');
     if(!active.length){

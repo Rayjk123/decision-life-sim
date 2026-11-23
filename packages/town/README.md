@@ -6,7 +6,7 @@ The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspec
 
 ## Run locally
 
-From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. It uses the heuristic unless `DECISION_URL` is set. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.
+From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. Set `DECISION_URL` to a server that supports `/v1/systemone` and `DECISION_MODEL` to its model name, such as `d3`. Without a URL, the town uses the heuristic. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.
 
 ## Host a shared town
 
