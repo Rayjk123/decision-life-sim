@@ -43,14 +43,34 @@ function eveningAmount(p){
   return Math.max(0,Math.min(1,(p-.68)/.14));
 }
 const g = map.getContext('2d');
-const blocks = ['homes','homes','INFIRMARY','GUILDHALL','SHOPS','WORKSHOP','homes','homes','BANK','SHOPS','LAND OFFICE','SHOPS','homes','homes','SHOPS','CITY HALL','CAR LOT','SHOPS','homes','SCHOOLHOUSE','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
+const blocks = ['homes','homes','INFIRMARY','GUILDHALL','SHOPS','WORKSHOP','homes','homes','COUNTING HOUSE','SHOPS','LAND OFFICE','SHOPS','homes','homes','SHOPS','CITY HALL','CARRIAGE YARD','SHOPS','homes','SCHOOLHOUSE','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
 const civic = { bank: 8, realtor: 10, city_hall: 15, car_lot: 16 };
 const shops = ['CAFE','BAKERY','BARBER','DELI','PHARMACY','BOOKS','PIZZA','FLORIST','MARKET'];
 const colors = ['#a74937','#38678e','#755091','#c2883d','#35766b'];
 const draw = (c,x,y,w,h,color) => { c.fillStyle=color; c.fillRect(x,y,w,h); };
 const hash = str => [...str].reduce((n,c) => Math.imul(n ^ c.charCodeAt(0),16777619) >>> 0,2166136261);
 const title = str => (str || '').replaceAll('_',' ').replace(/\b\w/g,c => c.toUpperCase());
-const money = cents => new Intl.NumberFormat('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0}).format(cents/100);
+const wholeCrowns = new Intl.NumberFormat('en-US',{maximumFractionDigits:0});
+const fractionalCrowns = new Intl.NumberFormat('en-US',{maximumFractionDigits:2});
+const money = cents => {
+  const formatter=Math.abs(cents)<100?fractionalCrowns:wholeCrowns;
+  const amount=formatter.format(cents/100);
+  const currency=frame?.presentation?.currency??'crowns';
+  return amount+' '+(currency==='crowns'&&Math.abs(Number(amount))===1?'crown':currency);
+};
+function displayName(group,key){
+  const names=frame?.presentation?.[group];
+  return names&&Object.hasOwn(names,key)?names[key]:title(key);
+}
+const moveName = move => displayName('moves',move);
+function marketName(market){
+  const name=displayName('regimes',market);
+  return name?name[0].toUpperCase()+name.slice(1):'Unavailable';
+}
+function loanName(){
+  const name=frame?.presentation?.houseLoan??'house loan';
+  return name[0].toUpperCase()+name.slice(1);
+}
 function label(c,x,y,name,bg='#25252c') {
   c.font='bold 8px monospace'; c.textAlign='center';
   const w=c.measureText(name).width+8;
@@ -200,7 +220,7 @@ function moveOdds(odds,chosen,format=percent){
   if(!entries.length)return element('p','No odds recorded for this month.');
   const list=element('dl',null,'odds');
   for(const [move,p] of entries){
-    const name=element('dt',title(move)+(move===chosen?' · Sampled':''));
+    const name=element('dt',moveName(move)+(move===chosen?' · Sampled':''));
     const value=element('dd',format(p));
     value.title=String(p);
     if(move===chosen){name.className='sampled-odds';value.className='sampled-odds';}
@@ -254,7 +274,7 @@ function appendDecisionEvidence(details,record,residentId=record.id){
   const interval=drawInterval(sampling,record.draw);
   const shown=displayDraw(record.draw,interval);
   details.append(statGrid([
-    ['Recorded outcome',title(record.move)],
+    ['Recorded outcome',moveName(record.move)],
     ['Decision source',decisionSource(record.decision)],
     ['Random draw',shown.draw],
   ]),element('h3','Sampling odds'));
@@ -265,7 +285,7 @@ function appendDecisionEvidence(details,record,residentId=record.id){
       const range=shown.bounds
         ?'Its draw interval runs from '+shown.bounds[0]+' up to, but excluding, '+shown.bounds[1]+'.'
         :'The draw was very close to a boundary. See the exact values below.';
-      details.append(element('p',title(sampling.move)+' was sampled. '+range,'draw-interval'));
+      details.append(element('p',moveName(sampling.move)+' was sampled. '+range,'draw-interval'));
       const exact=element('details',null,'exact-sampling');
       const summary=element('summary','Exact sampling values');
       summary.dataset.focusKey='exact-sampling-'+(record.month??frame.month);
@@ -275,7 +295,7 @@ function appendDecisionEvidence(details,record,residentId=record.id){
       ]),moveOdds(sampling.odds,sampling.move,String));
       details.append(exact);
     }
-    if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
+    if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was '+moveName('nothing')+'.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
   details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));
   let probe;
@@ -319,8 +339,8 @@ function probePanel(id,month){
       result.replaceChildren(element('p',probe.label+' · '+decisionSource(probe)),statGrid([
         ['Recorded coin',knownMoney(probe.beforeCoin)],['With twice the coin',knownMoney(probe.afterCoin)],
       ]));
-      if(probe.movesAdded.length)result.append(element('p','New offers · '+probe.movesAdded.map(title).join(', ')));
-      if(probe.movesRemoved.length)result.append(element('p','Offers removed · '+probe.movesRemoved.map(title).join(', ')));
+      if(probe.movesAdded.length)result.append(element('p','New offers · '+probe.movesAdded.map(moveName).join(', ')));
+      if(probe.movesRemoved.length)result.append(element('p','Offers removed · '+probe.movesRemoved.map(moveName).join(', ')));
       const odds=element('dl',null,'odds');
       const moves=[...new Set([...Object.keys(probe.base),...Object.keys(probe.variant)])];
       const shift=move=>Math.abs((probe.variant[move]??0)-(probe.base[move]??0));
@@ -328,7 +348,7 @@ function probePanel(id,month){
       for(const move of moves){
         const before=Object.hasOwn(probe.base,move)?percent(probe.base[move]):'Not offered';
         const after=Object.hasOwn(probe.variant,move)?percent(probe.variant[move]):'Not offered';
-        odds.append(element('dt',title(move)),element('dd',before+' → '+after));
+        odds.append(element('dt',moveName(move)),element('dd',before+' → '+after));
       }
       result.append(element('h3','Recorded → variant raw odds'),odds);
       result.append(element('p','This comparison does not execute a move or change the town.'));
@@ -356,9 +376,9 @@ function decisionComparison(row,prior){
   for(const record of [prior,row]){
     const decision=record.decision;
     body.append(element('h3',record.label),statGrid([
-      ['Outcome',title(record.move)],['Source',decisionSource(decision)],
+      ['Outcome',moveName(record.move)],['Source',decisionSource(decision)],
       ['Trigger',decision?.reason?title(decision.reason):'Not retained'],
-      ['Sampled move',decision?.sampling?.move?title(decision.sampling.move):'Not retained'],
+      ['Sampled move',decision?.sampling?.move?moveName(decision.sampling.move):'Not retained'],
       ['Draw',displayDraw(record.draw,drawInterval(decision?.sampling,record.draw)).draw],
     ]));
   }
@@ -367,7 +387,7 @@ function decisionComparison(row,prior){
   if(before&&after){
     const added=after.filter(move=>!before.includes(move));
     const removed=before.filter(move=>!after.includes(move));
-    const names=moves=>moves.map(title).join(', ')||'None';
+    const names=moves=>moves.map(moveName).join(', ')||'None';
     body.append(statGrid([['Added',names(added)],['Removed',names(removed)]]));
   }else body.append(element('p','The offered moves were not retained for both decisions.'));
 
@@ -379,7 +399,7 @@ function decisionComparison(row,prior){
     for(const move of common){
       const delta=Number(((newer[move]-older[move])*100).toFixed(1));
       const change=(delta>0?'+':'')+delta.toFixed(1)+' pp';
-      odds.append(element('dt',title(move)),element('dd',percent(older[move])+' → '+percent(newer[move])+' ('+change+')'));
+      odds.append(element('dt',moveName(move)),element('dd',percent(older[move])+' → '+percent(newer[move])+' ('+change+')'));
     }
     body.append(odds);
   }else body.append(element('p','No comparable raw odds were retained.'));
@@ -404,7 +424,7 @@ function timelineRow(row,residentId){
   const details=element('details');
   const summary=element('summary');
   const heading=element('span',null,'timeline-heading');
-  const outcome=row.move?title(row.move):'No recorded move';
+  const outcome=row.move?moveName(row.move):'No recorded move';
   heading.append(element('strong',row.label),element('small',outcome));
   const delta=element('span',null,'timeline-change');
   summary.append(heading,delta);
@@ -607,9 +627,9 @@ function renderPanels(){
     const portraitBrush=portrait.getContext('2d');portraitBrush.imageSmoothingEnabled=false;
     portraitBrush.drawImage(sprite,(24-sprite.width*portraitScale)/2,32-sprite.height*portraitScale,sprite.width*portraitScale,sprite.height*portraitScale);
     const identity=element('div',null,'resident-identity');
-    identity.append(portrait,element('p',sim.age+' · '+occupation(sim)),element('span',title(sim.arch),'badge'));
+    identity.append(portrait,element('p',sim.age+' · '+occupation(sim)),element('span',displayName('archetypes',sim.arch),'badge'));
     panel.append(identity,statGrid([['Net worth',knownMoney(sim.nw)],['Cash',knownMoney(sim.cash)],['Debt',knownMoney(sim.debt)]]));
-    panel.append(element('p','Recorded move · '+(sim.move?title(sim.move):'No decision recorded this month')),decisionDetails(sim));
+    panel.append(element('p','Recorded move · '+(sim.move?moveName(sim.move):'No decision recorded this month')),decisionDetails(sim));
     panel.append(residentHistory(sim,frame.month));
     panel.append(element('h3','Recent life events'));
     const memories=sim.memories??[];
@@ -681,7 +701,7 @@ function decisionMixPanel(month){
         const tbody=element('tbody');
         for(const row of group.moves){
           const entry=element('tr');
-          const name=element('th',title(row.move));name.scope='row';
+          const name=element('th',moveName(row.move));name.scope='row';
           entry.append(name,element('td',String(row.picked)),
             element('td',group.knownOffers?String(row.offered):'—'),
             element('td',row.offered?row.pickedWhenOffered+'/'+row.offered+' · '+percent(row.pickedWhenOffered/row.offered):'—'));
@@ -689,7 +709,7 @@ function decisionMixPanel(month){
         }
         table.append(head,tbody);
         result.replaceChildren(element('p',group.decisions.toLocaleString()+' decisions · Offer lists saved for '+group.knownOffers.toLocaleString()),
-          element('p','Outcomes count final recorded moves, including Do nothing after a failed rules check.'),
+          element('p','Outcomes count final recorded moves, including '+moveName('nothing')+' after a failed rules check.'),
           element('p','Offers count decisions with a saved list where the move was available. The rate uses only those offers. Move variants are grouped.'),table);
       }
       select.addEventListener('change',showGroup);
@@ -717,14 +737,14 @@ function renderWorld(){
     panel.append(element('p','Viewed month · '+frame.label+(connection==='offline'?' · Last received snapshot':'')),statGrid([
       ['Residents',frame.sims.length.toLocaleString()],
       ['Recorded decisions',decisions.length.toLocaleString()],
-      ['Market',title(frame.market)||'Unavailable'],
-      ['Mortgage rate',percent(frame.rate)],
-      ['Last index return',percent(frame.change)],
+      ['Market',marketName(frame.market)],
+      [loanName()+' rate',percent(frame.rate)],
+      [(frame.presentation?.fund??'Guild Fund')+' return',percent(frame.change)],
       ['World decider',title(frame.decider)||'Unavailable'],
     ]),decisionMixPanel(frame.month),element('h3','Decision feed'));
     const active=decisions.filter(sim=>sim.move!=='nothing');
     if(!active.length){
-      panel.append(element('p',decisions.length?'All recorded decisions were Nothing.':'No decisions recorded this month.'));
+      panel.append(element('p',decisions.length?'All residents who decided chose to do nothing.':'No decisions recorded this month.'));
       return;
     }
     const listed=active.slice(0,24);
@@ -732,7 +752,7 @@ function renderWorld(){
     const list=element('ul',null,'list feed');
     for(const sim of listed){
       const item=element('li');
-      item.append(residentButton(sim,sim.name+' · '+title(sim.move)));
+      item.append(residentButton(sim,sim.name+' · '+moveName(sim.move)));
       list.append(item);
     }
     panel.append(list);
@@ -802,9 +822,9 @@ function startStreet(){
 const interiors={
   home:{name:'Home',wall:'#dfbd91',trim:'#774935',counter:'Hearth',shelf:'#b68154'},
   bakery:{name:'Maple Bakery',wall:'#e6b998',trim:'#a34835',counter:'Pastries',shelf:'#d99148'},
-  bank:{name:'Hollow Bank',wall:'#c2ccb0',trim:'#426952',counter:'Teller',shelf:'#a7a168'},
+  bank:{name:'Counting House',wall:'#c2ccb0',trim:'#426952',counter:'Clerk',shelf:'#a7a168'},
   realtor:{name:'Land Office',wall:'#e1cfaa',trim:'#835840',counter:'Listings',shelf:'#b88461'},
-  car_lot:{name:'Auto Showroom',wall:'#c1cbd1',trim:'#485970',counter:'Sales desk',shelf:'#7097b2'},
+  car_lot:{name:'Carriage Yard',wall:'#c1cbd1',trim:'#485970',counter:'Sales desk',shelf:'#7097b2'},
   city_hall:{name:'City Hall',wall:'#d9c7ab',trim:'#765b49',counter:'Permits',shelf:'#a7885e'},
 };
 let outsideStop=null;
@@ -1062,7 +1082,7 @@ function showStory(person,p){
   const actions={home:p<.5?'At home · A quiet morning':'At home · Winding down',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
   const errandActivity=activity==='outbound'||activity==='errand';
   const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
-  const message=recordedErrand?actions[activity]+' · Recorded move: '+title(person.move):'Ambient routine · '+actions[activity];
+  const message=recordedErrand?actions[activity]+' · Recorded move: '+moveName(person.move):'Ambient routine · '+actions[activity];
   const key=person.id+':'+following+':'+message;
   if(key===storyText)return;
   storyText=key;
@@ -1124,7 +1144,7 @@ function drawFrame(time){
     const minutes=Math.floor(6*60+p*16*60);
     $('date').textContent=frame.label+' · '+String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
     $('day').value=p;
-    $('market').textContent=frame.sims.length+' residents · '+title(frame.market)+' · Mortgages '+(frame.rate*100).toFixed(1)+'%';
+    $('market').textContent=frame.sims.length+' residents · '+marketName(frame.market)+' · '+loanName()+' rate '+percent(frame.rate);
     const period=p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening'
       :localProgress===null?'Waiting for next month':'End of this day';
     $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+period;

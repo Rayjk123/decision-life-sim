@@ -170,3 +170,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The timeline now refreshes retention when the shared month changes or the disclosure reopens. It removes expired rows and updates probe availability in place for retained rows. The scene stays on the viewed month. World labels that month explicitly.
 - Isolated Chrome at 1440 × 900 and 320 × 640 ran a real heuristic probe, advanced a twelve-month checkpoint, and checked that the expired row disappeared while playback remained pinned. Desktop covered an open timeline and focus recovery. Phone covered closing and reopening the timeline. Both checked the World date.
 - Next, align the remaining town currency and move labels with the medieval setting, then verify a featured decision against live d3.
+
+## Round 25
+
+- The town frame supplies labels from the simulation theme and data tables. Profiles, timelines, comparisons, probes and the decision mix use matching move names, including Guild Fund investing and backing trading voyages. Balances display crowns. The street and World show the same market regime and house loan terminology.
+- The old bank and vehicle lot are now the Counting House and Carriage Yard in the overview and follow captions. Saved records and the model still use the same move IDs.
+- Isolated Chrome at 1440 × 900 and 320 × 640 inspected a real recorded Guild Fund investment across the leaderboard, resident profile, timeline, evidence, double-coin probe and decision mix. Both layouts fit the viewport. The frame and history retained the original move ID.
+- Next, walk through a featured decision and its counterfactual against live d3 in an isolated town.

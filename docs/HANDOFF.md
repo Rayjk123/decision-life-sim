@@ -39,7 +39,7 @@ Written for the next agent picking up **decision behaviour and simulation** work
 11. **Decider registry** (`deciders.json`: name, url, model, style) so switching models is config, not code.
 
 ### For the UX agent (not this track)
-- Dashboard and town still show dollars and "Expansion/Recession": use `fmt` (crowns), `REGIME_NAME` and `JOBS_NAME` from `@dls/sim-core`.
+- The legacy dashboard still shows dollars and "Expansion/Recession": use `fmt` (crowns), `REGIME_NAME` and `JOBS_NAME` from sim-core. The standalone pixel town receives its theme labels in the town frame.
 - "What changes the odds" panel: `probe(world, simId, id, decider, { base: recordedDecision.answers.main })`; `probeChangesFor(sim, world)` lists the toggles that apply.
 
 ## Fine-tuning (parked; how to resume)

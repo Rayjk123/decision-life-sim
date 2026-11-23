@@ -1,7 +1,8 @@
 import {
-  ARCHETYPE, ARRIVAL_MONTHS, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
+  ARCHETYPE, ARCHETYPES, ARRIVAL_MONTHS, BUSINESSES, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
   heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type DecisionResult, type World,
 } from '../../sim-core/src/index.ts';
+import { CURRENCY, FUND, LOAN_NAME, REGIME_NAME, RENTAL, VAULT, VENTURES } from '../../sim-core/src/theme.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
 export const DAY = 90_000;
@@ -10,6 +11,30 @@ const HISTORY_MONTHS = 12;
 const MODEL_PROBE_ARCHIVE_MONTHS = 2;
 const COMPARED_INPUTS = ['money', 'monthly', 'warnings', 'market'] as const;
 const doubleCoin = PROBE_CHANGES.find(change => change.id === 'double_coin');
+const presentation = {
+  currency: CURRENCY,
+  fund: FUND,
+  houseLoan: LOAN_NAME.mortgage,
+  regimes: REGIME_NAME,
+  archetypes: Object.fromEntries(ARCHETYPES.map(({ key, label }) => [key, label])),
+  moves: {
+    nothing: 'Do nothing',
+    invest_index: `Invest in the ${FUND}`,
+    trade_stocks: `Back ${VENTURES}`,
+    save_cash: `Save in the ${VAULT}`,
+    pay_debt: 'Pay down debt',
+    buy_home: 'Buy a home',
+    buy_home_big: 'Buy a larger home',
+    buy_rental: `Buy a ${RENTAL}`,
+    sell_rental: `Sell a ${RENTAL}`,
+    buy_car: 'Buy a cart or carriage',
+    start_business: 'Start a business',
+    ...Object.fromEntries(BUSINESSES.map(({ key, label }) => [
+      'start_' + key,
+      `Start ${/^[aeiou]/i.test(label) ? 'an' : 'a'} ${label.toLowerCase()}`,
+    ])),
+  },
+};
 
 function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
   if (!doubleCoin?.applies(request.sim, request.world)) return undefined;
@@ -149,7 +174,7 @@ export function sharedWorld(storage: Storage, {
       const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
       return { ...sim, decision, hasProbe: hasProbe(probe, d?.provider), workplace: career?.workplace, occupation: career?.label };
     });
-    return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
+    return { ...value.current, sims, presentation, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }
 
   async function residentHistory(id: string) {

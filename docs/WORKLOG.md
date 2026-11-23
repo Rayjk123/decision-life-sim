@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 25
+
+- Town UI now displays crowns, themed market and personality labels, and consistent choice names from the profile through World and the probe. The vehicle lot and bank are the Carriage Yard and Counting House.
+- Chrome passed on desktop and phone. The remaining release check is a featured decision against live d3. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 24
 
 - Independent desktop and phone review passed the full watch route and decision walkthrough. Fixed two findings by refreshing retained history during paused playback and identifying the viewed month in World.
