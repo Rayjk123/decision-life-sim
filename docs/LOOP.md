@@ -175,6 +175,12 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### Iteration 35 · P1.8: "Why?" probes (the backend for the UX's "what changes the odds")
+- `sim-core/src/probe.ts`: `probe(world, simId, changeId, decider)` clones the world, changes ONE fact, rebuilds the request exactly as a month does (`buildRequest`), re-asks the decider, and returns base and variant odds, the biggest shifts, and moves that became (il)legal. Changes: wages back, just laid off, no debts, twice the coin, a 20% raise, a crash, a boom, no memories, bolder, more cautious; `probeChangesFor(sim, world)` lists only those that apply. Never mutates the world; deterministic (tests in `probe.test.ts`).
+- CLI: `npm run probe -- --world <dir> [--sim <id>] [--change <id>|all] [--decider model --decision-url … --model d3]` (latest snapshot).
+- **For the UX agent:** the town's "Why this move?" panel can call `probe(world, simId, id, decider, { base: recordedDecision.answers.main })` to reuse the recorded odds and spend one model call per toggle (~0.1 s with d3). Label it "what changes the answer", not the model's reasoning.
+
+
 ### Iteration 34 · P1 behaviour: market news, red flags, memories, rentals, a bankruptcy bug, and older residents' life stories
 - **Market news as consequences** (`theme.marketNews`): "the Guild Fund crashed 9.4% last month, the worst fall in years; work is scarce and people are being let go" instead of bare percentages (public facts only; the regime stays hidden).
 - **Red flags**: a `warnings` line near the top (out of work, moneylender's debt and its monthly interest, behind on payments, below the reserve, many empty cottages), and the consequence inside the options themselves (investing with no wages: "this coin may be needed for bread and rent"; a rental in an emptying town: "may sit empty for months, costing X a month"). **d3 ignored all of it**: S-unemployed still invests 47-53%, S-rentals-empty still buys at 95%, wherever the warning sits. That's a d3 limit, not wording; the fine-tuned E06 passed exactly these (see docs/finetune).
