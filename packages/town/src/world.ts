@@ -118,11 +118,11 @@ async function next(world: World, decider: Decider, archive: LifetimeArchive, ca
 type Frame = Awaited<ReturnType<typeof next>>;
 type ResidentFrame = Frame['sims'][number];
 type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
-  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe' | 'cashFlow' | 'events'>>;
+  & Partial<Pick<ResidentFrame, 'name' | 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe' | 'cashFlow' | 'events'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow, events }: ResidentFrame): ResidentMonth {
-  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow, events };
+function monthRecord({ name, age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow, events }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, name: move ? name : undefined, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow, events };
 }
 
 function archiveMonth(frame: Frame): HistoryMonth {

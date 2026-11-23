@@ -6,11 +6,15 @@ The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspec
 
 Open **Lifetime history** in a resident profile for milestones by year and a net-worth chart. **World → Past residents** lets you search completed lives. An older town shows where its saved coverage begins.
 
+Choose **View decision** during a recorded errand or in the monthly timeline. The dated evidence opens over the town. Copy the link to share it. The link opens the record while it is retained and carries a labeled copy of the evidence for after the twelve-month timeline rolls over.
+
 ## Run locally
 
 From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. Set `DECISION_URL` to a server that supports `/v1/systemone` and `DECISION_MODEL` to its model name, such as `d3`. Without a URL, the town uses the heuristic. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.
 
-Run `npm run town:smoke` to check the watch-to-decision flow in Chrome at desktop and 320-pixel phone widths. The test starts a temporary heuristic town on a free loopback port. Set `CHROMIUM_PATH` to use a specific Chromium executable. The full verification gate runs this check as well.
+Run `npm run town:smoke` to check the watch-to-decision flow in Chrome at desktop and 320/390-pixel phone widths. The test starts a temporary heuristic town on a free loopback port. Set `CHROMIUM_PATH` to use a specific Chromium executable. The full verification gate runs this check as well. For Safari-engine coverage, install WebKit with `npx playwright-core install webkit` and run `npm run town:smoke -- --webkit`.
+
+Run `npm run town:soak` for the 1,000-resident Chrome check. It accelerates the shared clock and checks reconnect, pause, Go live, model fallback, resident death, timeline retention, and browser heap after garbage collection across published months.
 
 To exercise the configured model and its counterfactual from the same browser flow, run:
 

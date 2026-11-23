@@ -7,6 +7,13 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · release walkthrough and decision links
+
+- View decision opens the dated record from a financial errand or monthly timeline row, including for a departed resident. Copied links carry a labeled copy of the recorded evidence for after the shared timeline rolls over.
+- Independent Chromium review found overlapping controls at 390 pixels, arrow keys that interrupted Follow indoors, and no way to resume Follow when the selected resident changed streets. The playback row now has its own space on phones, interior camera input leaves Follow intact, and the selected resident's card remains available across districts.
+- The live d3 walkthrough exercised the actual decision, replay, and twice-the-coin probe against the desktop model. The isolated walkthrough allows 35 seconds for individual decisions after a cold d3 request took 13 seconds.
+- Independent recheck and WebKit passed at desktop and 320/390-pixel phone widths. The 1,000-resident Chrome soak advanced 17 months and exercised fallback, reconnect, paused playback, Go live, a followed resident's death, and history retention. Post-GC JavaScript heap stayed near 3 MiB. A physical iPhone pass remains open.
+
 ## Maple Hollow · model vs. heuristic replay
 
 - Advanced and Monthly timeline evidence now show model and heuristic sampling odds for the same resident state, legal moves, discipline adjustment and draw. The replay reports whether the sampled moves differ. The recorded outcome still reflects the rules check on the model's move.

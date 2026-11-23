@@ -81,14 +81,12 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
   #market{white-space:normal;text-align:right}
 }
 @media(max-width:570px){
+  header{grid-template-areas:"brand clock" "actions actions" "controls controls" "market market"}
+  #market{text-align:left}
   main:has(#resident[data-mode="profile"]:not([hidden])) #map{height:clamp(215px,39dvh,340px)}
   #map{display:grid;grid-template-rows:minmax(0,1fr) auto}
   #town{min-height:0;touch-action:pan-y}
   .resident-actions button{min-height:44px}
-}
-@media(max-width:360px){
-  header{grid-template-areas:"brand clock" "actions actions" "controls controls" "market market"}
-  #market{text-align:left}
 }
 
 #live{min-inline-size:64px}
@@ -142,3 +140,11 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .district-roster{list-style:none;padding:0}
 .district-roster small{display:block;margin-top:3px}
 #street-name{font-size:12px;font-weight:650;padding-inline:4px}
+
+.decision-link{display:inline-flex;align-items:center;min-height:34px;color:#ffd68d;text-underline-offset:3px;pointer-events:auto}
+.decision-link:focus-visible{outline:3px solid #a9c9ff;outline-offset:2px}
+.decision-dialog{inline-size:min(33rem,calc(100% - 24px));max-block-size:calc(100dvh - 24px);padding:16px;overflow:auto;border:1px solid #ab856d;border-radius:8px;background:#232941;color:#f2dfc3;overflow-wrap:anywhere}
+.decision-dialog::backdrop{background:#070c1baf}
+.decision-dialog p{line-height:1.45}
+.decision-dialog [role=status]:empty{display:none}
+.decision-dialog [aria-label="Decision link"]{width:100%;font:inherit}

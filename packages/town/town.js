@@ -226,6 +226,159 @@ function decisionDetails(sim){
   return details;
 }
 
+const decisionDialog=element('dialog',null,'decision-dialog');
+const decisionTitle=element('h2','Recorded decision');
+decisionTitle.id='decision-title';
+decisionDialog.setAttribute('aria-labelledby',decisionTitle.id);
+const decisionClose=element('button','Close');
+decisionClose.type='button';
+const decisionHeader=element('div',null,'panel-heading');
+decisionHeader.append(decisionTitle,decisionClose);
+const decisionBody=element('div');
+decisionDialog.append(decisionHeader,decisionBody);
+document.body.append(decisionDialog);
+let decisionRequest, decisionOrigin;
+
+function decisionHash(id,month){
+  return '#decision/'+encodeURIComponent(id)+'/'+month;
+}
+
+function decisionLink(id,month){
+  const link=element('a','View decision','decision-link');
+  link.href=decisionHash(id,month);
+  link.addEventListener('click',rememberDecisionOrigin);
+  return link;
+}
+
+function rememberDecisionOrigin(event){
+  if(!event.metaKey&&!event.ctrlKey&&!event.shiftKey&&!event.altKey)decisionOrigin=event.currentTarget;
+}
+
+function dismissDecision(){
+  decisionDialog.close();
+  if(decisionOrigin?.getClientRects().length)decisionOrigin.focus({preventScroll:true});
+  else canvas.focus({preventScroll:true});
+  decisionOrigin=null;
+}
+
+function closeDecision(){
+  decisionRequest?.abort();
+  if(location.hash.startsWith('#decision/'))history.replaceState(history.state,'',location.pathname+location.search);
+  dismissDecision();
+}
+
+function savedDecisionLink(id,record,name){
+  const {month,label,move,draw,probabilities,decision}=record;
+  const evidence={name,month,label,move,draw,probabilities,decision:decision&&{
+    provider:decision.provider,model:decision.model,valid:decision.valid,
+    sampling:decision.sampling,heuristicReplay:decision.heuristicReplay,
+  }};
+  const bytes=new TextEncoder().encode(JSON.stringify(evidence));
+  const saved=btoa(String.fromCharCode(...bytes)).replaceAll('+','-').replaceAll('/','_').replace(/=+$/,'');
+  return new URL(decisionHash(id,month)+'?saved='+saved,location.href).href;
+}
+
+function readSavedDecision(encoded,month){
+  if(!encoded)return;
+  const odds=value=>value&&typeof value==='object'&&!Array.isArray(value)
+    &&Object.values(value).every(p=>Number.isFinite(p)&&p>=0&&p<=1);
+  const sampling=value=>value===undefined||(typeof value?.move==='string'&&odds(value.odds));
+  try{
+    const bytes=Uint8Array.from(atob(encoded.replaceAll('-','+').replaceAll('_','/')),c=>c.charCodeAt(0));
+    const record=JSON.parse(new TextDecoder().decode(bytes));
+    const decision=record.decision;
+    if(record.month!==month||typeof record.label!=='string'||typeof record.move!=='string'
+      ||(record.name!==undefined&&typeof record.name!=='string')
+      ||(record.draw!==undefined&&!Number.isFinite(record.draw))
+      ||(record.probabilities!==undefined&&!odds(record.probabilities))
+      ||(decision!==undefined&&(!decision||typeof decision.provider!=='string'
+        ||(decision.model!==undefined&&typeof decision.model!=='string')
+        ||!sampling(decision.sampling)||!sampling(decision.heuristicReplay))))return;
+    return {...record,hasProbe:false};
+  }catch{
+    return;
+  }
+}
+
+function renderLinkedDecision(record,id,saved=false){
+  const name=record.name??frame?.sims.find(sim=>sim.id===id)?.name;
+  if(name)decisionTitle.textContent=name+'’s decision';
+  const evidence=element('section');
+  decisionBody.replaceChildren(element('p',record.label));
+  if(saved){
+    decisionBody.append(element('p','Saved evidence from a shared link. Live records and probes require a retained month.'));
+  }else{
+    const copy=element('button','Copy decision link');
+    copy.type='button';
+    const copyStatus=element('p');
+    copyStatus.setAttribute('role','status');
+    copy.onclick=async()=>{
+      const url=savedDecisionLink(id,record,name);
+      try{
+        await navigator.clipboard.writeText(url);
+        copyStatus.textContent='Decision link copied.';
+      }catch{
+        const manual=element('input');
+        manual.readOnly=true;
+        manual.value=url;
+        manual.setAttribute('aria-label','Decision link');
+        copyStatus.replaceChildren(manual);
+        manual.select();
+      }
+    };
+    decisionBody.append(copy,copyStatus);
+  }
+  decisionBody.append(evidence);
+  appendDecisionEvidence(evidence,record,id);
+}
+
+async function showLinkedDecision(){
+  decisionRequest?.abort();
+  if(!location.hash.startsWith('#decision/')){
+    if(decisionDialog.open)dismissDecision();
+    return;
+  }
+  const hash=location.hash;
+  const match=/^#decision\/([\w-]{1,80})\/([1-9][0-9]{0,8})(?:\?saved=([\w-]{1,16000}))?$/.exec(hash);
+  const controller=new AbortController();
+  decisionRequest=controller;
+  decisionTitle.textContent='Recorded decision';
+  const status=element('p',match?'Loading decision…':'This decision link is invalid.');
+  status.setAttribute('role','status');
+  decisionBody.replaceChildren(status);
+  if(!decisionDialog.open)decisionDialog.showModal();
+  decisionDialog.scrollTop=0;
+  if(!match)return;
+  const [,id,month,encoded]=match;
+  const saved=readSavedDecision(encoded,Number(month));
+  try{
+    const response=await fetch('/api/town/history/'+encodeURIComponent(id),{signal:controller.signal});
+    if(!response.ok)throw Error();
+    const {months}=await response.json();
+    if(controller.signal.aborted)return;
+    const record=months.find(row=>row.month===Number(month));
+    if(!record?.move){
+      if(saved){renderLinkedDecision(saved,id,true);return;}
+      status.textContent=record?'No decision was recorded for this resident in '+record.label+'.'
+        :'This decision is outside the retained timeline or the resident is unavailable.';
+      return;
+    }
+    renderLinkedDecision(record,id);
+  }catch{
+    if(controller.signal.aborted)return;
+    if(saved){renderLinkedDecision(saved,id,true);return;}
+    status.textContent='The decision could not be loaded.';
+    const retry=element('button','Retry');
+    retry.onclick=showLinkedDecision;
+    decisionBody.append(retry);
+  }
+}
+
+decisionClose.onclick=closeDecision;
+$('street-decision').addEventListener('click',rememberDecisionOrigin);
+decisionDialog.addEventListener('cancel',event=>{event.preventDefault();closeDecision();});
+window.addEventListener('hashchange',showLinkedDecision);
+
 function decisionReplay(record,model,heuristic){
   const details=element('details',null,'decision-replay');
   const summary=element('summary','Model vs. heuristic');
@@ -455,6 +608,7 @@ function timelineRow(row,residentId){
   }
   let updateProbe;
   if(row.move&&(row.decision||row.probabilities)){
+    details.append(decisionLink(residentId,row.month));
     const evidence=element('details',null,'decision-details past-decision');
     const evidenceSummary=element('summary','Decision evidence');
     evidenceSummary.dataset.focusKey='evidence-'+row.month;
@@ -1412,12 +1566,14 @@ function drawStreet(focus,p,w,h){
 }
 function showStory(person,p){
   const box=$('street-story');
-  box.hidden=!person||!streetMode||streetJourney(person,p).district!==activeStreet;
+  box.hidden=!person||!streetMode;
   if(box.hidden)return;
-  const [activity]=routine(person,p);
-  const {description,move}=streetActivity(person,activity,p);
-  const message=districts[activeStreet].name+' · '+description+(move?' · Recorded move: '+moveName(move):' · Ambient routine');
-  const key=person.id+':'+following+':'+message;
+  const {district,activity}=streetJourney(person,p);
+  const {description,move}=district===activeStreet?streetActivity(person,activity,p):{description:null,move:null};
+  const message=description
+    ?districts[district].name+' · '+description+(move?' · Recorded move: '+moveName(move):' · Ambient routine')
+    :'Currently in '+districts[district].name;
+  const key=frame.month+':'+person.id+':'+following+':'+message;
   if(key===storyText)return;
   storyText=key;
   const inspect=$('street-resident');
@@ -1426,6 +1582,9 @@ function showStory(person,p){
   inspect.onclick=()=>choose(person.id);
   $('street-follow').textContent=following?'Stop following':'Follow';
   $('street-activity').textContent=message;
+  const link=$('street-decision');
+  link.hidden=!move;
+  if(move)link.href=decisionHash(person.id,frame.month);
 }
 function walkPhaseFor(sim,distance,height){
   return distance==null||reducedMotion.matches?null
@@ -1637,6 +1796,9 @@ function updateCameraControls(){
   $('zoom-out').disabled=interiorOpen||streetCamera.zoom<=fit;
   $('zoom-in').disabled=interiorOpen||streetCamera.zoom>=maxZoom();
   for(const id of ['zoom-out','zoom-in','zoom-level'])$(id).hidden=!streetMode;
+  canvas.setAttribute('aria-label',!streetMode?'Town overview. Use the street pins to explore.'
+    :interiorOpen?'Interior scene. Use Step outside to return to the street.'
+      :'Town street. Use left and right arrows to pan, and plus or minus to zoom.');
 }
 const maxZoom=()=>streetFitZoom*2;
 function zoom(factor){
@@ -1651,7 +1813,7 @@ const coords=event=>{
 };
 canvas.addEventListener('wheel',event=>{event.preventDefault();zoom(Math.exp(clamp(-event.deltaY*.002,-.5,.5)));},{passive:false});
 canvas.addEventListener('pointerdown',event=>{
-  if(event.button!==0||drag||!streetMode)return;
+  if(event.button!==0||drag||!streetMode||interiorOpen)return;
   drag={...coords(event),id:event.pointerId,moving:false};
   canvas.setPointerCapture(event.pointerId);
 });
@@ -1704,14 +1866,14 @@ function switchMap(showStreet){
 $('street').onclick=()=>switchMap(true);
 $('overview').onclick=()=>switchMap(false);
 canvas.addEventListener('keydown',event=>{
-  if(!streetMode)return;
+  if(!streetMode||interiorOpen)return;
   if(event.key==='+'||event.key==='=')zoom(1.4);
   else if(event.key==='-')zoom(1/1.4);
   else {
-    const delta={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[event.key];
-    if(!delta)return;
+    const delta={ArrowLeft:-1,ArrowRight:1}[event.key];
+    if(!delta||!scene)return;
     leaveFollow();
-    if(scene){streetCamera.pan=clamp((streetCamera.pan??(canvas.clientWidth*.5-scene.x)/scene.width)+delta[0]*65/scene.width,0,1);event.preventDefault();return;}
+    streetCamera.pan=clamp((streetCamera.pan??(canvas.clientWidth*.5-scene.x)/scene.width)+delta*65/scene.width,0,1);
   }
   event.preventDefault();
 });
@@ -1758,9 +1920,9 @@ $('live').onclick=()=>{
   updatePlaybackControls();
 };
 document.addEventListener('visibilitychange',()=>{if(!document.hidden){lastTime=performance.now();poll();}});
-document.addEventListener('keydown',event=>{if(event.key!=='Escape')return;
+document.addEventListener('keydown',event=>{if(event.key!=='Escape'||decisionDialog.open)return;
   if(!$('world').hidden)setWorld(false);
   else if(document.activeElement.closest('#resident, #place'))document.activeElement.closest('aside').querySelector('[data-focus-key=close]')?.click();
   else if(document.activeElement===canvas)$('overview').click();});
 setInterval(()=>{if(Date.now()-lastPoll>12000)poll();},4000);
-poll();requestAnimationFrame(drawFrame);
+poll();showLinkedDecision();requestAnimationFrame(drawFrame);

@@ -4,19 +4,19 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
-import { chromium, type Browser, type Page } from 'playwright-core';
+import { chromium, webkit, type Browser, type Page } from 'playwright-core';
 import { DAY, sharedWorld, type Checkpoint } from '../packages/town/src/world.ts';
 import { kevDecider } from '../packages/worker/src/kev.ts';
 
 const ROOT = join(import.meta.dirname, '..');
-const { values: options } = parseArgs({ options: { 'live-model': { type: 'boolean' } } });
+const { values: options } = parseArgs({ options: { 'live-model': { type: 'boolean' }, webkit: { type: 'boolean' } } });
 const modelOptions = options['live-model'] ? {
   url: process.env.DECISION_URL, model: process.env.DECISION_MODEL, apiKey: process.env.KEV_API_KEY,
 } : undefined;
 if (modelOptions && (!modelOptions.url || !modelOptions.model)) {
   throw new Error('--live-model requires DECISION_URL and DECISION_MODEL');
 }
-const decider = modelOptions?.url ? kevDecider({ ...modelOptions, url: modelOptions.url, timeoutMs: 10_000, retries: 0 }) : undefined;
+const decider = modelOptions?.url ? kevDecider({ ...modelOptions, url: modelOptions.url, timeoutMs: 35_000, retries: 0 }) : undefined;
 const population = decider ? 12 : 72;
 const work = await mkdtemp(join(tmpdir(), 'maple-hollow-ux-'));
 const checkpointFile = join(work, 'checkpoint.json');
@@ -61,6 +61,7 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   assert((await atlas).ok(), 'Walk atlas should load');
   const profile = page.locator('#resident');
   await page.locator('#street-resident').waitFor();
+  await page.locator('#sound[aria-pressed="true"]').waitFor();
   await page.locator('#ranking').click();
   await profile.locator(`button[data-focus-key="${resident.id}"]`).click();
   const follow = profile.getByRole('button', { name: 'Follow', exact: true });
@@ -121,6 +122,19 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   }
   await current.getByText('Income after tax', { exact: true }).waitFor();
   await current.getByText('Discretionary spending', { exact: true }).waitFor();
+  const decisionLink = current.getByRole('link', { name: 'View decision' });
+  const decisionHash = '#decision/' + resident.id + '/' + frame.month;
+  assert.equal(await decisionLink.getAttribute('href'), decisionHash);
+  await decisionLink.click();
+  const linked = page.getByRole('dialog');
+  await linked.getByText(frame.label, { exact: true }).waitFor();
+  await linked.getByText('Recorded outcome', { exact: true }).waitFor();
+  await linked.getByRole('button', { name: 'Copy decision link' }).waitFor();
+  assert.equal(new URL(page.url()).hash, decisionHash);
+  await page.keyboard.press('Escape');
+  await linked.waitFor({ state: 'hidden' });
+  assert.equal(new URL(page.url()).hash, '');
+  assert(await decisionLink.evaluate(node => document.activeElement === node), 'Closing evidence should restore link focus');
   await current.getByRole('heading', { name: 'Selected cash flows', exact: true }).waitFor();
   await current.getByText('Cash change also reflects purchases, investments, and transfers between accounts.', { exact: true }).waitFor();
   assert.equal(await rows.count(), 12, 'Timeline should include the retained warm-up months');
@@ -206,6 +220,38 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
     await panel.getByRole('button', { name: 'Zoom to street' }).click();
     await stage.and(page.locator(`[data-drawn-artwork="street-${district}.jpg"]`)).waitFor();
   }
+  const onErrand = frame.sims.find(sim => sim.errand && sim.move && sim.decision?.provider === resident.decision?.provider);
+  assert(onErrand, 'The walkthrough needs a recorded errand');
+  await page.locator('#ranking').click();
+  await profile.locator(`button[data-focus-key="${onErrand.id}"]`).click();
+  if (await follow.getAttribute('aria-pressed') === 'false') await follow.click();
+  await profile.getByRole('button', { name: /close/i }).click();
+  await page.locator('[data-speed="12"]').click();
+  await page.locator('#pause').click();
+  const streetDecision = page.locator('#street-decision');
+  await streetDecision.waitFor();
+  await page.locator('#inside').getByText('Step outside', { exact: true }).waitFor();
+  await page.locator('#pause').click();
+  await stage.focus();
+  await page.keyboard.press('ArrowUp');
+  assert.equal(await page.locator('#inside').textContent(), 'Step outside');
+  assert.equal(await page.locator('#street-follow').textContent(), 'Stop following');
+  assert.equal(await streetDecision.getAttribute('href'), '#decision/' + onErrand.id + '/' + frame.month);
+  await streetDecision.click();
+  await linked.getByRole('heading', { name: onErrand.name + '’s decision' }).waitFor();
+  await linked.getByText('Recorded outcome', { exact: true }).waitFor();
+  await linked.getByRole('button', { name: 'Close' }).click();
+  assert.equal(await page.locator('#street-follow').textContent(), 'Stop following');
+  await page.locator('#sound').click();
+  assert.equal(await page.locator('#sound').getAttribute('aria-pressed'), 'false');
+  await page.goto(url + '/?watch=1' + decisionHash);
+  await page.locator('#sound[aria-pressed="false"]').waitFor({ state: 'attached' });
+  await linked.getByText(frame.label, { exact: true }).waitFor();
+  await linked.getByRole('heading', { name: resident.name + '’s decision' }).waitFor();
+  await linked.getByRole('button', { name: 'Close' }).click();
+  assert.equal(new URL(page.url()).search, '?watch=1');
+  await page.goto(url + '/#decision/' + resident.id + '/999999999');
+  await linked.getByText('This decision is outside the retained timeline or the resident is unavailable.').waitFor();
   assert.deepEqual(errors, [], 'Town should have no uncaught browser errors');
 }
 
@@ -243,11 +289,13 @@ try {
     stdio: ['ignore', 'pipe', 'inherit'],
   });
   const url = await endpoint(server);
-  browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chrome' });
-  for (const viewport of [{ width: 1440, height: 900 }, { width: 320, height: 640 }]) {
+  browser = options.webkit ? await webkit.launch()
+    : await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : { channel: 'chrome' });
+  for (const viewport of [{ width: 1440, height: 900 }, { width: 390, height: 844 }, { width: 320, height: 640 }]) {
     const now = Date.now();
     await writeFile(checkpointFile, JSON.stringify({ ...fixture, startedAt: now, lastSeenAt: now }));
-    const page = await browser.newPage({ viewport, hasTouch: viewport.width === 320, isMobile: viewport.width === 320 });
+    const mobile = viewport.width < 500;
+    const page = await browser.newPage({ viewport, hasTouch: mobile, isMobile: mobile });
     page.setDefaultTimeout(8000);
     try {
       await verifyViewport(page, url, frame, resident, eventsByResident.get(resident.id) ?? []);
@@ -255,7 +303,7 @@ try {
       await page.close();
     }
   }
-  console.log(`Town smoke passed on desktop and 320-pixel phone${decider ? ' with ' + decider.model : ''}`);
+  console.log(`Town smoke passed in ${options.webkit ? 'WebKit' : 'Chrome'} on desktop and 320/390-pixel phone viewports${decider ? ' with ' + decider.model : ''}`);
 } finally {
   await browser?.close();
   if (server && server.exitCode === null && server.signalCode === null && server.pid !== undefined) {
