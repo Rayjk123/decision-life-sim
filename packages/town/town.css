@@ -163,3 +163,17 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .decision-dialog p{line-height:1.45}
 .decision-dialog [role=status]:empty{display:none}
 .decision-dialog [aria-label="Decision link"]{width:100%;font:inherit}
+
+#music-settings{position:relative}
+#music-settings summary{display:block;border:1px solid #6f6682;border-radius:5px;padding:7px 10px;background:#232c46;color:#f1dfc7;cursor:pointer}
+#music-settings summary::-webkit-details-marker{display:none}
+#music-settings[open] summary{background:#e9ad61;color:#271f30}
+.music-options{position:absolute;z-index:5;inset-block-start:calc(100% + 6px);inset-inline-end:0;width:202px;padding:10px;display:grid;gap:8px;background:#232941;border:1px solid #ab856d;border-radius:6px;box-shadow:0 4px 14px #0d142580}
+.music-options label{display:grid;gap:4px}
+.music-options select,.music-options input{width:100%;font:inherit}
+@media(max-width:700px){
+  header{position:relative;z-index:3}
+  #music-settings{position:static}
+  .music-options{inset-block-start:calc(100% - 5px);inset-inline-end:8px}
+}
+@media(max-width:570px){#music-settings summary{font-size:12px;padding-inline:4px}}

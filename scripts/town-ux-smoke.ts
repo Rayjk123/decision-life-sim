@@ -252,6 +252,17 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await linked.getByText('Recorded outcome', { exact: true }).waitFor();
   await linked.getByRole('button', { name: 'Close' }).click();
   assert.equal(await page.locator('#street-follow').textContent(), 'Stop following');
+  const tracks = page.locator('#music-settings > summary');
+  await tracks.click();
+  const track = page.getByLabel('Track on repeat');
+  assert.equal(await track.locator('option').count(), 5);
+  assert.equal(await track.inputValue(), 'evening');
+  await track.selectOption('waterfront');
+  const volume = page.getByRole('slider', { name: 'Music volume' });
+  await volume.press('End');
+  assert.equal(await volume.inputValue(), '1');
+  await volume.press('Escape');
+  await track.waitFor({ state: 'hidden' });
   await page.locator('#sound').click();
   assert.equal(await page.locator('#sound').getAttribute('aria-pressed'), 'false');
   await page.goto(url + '/?watch=1' + decisionHash);
@@ -259,6 +270,9 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await linked.getByText(frame.label, { exact: true }).waitFor();
   await linked.getByRole('heading', { name: resident.name + '’s decision' }).waitFor();
   await linked.getByRole('button', { name: 'Close' }).click();
+  await tracks.click();
+  assert.equal(await track.inputValue(), 'waterfront');
+  assert.equal(await volume.inputValue(), '1');
   assert.equal(new URL(page.url()).search, '?watch=1');
   await page.goto(url + '/#decision/' + resident.id + '/999999999');
   await linked.getByText('This decision is outside the retained timeline or the resident is unavailable.').waitFor();

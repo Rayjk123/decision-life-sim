@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · lo-fi track picker
+
+- Added Rain on Market Lane, Saturday Market, Waterfront Dawn, and Lanterns in Guild Row alongside Maple Evening. The Tracks menu repeats the selected arrangement and stores the selection and volume locally. All five are synthesized in the browser.
+- The ten-town demo generation plan is on hold.
+
 ## Maple Hollow · mainline sync and Technical view
 
 - Merged mainline through `d867d7b`. Mainline makes E07m the default when a decision endpoint is configured and adds medieval evaluation results, GGUF release assets, and model and dataset cards. The merge retains the town's recorded-model counterfactual. The preview still runs the heuristic unless started with a model endpoint.

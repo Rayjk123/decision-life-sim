@@ -8,6 +8,8 @@ Open **Technical view** from the town header for a wealth leaderboard chart, sea
 
 Choose **View decision** during a recorded errand or in the monthly timeline. The dated evidence opens over the town. Copy the link to share it. The link opens the record while it is retained and carries a labeled copy of the evidence for after the twelve-month timeline rolls over.
 
+Open **Tracks** to choose from five original lo-fi loops and adjust the volume. Your selection repeats and is remembered alongside volume and mute on that browser.
+
 ## Run locally
 
 From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. Set `DECISION_URL` to a server that supports `/v1/systemone` and `DECISION_MODEL` to its model name, such as `d3`. Without a URL, the town uses the heuristic. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.
