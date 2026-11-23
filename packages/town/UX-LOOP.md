@@ -33,3 +33,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The street zoom shows magnification relative to the fitted scene. Fixed interiors show Fit and disable both zoom buttons. The overview keeps its existing zoom range.
 - Chrome at 1440 × 900 and 320 × 640 verified distinct exterior views at work and the bank, changed canvas pixels when zooming the street, and disabled zoom in both interiors.
 - Next, give the resident a quiet scene at home so following covers the start and end of the day.
+
+## Round 5
+
+- Following now opens a cottage at dawn and on the evening return. Stepping outside affects just that visit, so the morning choice does not suppress the evening return.
+- The cottage has matching [daylight](art/cottage-day.png) and [evening](art/cottage.png) artwork. Both are built-in ImageGen outputs. The first prompt used the bakery as a style reference and requested a modest medieval living room with a left-hand door, right-hand hearth, autumn window, and open floor for a walking sprite. The daylight prompt kept the composition and switched the window and floor lighting to morning sunlight.
+- Chrome at 1440 × 900 and 320 × 640 checked that both assets loaded from the local town and followed one resident from the cottage to work, through an errand, and back home with Follow still on.
+- Round 6 should independently review the entire route and the quiet time spent at home. The cottage currently represents the home scene for every resident.

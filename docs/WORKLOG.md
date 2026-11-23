@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 5
+
+- A cottage interior completes the illustrated loop from home to work and back. The resident starts and ends the day by the hearth. Step outside applies to the current home visit.
+- Next round reviews the full watch experience on desktop and phone. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 4
 
 - Work and civic errands have separate destinations on the illustrated street. Civic trips head across the bridge. The street zoom shows its effective magnification, and fixed interiors show Fit.

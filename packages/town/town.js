@@ -327,13 +327,13 @@ function routine(s,t){
   const morning=.04+stagger*.20, arriving=morning+.09+(h%7)/100;
   const midday=Math.max(arriving+.03,.35+((h>>>8)%100)/480), errandDone=midday+.09;
   const evening=Math.max(errandDone+.015,.64+((h>>>16)%100)/470), end=Math.min(.98,evening+.13);
-  if(t<morning)return ['home',0];
+  if(t<morning)return ['home',t/morning];
   if(t<arriving)return ['commute',(t-morning)/(arriving-morning)];
   if(t<midday)return [s.working?'work':'outside',(t-arriving)/(midday-arriving)];
   if(t<errandDone)return ['outbound',(t-midday)/(errandDone-midday)];
   if(t<evening)return ['errand',(t-errandDone)/(evening-errandDone)];
   if(t<end)return ['returning',(t-evening)/(end-evening)];
-  return ['home',0];
+  return ['home',(t-end)/(1-end)];
 }
 function position(s,t){
   const h=hash(s.id), slot=(h>>>10)%39;
@@ -359,12 +359,14 @@ function position(s,t){
 }
 function openStreet(){
   if(!frame?.sims.length)return;
+  sceneArt('cottage');
   const person=get()??frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
   selected=person.id;place=null;view='street';streetMode=true;streetPan=null;
   Object.assign(camera,{zoom:streetFitZoom,following:true});
   snapFollow=true;updateCameraControls();renderPanels();
 }
 const interiors={
+  home:{name:'Home',wall:'#dfbd91',trim:'#774935',counter:'Hearth',shelf:'#b68154'},
   bakery:{name:'Maple Bakery',wall:'#e6b998',trim:'#a34835',counter:'Pastries',shelf:'#d99148'},
   bank:{name:'Hollow Bank',wall:'#c2ccb0',trim:'#426952',counter:'Teller',shelf:'#a7a168'},
   realtor:{name:'Land Office',wall:'#e1cfaa',trim:'#835840',counter:'Listings',shelf:'#b88461'},
@@ -379,24 +381,29 @@ function destinationFor(s){
   return !s.errand&&(hash(s.id)>>>12)%4===0?'bakery':null;
 }
 function drawInterior(placeKey,person,progress,w,h,p,animated){
-  const edge=animated?Math.min(progress,1-progress):1;
+  const atHome=placeKey==='home';
+  const morning=p<.5;
+  const edge=!animated?1:atHome?(morning?1-progress:progress):Math.min(progress,1-progress);
   const acrossFloor=clamp(edge/.16,0,1);
-  const leaving=acrossFloor<1&&progress>.5;
+  const leaving=acrossFloor<1&&(atHome?morning:progress>.5);
   const stride=acrossFloor<1?p*frame.duration*Math.PI/240:null;
   const transition=1-clamp(edge/.06,0,1);
   const workplace=workplaceScenes[placeKey];
-  const imageName=workplace?'work-'+workplace.art:placeKey==='bakery'?'bakery':placeKey==='realtor'?'work-land-office':null;
-  const artwork=imageName&&sceneArt(imageName);
+  const imageName=workplace?'work-'+workplace.art
+    :{home:eveningAmount(p)<.5?'cottage-day':'cottage',bakery:'bakery',realtor:'work-land-office'}[placeKey];
+  const variant=imageName&&sceneArt(imageName);
+  const artwork=atHome&&!ready(variant)?sceneArt('cottage'):variant;
   if(artwork&&ready(artwork)){
     ctx.resetTransform();draw(ctx,0,0,w,h,'#171e35');
     const scale=Math.min(w/artwork.width,h/artwork.height);
     const width=artwork.width*scale,height=artwork.height*scale;
     const x=(w-width)/2,y=(h-height)/2;
     ctx.imageSmoothingEnabled=false;ctx.drawImage(artwork,x,y,width,height);
-    if(eveningAmount(p)<1){
+    if(!atHome&&eveningAmount(p)<1){
       ctx.globalAlpha=.12*(1-eveningAmount(p));draw(ctx,x,y,width,height,'#ffd7a1');ctx.globalAlpha=1;
     }
-    drawPerson(person,x+width*(.16+.35*acrossFloor),y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
+    const standingX=atHome ? .67 : .51;
+    drawPerson(person,x+width*(.16+(standingX-.16)*acrossFloor),y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
     shadeDoorway(w,h,transition);
     hits=[];scene=null;
     return;
@@ -580,8 +587,8 @@ function drawStreet(focus,p,w,h){
   if(focus&&camera.following&&!reducedMotion.matches){
     const [activity,progress]=routine(focus,p);
     const hasErrand=Boolean(destinationFor(focus));
-    const atDeparture=(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
-    const atArrival=(activity==='commute'&&focus.working)||(activity==='outbound'&&hasErrand);
+    const atDeparture=activity==='commute'||(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
+    const atArrival=activity==='returning'||(activity==='commute'&&focus.working)||(activity==='outbound'&&hasErrand);
     const edge=Math.min(atDeparture?progress:1,atArrival?1-progress:1);
     shadeDoorway(w,h,1-clamp(edge/.06,0,1));
   }
@@ -595,7 +602,7 @@ function showStory(person,p){
   const stop=destinationFor(person);
   const destination=interiors[stop]?.name??'the neighborhood';
   const workplace=workplaceFor(person)?.name;
-  const actions={home:'At home',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
+  const actions={home:p<.5?'At home · A quiet morning':'At home · Winding down',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
   const errandActivity=activity==='outbound'||activity==='errand';
   const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
   const message=recordedErrand?actions[activity]+' · Recorded move: '+title(person.move):'Ambient routine · '+actions[activity];
@@ -657,9 +664,10 @@ function drawFrame(time){
     const focus=get(), focusPoint=focus&&position(focus,p);
     showStory(focus,p);
     const [activity,progress]=focus?routine(focus,p):[];
-    const destination=activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
+    const destination=activity==='home'?'home':activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
       :activity==='errand'?destinationFor(focus):null;
-    const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+activity+':'+destination:null;
+    const visit=activity==='home'?(p<.5?'morning':'evening'):activity;
+    const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+visit+':'+destination:null;
     const inside=$('inside');
     inside.hidden=!stopId;
     const viewingInterior=Boolean(stopId&&outsideStop!==stopId);
