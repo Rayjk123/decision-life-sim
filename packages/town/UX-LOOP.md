@@ -101,3 +101,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - On narrow screens, opening the timeline brings the first row into view when the disclosure has focus. The closed rows make twelve months much easier to scan.
 - Isolated Chrome at 1440 × 900 and 320 × 640 verified 12 real months, correct adjacent-month changes, and expandable balances. The phone check also verified a missing preceding month.
 - Round 15 should let visitors inspect retained decision evidence from timeline rows and commission the next independent review.
+
+## Round 15
+
+- Expanded timeline rows can show Decision evidence. The checkpoint preserves each exposed decision's raw odds, ordered sampling odds, draw, and source when archiving a month. Outcome-only legacy rows explain what was retained.
+- Twelve months remain bounded. A local 1,000-resident sample had approximately 1.77 MB of archived data in a 3.70 MB checkpoint. The history endpoint returned about 3.6 KB for the sampled resident.
+- Isolated Chrome at 1440 × 900 and 320 × 640 verified the archived odds and draw against the original visible decision. It also checked the outcome-only fallback. The restart test checks retained odds, source, and draw.
+- The independent review verified keyboard and touch disclosures and missing-data states. It reproduced a close call where rounded percentages suggested a different sample, and found that live rollover collapsed open timeline rows and lost keyboard focus. The next passes should display the winning draw interval, preserve open rows and focus, then compare consecutive decisions and archetypes.

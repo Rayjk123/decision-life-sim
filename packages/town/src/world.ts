@@ -26,11 +26,13 @@ async function next(world: World, decider: Decider) {
 }
 
 type Frame = Awaited<ReturnType<typeof next>>;
-type ResidentMonth = Pick<Frame['sims'][number], 'age' | 'nw' | 'cash' | 'debt' | 'move'>;
+type ResidentFrame = Frame['sims'][number];
+type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
+  & Partial<Pick<ResidentFrame, 'probabilities' | 'draw' | 'decision'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move }: Frame['sims'][number]): ResidentMonth {
-  return { age, nw, cash, debt, move };
+function monthRecord({ age, nw, cash, debt, move, probabilities, draw, decision }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, probabilities, draw, decision };
 }
 
 export interface Checkpoint {

@@ -204,23 +204,27 @@ function decisionDetails(sim){
   details.dataset.residentId=sim.id;
   details.open=advancedFor===sim.id;
   details.append(summary,element('p',frame.label));
-  if(!sim.move){
+  appendDecisionEvidence(details,sim);
+  return details;
+}
+
+function appendDecisionEvidence(details,record){
+  if(!record.move){
     details.append(element('p','No decision recorded for this month.'));
-    return details;
+    return;
   }
-  const sampling=sim.decision?.sampling;
+  const sampling=record.decision?.sampling;
   details.append(statGrid([
-    ['Recorded outcome',title(sim.move)],
-    ['Decision source',decisionSource(sim.decision)],
-    ['Random draw',Number.isFinite(sim.draw)?sim.draw.toFixed(6):'Unavailable'],
+    ['Recorded outcome',title(record.move)],
+    ['Decision source',decisionSource(record.decision)],
+    ['Random draw',Number.isFinite(record.draw)?record.draw.toFixed(6):'Unavailable'],
   ]),element('h3','Sampling odds'));
   if(sampling){
     details.append(element('p','The engine adjusts the raw odds for discipline, then compares the draw with the running total in the order shown.'),
       moveOdds(sampling.odds,sampling.move));
-    if(sim.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
+    if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
-  details.append(element('h3','Raw move odds'),moveOdds(sim.probabilities));
-  return details;
+  details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));
 }
 
 function balanceChange(current,previous){
@@ -250,6 +254,18 @@ function timelineRow(row,previous){
     ['Cash change',balanceChange(row.cash,previous.cash)],['Debt change',balanceChange(row.debt,previous.debt)],
   ]));
   else details.append(element('p','No preceding month was recorded for comparison.'));
+  if(row.move&&(row.decision||row.probabilities)){
+    const evidence=element('details',null,'decision-details past-decision');
+    const evidenceSummary=element('summary','Decision evidence');
+    evidenceSummary.dataset.focusKey='evidence-'+row.month;
+    evidence.append(evidenceSummary);
+    evidence.addEventListener('toggle',()=>{
+      if(evidence.open&&evidence.childElementCount===1)appendDecisionEvidence(evidence,row);
+    });
+    details.append(evidence);
+  }else if(row.move){
+    details.append(element('p','Only the outcome was retained for this decision.'));
+  }
   item.append(details);
   return item;
 }

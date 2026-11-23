@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 15
+
+- A recorded decision now keeps its source, raw odds, sampling odds, and draw in the retained monthly timeline. Expand a row to view the evidence or see that only its outcome was retained.
+- A twelve-month, 1,000-resident heuristic sample held about 1.77 MB of history in a 3.70 MB checkpoint. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 14
 
 - The monthly timeline now shows the recorded move and net-worth change at a glance. Expand a month for its ending balances and cash and debt changes. Comparisons require the immediately preceding month.

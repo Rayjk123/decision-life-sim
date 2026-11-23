@@ -96,9 +96,9 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .resident-history{margin-top:8px}
 .timeline{margin:0;padding:0;list-style:none}
 .timeline li{padding:5px 0;border-top:1px solid #776781}
-.timeline summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;min-height:42px}
-.timeline summary::before{content:'▸';grid-column:1;grid-row:1;color:#d9bc91}
-.timeline details[open] summary::before{content:'▾'}
+.timeline li>details>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;min-height:42px}
+.timeline li>details>summary::before{content:'▸';grid-column:1;grid-row:1;color:#d9bc91}
+.timeline li>details[open]>summary::before{content:'▾'}
 .timeline-heading{grid-column:1;grid-row:1;padding-inline-start:14px;display:grid;min-width:0}
 .timeline-heading small{font-weight:400;color:#c1ad99}
 .timeline-change{font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
@@ -106,4 +106,5 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .timeline-change[data-direction="down"]{color:#ffb7a1}
 .timeline .stats{margin-top:4px}
 .timeline li p{margin:4px 0 0}
+.past-decision{margin-top:8px}
 .sampled-odds{font-weight:700;color:#ffd68d}
