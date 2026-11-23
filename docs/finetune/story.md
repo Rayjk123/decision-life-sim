@@ -111,4 +111,4 @@ It still misses the big deals (two rental scenarios and one business scenario): 
 
 - **E07m is the default decision model** (2026-11-23), served from the desktop on port 8010 by `research/finetune/desktop/serve-default.ps1` (a logon task that restarts the server if it exits). The code defaults to model `e07m`; point `DECISION_URL` at the desktop.
 - **Next improvement:** ~100–200 more labelled "the deal clears the bar, take it" decisions to close the rental and new-business gap, then a 2-hour retrain.
-- **Faster serving:** export to a single GGUF file for llama.cpp's `/v1/systemone` server (`save_pretrained_gguf`), so the model runs without Python and potentially on the Mac.
+- **Open release:** E07m is exported for llama.cpp (`research/finetune/desktop/export_unsloth.py`): Q4_K_M (2.6 GB) and Q8_0 (4.3 GB) GGUF files run on a Mac with no Python and score the same on the golden suite (77% / 57% and 76% / 57%; ~1.2–1.4 decisions/s on an M3 Pro). Model card, training data and rubric: `research/finetune/release/` (Apache-2.0, like the base model).
