@@ -22,6 +22,8 @@ export interface TickOptions {
   policy?: CallPolicy;
   concurrency?: number;
   style?: StateStyle;
+  /** Read-only hook before decision execution changes the resident or the world. */
+  onDecisionRequest?: (request: DecisionRequest) => void;
   onDecision?: (d: DecisionRecord) => void;
 }
 
@@ -115,6 +117,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     if (!reason) continue;
     const req = buildRequest(sim, world, opts.style);
     if (req.moves.length === 1 && !req.askRetire) continue; // nothing to decide
+    opts.onDecisionRequest?.(req);
     requests.push({ reason, req });
   }
 

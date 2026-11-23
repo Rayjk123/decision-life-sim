@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 21
+
+- Town decisions now capture a twice-as-much-coin variant from the actual pre-decision context. The capture recomputes available moves and heuristic odds without changing the world. External-model request snapshots have a shorter retention window.
+- The next round adds the result endpoint and resident control. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 20
 
 - World now includes a decision mix by personality and recorded source for the retained months. It shows recorded picks, known offers, and picks among those offers. Older unclassified decisions are counted separately.

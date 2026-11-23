@@ -141,3 +141,11 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - New archived choices retain their personality. Older unclassified decisions remain in the total and appear as a separate count. Known-offer coverage is shown per group. Pending frames never enter the mix.
 - The restart test checks date coverage and counts. Isolated Chrome at 1440 × 900 and 320 × 640 checked the actual aggregate endpoint and rendered model, heuristic, and fallback group fixtures. The CloudFormation template parsed locally.
 - Round 21 should start the counterfactual path using reproducible recorded inputs and commission the next independent review.
+
+## Round 21
+
+- New decisions capture one counterfactual from the same pre-decision month and economy: double the resident’s cash, rebuild the legal moves, and record the heuristic variant odds. Model-backed towns also capture the variant model request. No additional model calls run during capture.
+- The scene and timeline expose availability only. Heuristic captures follow the twelve-month retention window. Full model prompts stay in the current and pending frames and two recent archived months to bound checkpoint size.
+- A 1,000-resident replay matched the existing probe’s variant odds and kept all published moves identical. The measured checkpoint was about 5.95 MB with heuristic capture and 8.47 MB with a model fixture after the retention cap.
+- Isolated Chrome at 1440 × 900 and 320 × 640 confirmed decision evidence still worked, including timeline availability without the private request. Round 22 should expose the read-only comparison and a resident control.
+- The independent review verified source separation, missing-personality counts, and deduplicated offers. It found that Picked was ambiguous because it counts final outcomes, that reopening a paused mix could reuse expired data, and that narrow headers broke mid-word. Fix these before release.

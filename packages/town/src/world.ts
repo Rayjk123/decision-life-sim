@@ -1,13 +1,40 @@
-import { ARCHETYPE, ARRIVAL_MONTHS, CAREER, ageInt, balanceSheet, createWorld, heuristicDecider, runMonth, type Decider, type World } from '../../sim-core/src/index.ts';
+import {
+  ARCHETYPE, ARRIVAL_MONTHS, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
+  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type World,
+} from '../../sim-core/src/index.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
 export const DAY = 90_000;
 const IDLE = 15 * 60_000;
 const HISTORY_MONTHS = 12;
+const MODEL_PROBE_ARCHIVE_MONTHS = 2;
 const COMPARED_INPUTS = ['money', 'monthly', 'warnings', 'market'] as const;
+const doubleCoin = PROBE_CHANGES.find(change => change.id === 'double_coin');
+
+function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
+  if (!doubleCoin?.applies(request.sim, request.world)) return undefined;
+  const sim = structuredClone(request.sim);
+  // Double coin edits only this resident. The same month, market and town economy stay in view.
+  const world = { ...request.world, sims: request.world.sims.map(resident => resident.id === sim.id ? sim : resident) };
+  doubleCoin.apply(sim, world);
+  const variant = buildRequest(sim, world);
+  return {
+    beforeCoin: request.sim.cash,
+    afterCoin: sim.cash,
+    offered: variant.moves.map(move => move.id),
+    heuristicOdds: heuristicAnswers(sim, world, variant.moves, variant.askRetire).main,
+    modelRequest: keepModelRequest ? { state: variant.state, questions: variant.questions, moves: variant.moves } : undefined,
+  };
+}
 
 async function next(world: World, decider: Decider) {
-  const result = await runMonth(world, decider);
+  const probes = new Map<string, NonNullable<ReturnType<typeof captureProbe>>>();
+  const result = await runMonth(world, decider, {
+    onDecisionRequest(request) {
+      const capture = captureProbe(request, decider !== heuristicDecider);
+      if (capture) probes.set(request.sim.id, capture);
+    },
+  });
   const decisions = new Map(result.decisions.map(d => [d.simId, d]));
   return {
     month: world.month, label: monthLabel(world.month), market: world.market.regime,
@@ -28,6 +55,7 @@ async function next(world: World, decider: Decider) {
         working: s.employed || s.selfEmployed, nw: sheet.netWorth, cash: sheet.cash, debt: sheet.debt,
         memories: s.memory, move: d?.picked, errand: d ? ERRAND[moveKindOf(d.picked)] : null,
         probabilities: d?.answers.main, draw: d?.draw, decision, spend: s.spendLevel, persona: s.persona,
+        probe: probes.get(s.id),
       };
     }),
   };
@@ -36,11 +64,21 @@ async function next(world: World, decider: Decider) {
 type Frame = Awaited<ReturnType<typeof next>>;
 type ResidentFrame = Frame['sims'][number];
 type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
-  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision'>>;
+  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision }: ResidentFrame): ResidentMonth {
-  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision };
+function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe };
+}
+
+function publicMonthRecord(resident: ResidentMonth) {
+  const { probe, ...record } = resident;
+  return { ...record, hasProbe: hasProbe(probe, record.decision?.provider) };
+}
+
+function hasProbe(probe: ResidentMonth['probe'], provider: string | undefined) {
+  return Boolean(probe && (provider === 'heuristic' || provider === 'heuristic-fallback'
+    || (provider === 'kev' && probe.modelRequest)));
 }
 
 export interface Checkpoint {
@@ -75,6 +113,11 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
         if (now - value.startedAt >= DAY && value.pending) {
           const residents = Object.fromEntries(value.current.sims.map(sim => [sim.id, monthRecord(sim)]));
           value.history = [...(value.history ?? []), { month: value.current.month, residents }].slice(1 - HISTORY_MONTHS);
+          for (const older of value.history.slice(0, -MODEL_PROBE_ARCHIVE_MONTHS)) {
+            for (const resident of Object.values(older.residents)) {
+              if (resident.probe?.modelRequest) delete resident.probe.modelRequest;
+            }
+          }
           value.current = value.pending;
           value.pending = null;
           value.startedAt = now;
@@ -91,11 +134,11 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
   }
 
   function response(value: Checkpoint, now: number) {
-    const sims = value.current.sims.map(sim => {
+    const sims = value.current.sims.map(({ probe, ...sim }) => {
       const career = CAREER[sim.career];
       const d = sim.decision;
       const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
-      return { ...sim, decision, workplace: career?.workplace, occupation: career?.label };
+      return { ...sim, decision, hasProbe: hasProbe(probe, d?.provider), workplace: career?.workplace, occupation: career?.label };
     });
     return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }
@@ -105,9 +148,9 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
     if (!saved) return [];
     const { current, history = [] } = saved.value;
     const months = history.flatMap(({ month, residents }) =>
-      Object.hasOwn(residents, id) ? [{ month, label: monthLabel(month), ...residents[id] }] : []);
+      Object.hasOwn(residents, id) ? [{ month, label: monthLabel(month), ...publicMonthRecord(residents[id]) }] : []);
     const resident = current.sims.find(sim => sim.id === id);
-    if (resident) months.push({ month: current.month, label: current.label, ...monthRecord(resident) });
+    if (resident) months.push({ month: current.month, label: current.label, ...publicMonthRecord(monthRecord(resident)) });
     return months;
   }
 
