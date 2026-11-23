@@ -108,3 +108,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Twelve months remain bounded. A local 1,000-resident sample had approximately 1.77 MB of archived data in a 3.70 MB checkpoint. The history endpoint returned about 3.6 KB for the sampled resident.
 - Isolated Chrome at 1440 × 900 and 320 × 640 verified the archived odds and draw against the original visible decision. It also checked the outcome-only fallback. The restart test checks retained odds, source, and draw.
 - The independent review verified keyboard and touch disclosures and missing-data states. It reproduced a close call where rounded percentages suggested a different sample, and found that live rollover collapsed open timeline rows and lost keyboard focus. The next passes should display the winning draw interval, preserve open rows and focus, then compare consecutive decisions and archetypes.
+
+## Round 16
+
+- The draw and its winning cumulative interval now use the same percentage scale. Close calls add display precision, and Exact sampling values exposes the recorded draw, bounds and ordered weights as unrounded fractions. This works in live and archived decision details.
+- An interval check covered close draws, a boundary too small to round safely, and the final move's floating-point remainder. Isolated Chrome verified the review's close-call example at 1440 × 900 via keyboard and at 320 × 640 via touch, plus an older record without sampling evidence.
+- Round 17 should preserve open timeline rows and keyboard focus across a live month change.

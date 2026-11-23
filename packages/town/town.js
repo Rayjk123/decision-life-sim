@@ -183,18 +183,43 @@ function decisionSource(decision){
   return decision.model??title(decision.provider.replaceAll('-',' '));
 }
 
-function moveOdds(odds,chosen){
+function moveOdds(odds,chosen,format=percent){
   const entries=Object.entries(odds??{}).filter(([,p])=>Number.isFinite(p));
   if(!entries.length)return element('p','No odds recorded for this month.');
   const list=element('dl',null,'odds');
   for(const [move,p] of entries){
     const name=element('dt',title(move)+(move===chosen?' · Sampled':''));
-    const value=element('dd',percent(p));
+    const value=element('dd',format(p));
     value.title=String(p);
     if(move===chosen){name.className='sampled-odds';value.className='sampled-odds';}
     list.append(name,value);
   }
   return list;
+}
+
+function drawInterval(sampling,draw){
+  if(!sampling||!Number.isFinite(draw))return null;
+  const moves=Object.entries(sampling.odds);
+  let lower=0;
+  for(const [i,[move,odds]] of moves.entries()){
+    const upper=i===moves.length-1?1:lower+odds;
+    if(move===sampling.move)return lower<=draw&&draw<upper?{lower,upper}:null;
+    lower=upper;
+  }
+  return null;
+}
+
+function displayDraw(draw,interval){
+  if(!Number.isFinite(draw))return {draw:'Unavailable'};
+  let digits=4;
+  const round=n=>Number((100*n).toFixed(digits));
+  if(interval){
+    while(digits<12&&round(draw)>=round(interval.upper))digits++;
+  }
+  const format=n=>round(n)+'%';
+  const bounds=interval&&round(draw)<round(interval.upper)
+    ?[format(interval.lower),format(interval.upper)]:null;
+  return {draw:format(draw),bounds};
 }
 
 function decisionDetails(sim){
@@ -214,14 +239,30 @@ function appendDecisionEvidence(details,record){
     return;
   }
   const sampling=record.decision?.sampling;
+  const interval=drawInterval(sampling,record.draw);
+  const shown=displayDraw(record.draw,interval);
   details.append(statGrid([
     ['Recorded outcome',title(record.move)],
     ['Decision source',decisionSource(record.decision)],
-    ['Random draw',Number.isFinite(record.draw)?record.draw.toFixed(6):'Unavailable'],
+    ['Random draw',shown.draw],
   ]),element('h3','Sampling odds'));
   if(sampling){
     details.append(element('p','The engine adjusts the raw odds for discipline, then compares the draw with the running total in the order shown.'),
       moveOdds(sampling.odds,sampling.move));
+    if(interval){
+      const range=shown.bounds
+        ?'Its draw interval runs from '+shown.bounds[0]+' up to, but excluding, '+shown.bounds[1]+'.'
+        :'The draw was very close to a boundary. See the exact values below.';
+      details.append(element('p',title(sampling.move)+' was sampled. '+range,'draw-interval'));
+      const exact=element('details',null,'exact-sampling');
+      const summary=element('summary','Exact sampling values');
+      summary.dataset.focusKey='exact-sampling-'+(record.month??frame.month);
+      exact.open=!shown.bounds;
+      exact.append(summary,element('p','Values are fractions from 0 to 1.'),statGrid([
+        ['Draw',String(record.draw)],['Lower bound',String(interval.lower)],['Upper bound',String(interval.upper)],
+      ]),moveOdds(sampling.odds,sampling.move,String));
+      details.append(exact);
+    }
     if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
   details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));

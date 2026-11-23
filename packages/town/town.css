@@ -108,3 +108,5 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .timeline li p{margin:4px 0 0}
 .past-decision{margin-top:8px}
 .sampled-odds{font-weight:700;color:#ffd68d}
+.draw-interval{border-inline-start:2px solid #d9bc91;padding-inline-start:8px}
+.exact-sampling{margin:8px 0}

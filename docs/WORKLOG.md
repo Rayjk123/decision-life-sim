@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 16
+
+- Decision evidence now shows the cumulative interval that contained the draw. The readout adds precision for close calls, and Exact sampling values opens the unrounded draw, bounds, and sampling odds on keyboard or touch.
+- Next, preserve timeline rows and inspection focus across live month changes. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 15
 
 - A recorded decision now keeps its source, raw odds, sampling odds, and draw in the retained monthly timeline. Expand a row to view the evidence or see that only its outcome was retained.
