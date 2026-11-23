@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 31
+
+- The smoke walkthrough now has an opt-in model mode that checks the configured model, exact draw and double-coin odds against the recorded decision. A local SystemOne fixture passed on desktop and phone.
+- The desktop GPU is still occupied. Live d3 verification remains the release check. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 30
 
 - The full verification gate now runs a repeatable Maple Hollow walkthrough in real desktop and phone Chrome. It covers following, pause and phone layout, retained history, the heuristic double-coin comparison, and World.

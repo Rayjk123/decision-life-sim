@@ -209,3 +209,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Added `npm run town:smoke` to the full verification gate alongside the legacy dashboard smoke test. It starts the actual town server on an OS-assigned loopback port with a temporary two-month heuristic checkpoint.
 - Chrome at 1440 × 900 and 320 × 640 verifies the walk atlas loads, following reaches a walking scene, Pause freezes the canvas, the phone controls stay clear of the scene, and the history, recorded source, double-coin comparison and decision mix work together.
 - Independent review passed the phone camera rail and paused walk with visible boots. On desktop and phone it opened a resident's exact draw, visited World, and confirmed the same profile, disclosures, Follow state and paused clock on return. It found no blockers in that flow. The live d3 walkthrough remains pending while the desktop GPU is occupied.
+
+## Round 31
+
+- Added `npm run town:smoke -- --live-model` with explicit `DECISION_URL` and `DECISION_MODEL` configuration. It seeds a 12-resident checkpoint and requires a recorded decision and its counterfactual to come from the named model. Both smoke modes check the exact draw, original odds and normalized comparison odds.
+- A local SystemOne response fixture passed the model path at 1440 × 900 and 320 × 640 in nine requests. The full gate uses the heuristic path and remains independent of any desktop model server.
+- The desktop GPU remained fully occupied. Run the opt-in check against d3 when capacity returns.

@@ -3,17 +3,28 @@ import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { parseArgs } from 'node:util';
 import { chromium, type Browser, type Page } from 'playwright-core';
 import { DAY, sharedWorld, type Checkpoint } from '../packages/town/src/world.ts';
+import { kevDecider } from '../packages/worker/src/kev.ts';
 
 const ROOT = join(import.meta.dirname, '..');
+const { values: options } = parseArgs({ options: { 'live-model': { type: 'boolean' } } });
+const modelOptions = options['live-model'] ? {
+  url: process.env.DECISION_URL, model: process.env.DECISION_MODEL, apiKey: process.env.KEV_API_KEY,
+} : undefined;
+if (modelOptions && (!modelOptions.url || !modelOptions.model)) {
+  throw new Error('--live-model requires DECISION_URL and DECISION_MODEL');
+}
+const decider = modelOptions?.url ? kevDecider({ ...modelOptions, url: modelOptions.url, timeoutMs: 10_000, retries: 0 }) : undefined;
+const population = decider ? 12 : 72;
 const work = await mkdtemp(join(tmpdir(), 'maple-hollow-ux-'));
 const checkpointFile = join(work, 'checkpoint.json');
 let saved: Checkpoint | undefined;
 const town = sharedWorld({
   async load() { return saved ? { value: structuredClone(saved), version: 'smoke' } : null; },
   async save(value) { saved = structuredClone(value); return true; },
-}, { pop: 72 });
+}, { pop: population, decider });
 
 function endpoint(server: ChildProcess) {
   return new Promise<string>((resolve, reject) => {
@@ -71,18 +82,30 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await profile.locator('.timeline li').getByText(frame.label, { exact: true }).waitFor();
   assert.equal(await profile.locator('.timeline > li').count(), 2, 'Timeline should show both retained months');
   await profile.getByText('Advanced decision details', { exact: true }).click();
-  await profile.getByText('Heuristic', { exact: true }).waitFor();
+  const source = resident.decision?.model ?? 'Heuristic';
+  const evidence = profile.locator('.decision-details').filter({ hasText: 'Advanced decision details' }).first();
+  await evidence.getByText(source, { exact: true }).waitFor();
+  const exact = evidence.locator('.exact-sampling');
+  if (await exact.getAttribute('open') === null) await exact.getByText('Exact sampling values', { exact: true }).click();
+  await exact.getByText(String(resident.draw), { exact: true }).waitFor();
   await profile.getByText('What changes the odds?', { exact: true }).click();
   const response = page.waitForResponse(r => r.url() === `${url}/api/town/probe/${resident.id}/${frame.month}`);
   await profile.getByRole('button', { name: 'Try twice the coin' }).click();
   const probe = await (await response).json();
   assert.equal(probe.status, 'ready');
   assert.equal(probe.afterCoin, 2 * probe.beforeCoin);
+  assert.equal(probe.provider, resident.decision?.provider);
+  assert.equal(probe.model, resident.decision?.model);
+  assert.deepEqual(probe.base, resident.probabilities);
+  const variant = Object.values(probe.variant) as number[];
+  assert(variant.length > 0 && variant.every(weight => Number.isFinite(weight) && weight >= 0));
+  assert(Math.abs(variant.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-8, 'The variant odds should sum to one');
   await profile.getByText('With twice the coin', { exact: true }).waitFor();
 
   await page.locator('#toggle').click();
   const world = page.locator('#world-live');
   await world.getByText('Viewed month · ' + frame.label, { exact: true }).waitFor();
+  await world.getByText(source, { exact: true }).waitFor();
   await world.getByText('Decision mix by personality', { exact: true }).click();
   await world.getByRole('combobox').waitFor();
   await page.locator('#close-world').click();
@@ -97,15 +120,19 @@ try {
   await town(0);
   await town(1000);
   const frame = await town(DAY);
+  await town(DAY + 1000);
   const fixture = saved;
-  assert(fixture);
-  const resident = frame.sims.find(sim => sim.working && sim.hasProbe && fixture.history?.[0].residents[sim.id]);
-  assert(resident, 'Seeded smoke world should contain a working resident with history and a decision');
+  assert(fixture?.pending);
+  const provider = decider ? 'kev' : 'heuristic';
+  const resident = frame.sims.find(sim => sim.working && sim.hasProbe && sim.decision?.sampling
+    && sim.decision.provider === provider && sim.decision.model === decider?.model && fixture.history?.[0].residents[sim.id]);
+  assert(resident, `Seeded smoke world should contain a working resident with history and a ${decider?.model ?? provider} decision`);
   server = spawn(process.execPath, ['--import', 'tsx', 'packages/town/src/server.ts'], {
     cwd: ROOT,
     env: {
-      ...process.env, TOWN_PORT: '0', TOWN_HOST: '127.0.0.1', TOWN_DATA: work, TOWN_POP: '72',
-      TOWN_BUCKET: '', TOWN_ASSETS: join(ROOT, 'packages/town'), DECISION_URL: '', AWS_LAMBDA_FUNCTION_NAME: '',
+      ...process.env, TOWN_PORT: '0', TOWN_HOST: '127.0.0.1', TOWN_DATA: work, TOWN_POP: String(population),
+      TOWN_BUCKET: '', TOWN_ASSETS: join(ROOT, 'packages/town'), AWS_LAMBDA_FUNCTION_NAME: '',
+      DECISION_URL: modelOptions?.url ?? '', DECISION_MODEL: modelOptions?.model ?? '',
     },
     stdio: ['ignore', 'pipe', 'inherit'],
   });
@@ -122,7 +149,7 @@ try {
       await page.close();
     }
   }
-  console.log('Town smoke passed on desktop and 320-pixel phone');
+  console.log(`Town smoke passed on desktop and 320-pixel phone${decider ? ' with ' + decider.model : ''}`);
 } finally {
   await browser?.close();
   if (server && server.exitCode === null && server.signalCode === null && server.pid !== undefined) {
