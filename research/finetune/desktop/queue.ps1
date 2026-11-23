@@ -19,6 +19,7 @@ foreach ($job in Get-Content $List) {
   $kind, $run = $job.Split(" ", 2)
   Add-Content queue.log "$(Get-Date -Format s) start $job"
   if ($kind -eq "eval") { & $py eval_unsloth.py "runs\$run" @T *> "runs\$run\eval.log" }
+  elseif ($kind -eq "evalgold") { & $py eval_unsloth.py "runs\$run" "data\sets\claude-hard-med\test.jsonl" *> "runs\$run\eval.log" }   # medieval wording: the gold test set only
   elseif ($kind -eq "train") { & $py train_unsloth.py "runs\$run\config.json" *> "runs\$run\train.log" }
   elseif ($kind -eq "serve") {
     # Serve the model on :8010 until runs\<run>\serve.stop appears (or 60 min), so the Mac can run the golden suite.

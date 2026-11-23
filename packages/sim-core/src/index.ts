@@ -19,3 +19,4 @@ export * from './economy.ts';
 export * from './spend.ts';
 export * from './history.ts';
 export * from './probe.ts';
+export * from './theme.ts';
