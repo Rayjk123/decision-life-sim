@@ -11,7 +11,7 @@ for (const name of ['street-day.png', 'street-evening.png', 'bakery.png', 'cast.
 }
 const assetDir = process.env.TOWN_ASSETS ?? fileURLToPath(new URL('../', import.meta.url));
 const decider = process.env.DECISION_URL ? kevDecider({
-  url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'kev-latest', apiKey: process.env.KEV_API_KEY,
+  url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'e07m', apiKey: process.env.KEV_API_KEY,
 }) : undefined;
 const pop = Number(process.env.TOWN_POP ?? 1000);
 if (!Number.isInteger(pop) || pop < 1 || pop > 1000) throw new Error('TOWN_POP must be an integer from 1 to 1000');

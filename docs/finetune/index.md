@@ -5,6 +5,8 @@ nav_order: 6
 
 # Training our own decision model
 
+> **Start here:** [How we trained a decision model that beats d3](story.md), the whole effort as one story: trials, lessons, and how the results improved. This page is the lab notebook behind it.
+
 A deep dive into fine-tuning a small decision model for this town, using Unsloth's decision-model recipe and Kev's own training recipe, and comparing the results against Kev-4B, d3:4b and the heuristic. This page is the lab notebook: the plan, every run, what worked, what didn't and why.
 {: .fs-5 .fw-300 }
 

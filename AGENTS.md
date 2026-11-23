@@ -6,7 +6,7 @@ Read these first, every session:
 3. `docs/HANDOFF.md`: the open tasks in priority order, with the commands and rules that bite.
 
 ## What this is
-A medieval market town of sims living out their financial lives month by month (gold crowns, the Guild Fund, trading voyages; words in `packages/sim-core/src/theme.ts`, mechanics unchanged). The rules engine (`packages/sim-core`) decides what is legal and keeps the books. A decision model picks what each sim does among legal moves: any model speaking the `/v1/systemone` API (the chosen model: **d3:4b** on Ollama, 70% overall / 48% pairs on the medieval golden suite; Kev-0.8B/4B via `scripts/kev.sh`; see `docs/results.md`). A seeded dice roll makes the final pick. Behaviour is "act in character", with no explicit goals yet.
+A medieval market town of sims living out their financial lives month by month (gold crowns, the Guild Fund, trading voyages; words in `packages/sim-core/src/theme.ts`, mechanics unchanged). The rules engine (`packages/sim-core`) decides what is legal and keeps the books. A decision model picks what each sim does among legal moves: any model speaking the `/v1/systemone` API (the default model: **E07m**, our own 4B fine-tune served from the desktop on :8010, 77% overall / 57% pairs on the medieval golden suite vs d3:4b's 70% / 48%; see `docs/finetune/story.md`; Kev-0.8B/4B via `scripts/kev.sh`; see `docs/results.md`). A seeded dice roll makes the final pick. Behaviour is "act in character", with no explicit goals yet.
 
 ## Commands
 ```bash

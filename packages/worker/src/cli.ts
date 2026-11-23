@@ -5,7 +5,7 @@
 import { parseArgs } from 'node:util';
 import { join } from 'node:path';
 import { heuristicDecider, type Decider, type StateStyle } from '@dls/sim-core';
-import { decisionUrl, kevDecider, percentile } from './kev.ts';
+import { DEFAULT_MODEL, decisionUrl, kevDecider, percentile } from './kev.ts';
 import { monthLabel } from './store.ts';
 import { runWorld, worldDir } from './runner.ts';
 import { archetypeTable, decisionMix } from './report.ts';
@@ -19,7 +19,7 @@ const { values: a } = parseArgs({
     'history-years': { type: 'string', default: '70' },   // town history before month 0 (0 = a town of 18-year-olds)
     'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
     'kev-url': { type: 'string' },
-    model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
+    model: { type: 'string', default: DEFAULT_MODEL },
     policy: { type: 'string', default: 'events' },               // events | monthly
     style: { type: 'string', default: 'words' },                 // words | numbers | terse
     concurrency: { type: 'string', default: '8' },
