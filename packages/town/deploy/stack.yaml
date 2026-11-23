@@ -37,7 +37,7 @@ Resources:
                 Action: s3:ListBucket
                 Resource: !GetAtt World.Arn
               - Effect: Allow
-                Action: [s3:GetObject, s3:PutObject]
+                Action: ['s3:GetObject', 's3:PutObject']
                 Resource: !Sub ${World.Arn}/world/checkpoint.json
   Town:
     Type: AWS::Lambda::Function
@@ -93,6 +93,12 @@ Resources:
       ApiId: !Ref Api
       RouteKey: GET /api/town
       Target: !Sub integrations/${TownIntegration}
+  TownHistoryRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Api
+      RouteKey: 'GET /api/town/history/{resident}'
+      Target: !Sub integrations/${TownIntegration}
   AllowApi:
     Type: AWS::Lambda::Permission
     Properties:
@@ -100,6 +106,13 @@ Resources:
       FunctionName: !Ref Town
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/GET/api/town
+  AllowHistoryApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Town
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/GET/api/town/history/*
   SiteAccess:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:
@@ -132,6 +145,11 @@ Resources:
           Compress: true
         CacheBehaviors:
           - PathPattern: /api/town
+            TargetOriginId: api
+            ViewerProtocolPolicy: redirect-to-https
+            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
+            Compress: true
+          - PathPattern: /api/town/history/*
             TargetOriginId: api
             ViewerProtocolPolicy: redirect-to-https
             CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad

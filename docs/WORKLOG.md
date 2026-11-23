@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 11
+
+- Resident profiles now have a monthly timeline sourced from the same checkpoint as the scene. It loads up to 12 visible months on demand, with dated balances and recorded moves where available. Existing checkpoints build history as their current month advances.
+- Next round will keep the viewed month pinned during local pause or playback when the shared month rolls over. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 10
 
 - Follow and Stop following are available directly beside the resident’s name. Opening or closing the profile leaves Follow as it was. Profiles and rankings use the simulation’s player-facing occupation labels.

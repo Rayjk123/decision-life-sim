@@ -192,10 +192,56 @@ function decisionDetails(sim){
     details.append(list);
   }else details.append(element('p','No odds available for this month.'));
   details.append(element('h3','Provenance'),statGrid([
-    ['Decision history','Past records unavailable'],
     ['Decision inputs','Input snapshot unavailable'],
     ['Model provenance','Provider and model unavailable'],
   ]));
+  return details;
+}
+
+let historyDisclosure;
+function residentHistory(sim,month){
+  const key=sim.id+':'+month;
+  if(historyDisclosure?.key===key)return historyDisclosure.details;
+  const open=historyDisclosure?.id===sim.id&&historyDisclosure.details.open;
+  const details=element('details',null,'decision-details resident-history');
+  historyDisclosure={key,id:sim.id,details};
+  const summary=element('summary','Monthly timeline');
+  summary.dataset.focusKey='timeline';
+  const body=element('div');
+  details.append(summary,body);
+  let loading=false,loaded=false;
+  async function load(){
+    if(!details.open||loading||loaded)return;
+    loading=true;
+    body.replaceChildren(element('p','Loading recorded months…'));
+    try{
+      const response=await fetch('/api/town/history/'+encodeURIComponent(sim.id));
+      if(!response.ok)throw Error();
+      const {months}=await response.json();
+      const visible=months.filter(row=>row.month<=month).reverse();
+      body.replaceChildren(element('p',visible.length
+        ?'Up to 12 months recorded in this town.'
+        :'No months are available for this resident yet.'));
+      if(visible.length){
+        const list=element('ol',null,'timeline');
+        for(const row of visible){
+          const item=element('li');
+          item.append(element('strong',row.label+' · Age '+row.age),statGrid([
+            ['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)],
+          ]),element('p',row.move?'Recorded move · '+title(row.move):'No decision recorded.'));
+          list.append(item);
+        }
+        body.append(list);
+      }
+      loaded=true;
+    }catch{
+      body.replaceChildren(element('p','Timeline unavailable. Close and reopen to retry.'));
+    }finally{
+      loading=false;
+    }
+  }
+  details.addEventListener('toggle',load);
+  details.open=Boolean(open);
   return details;
 }
 
@@ -269,6 +315,7 @@ function renderPanels(){
     identity.append(portrait,element('p',sim.age+' · '+occupation(sim)),element('span',title(sim.arch),'badge'));
     panel.append(identity,statGrid([['Net worth',knownMoney(sim.nw)],['Cash',knownMoney(sim.cash)],['Debt',knownMoney(sim.debt)]]));
     panel.append(element('p','Recorded move · '+(sim.move?title(sim.move):'No decision recorded this month')),decisionDetails(sim));
+    panel.append(residentHistory(sim,frame.month));
     panel.append(element('h3','Recent life events'));
     const memories=sim.memories??[];
     if(memories.length){

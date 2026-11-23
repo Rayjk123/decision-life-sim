@@ -73,3 +73,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Profiles, rankings and place lists show the career label from the simulation. The town API derives it from the saved career key, so existing checkpoints can return it.
 - Isolated Chrome at 1440 × 900 and 320 × 640 verified stop and resume from the scene, opening and closing the profile during Follow, and distinguishing two people with the same name by occupation in the leaderboard.
 - The next phase starts with a retained timeline and predictable behavior across the shared month boundary. The review also flagged sprite clearance under overlays, player-facing financial terms, and explaining the limits of the current decision odds. Carry these into the next passes.
+
+## Round 11
+
+- The resident profile has an on-demand timeline with up to twelve recorded months, including the current month. Each row shows the actual month, age, ending balances, and recorded move when available.
+- The same checkpoint archives only published frames. A pending month stays out of the timeline, and a legacy checkpoint starts with its current frame. The history endpoint does not advance the simulation and returns an empty timeline for an unknown resident.
+- Isolated Chrome at 1440 × 900 and 320 × 640 loaded two actual promoted months through the timeline endpoint. Tests cover restart, pre-history checkpoints, pending frames, and the retention cap. The CloudFormation template parses locally.
+- Round 12 should keep the scene and profile pinned during local playback across a shared month rollover, then commission the next independent review.

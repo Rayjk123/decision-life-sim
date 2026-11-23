@@ -3,6 +3,7 @@ import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
 export const DAY = 90_000;
 const IDLE = 15 * 60_000;
+const HISTORY_MONTHS = 12;
 
 async function next(world: World, decider: Decider) {
   const result = await runMonth(world, decider);
@@ -24,12 +25,20 @@ async function next(world: World, decider: Decider) {
 }
 
 type Frame = Awaited<ReturnType<typeof next>>;
+type ResidentMonth = Pick<Frame['sims'][number], 'age' | 'nw' | 'cash' | 'debt' | 'move'>;
+type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
+
+function monthRecord({ age, nw, cash, debt, move }: Frame['sims'][number]): ResidentMonth {
+  return { age, nw, cash, debt, move };
+}
+
 export interface Checkpoint {
   world: World;
   current: Frame;
   pending: Frame | null;
   startedAt: number;
   lastSeenAt: number;
+  history?: HistoryMonth[];
 }
 export interface Storage {
   load(): Promise<{ value: Checkpoint; version: string } | null>;
@@ -53,6 +62,8 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
         if (dormant) value.startedAt += now - value.lastSeenAt;
         // Keep the visible month stable while preparing the following one.
         if (now - value.startedAt >= DAY && value.pending) {
+          const residents = Object.fromEntries(value.current.sims.map(sim => [sim.id, monthRecord(sim)]));
+          value.history = [...(value.history ?? []), { month: value.current.month, residents }].slice(1 - HISTORY_MONTHS);
           value.current = value.pending;
           value.pending = null;
           value.startedAt = now;
@@ -76,5 +87,19 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
     return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }
 
-  return (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; });
+  async function residentHistory(id: string) {
+    const saved = await storage.load();
+    if (!saved) return [];
+    const { current, history = [] } = saved.value;
+    const months = history.flatMap(({ month, residents }) =>
+      Object.hasOwn(residents, id) ? [{ month, label: monthLabel(month), ...residents[id] }] : []);
+    const resident = current.sims.find(sim => sim.id === id);
+    if (resident) months.push({ month: current.month, label: current.label, ...monthRecord(resident) });
+    return months;
+  }
+
+  return Object.assign(
+    (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; }),
+    { residentHistory },
+  );
 }

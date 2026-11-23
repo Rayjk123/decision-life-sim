@@ -20,7 +20,7 @@ Leaderboard opens from the street, sorts living residents by current net worth, 
 | Town and leaderboard | Living residents, market regime, monthly return, mortgage rate and current decision counts | Publish same-world annual aggregates, deceased residents' records, peak wealth and dated decision history. Introduce a stable world ID and a replay link carrying world, month, resident and decision. |
 | Activity | Seeded visual routine; financial moves have an errand mapping | If additional activity decisions are added, persist activity source, destination, time interval and optional financial decision ID. Ambient activity should never change the ledger by itself. |
 
-The scene calls GET /api/town. Its checkpoint contains the current and pending frame. The older dashboard reads public month, decision, journey and leaderboard files written by WorldStore. Future work should publish those read models from the authoritative shared world and load detail on demand. A UI placeholder needs an absence state and a named data dependency. Invented trends, example money and simulated model identifiers would undermine the article.
+The scene calls GET /api/town. Its checkpoint contains the current and pending frame plus up to eleven prior compact monthly balance and move snapshots. GET /api/town/history/{resident} reads the retained timeline without advancing the world. The older dashboard reads public month, decision, journey and leaderboard files written by WorldStore. Future work should publish those read models from the authoritative shared world and load detail on demand. A UI placeholder needs an absence state and a named data dependency. Invented trends, example money and simulated model identifiers would undermine the article.
 
 ## Acceptance walkthrough
 

@@ -93,3 +93,8 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 }
 
 #live{min-inline-size:64px}
+.resident-history{margin-top:8px}
+.timeline{margin:0;padding:0;list-style:none}
+.timeline li{padding:8px 0;border-top:1px solid #776781}
+.timeline .stats{margin-top:4px}
+.timeline li p{margin:4px 0 0}

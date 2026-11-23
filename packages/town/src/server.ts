@@ -65,8 +65,13 @@ const world = (process.env.TOWN_BUCKET ? cloudStorage(process.env.TOWN_BUCKET) :
 export async function handler(event: { rawPath: string; requestContext?: { http?: { method?: string } } }) {
   const headers = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-type': 'text/plain; charset=utf-8' };
   if (event.requestContext?.http?.method !== 'GET') return { statusCode: 405, headers, body: 'Method not allowed' };
-  if (event.rawPath === '/api/town') {
-    try { return { statusCode: 200, headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(await (await world)()) }; }
+  const history = /^\/api\/town\/history\/([a-zA-Z0-9_-]{1,80})$/.exec(event.rawPath);
+  if (event.rawPath === '/api/town' || history) {
+    try {
+      const town = await world;
+      const body = history ? { months: await town.residentHistory(history[1]) } : await town();
+      return { statusCode: 200, headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) };
+    }
     catch (error) { console.error(error); return { statusCode: 503, headers, body: 'Town temporarily unavailable' }; }
   }
   const asset = assets.get(event.rawPath);
