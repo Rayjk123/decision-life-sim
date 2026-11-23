@@ -32,5 +32,6 @@ Teacher agreement with gold on the test states: heuristic 64% (n=200) · d3 56% 
 | e04-haiku-0.8b | haiku | 78.6% · 49% · 0.103 | **95%** (n=200) | 63% (100%) | 78% | 15.5 | 2.55 GB |
 | e05-haikufull-0.8b | haiku | 78.4% · 47% · 0.124 | **96%** (n=200) | 60% (98%) | 80% | 21.3 | 2.54 GB |
 | e06-deals-0.8b | haiku | 80.4% · 52% · 0.121 | **96%** (n=200) | 64% (99%) | 81% | 26.0 | 2.54 GB |
+| e07m-deals-4b-medieval | haiku | 81.5% · 54% · 0.143 | – | – | – | 147.3 | 7.42 GB |
 
 **Reading the columns.** *Acc* is per question; *record* means every question in a decision was right; *ECE* (expected calibration error) is the gap between how confident the model is and how often it's right, after temperature calibration. *Gold spend* is exact level, with within one level in brackets: exact spend tops out near 60% for any rule (see the lab notebook, row 25).

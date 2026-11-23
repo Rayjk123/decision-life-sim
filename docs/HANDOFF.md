@@ -13,7 +13,7 @@ Written for the next agent picking up **decision behaviour and simulation** work
 - **The town is medieval** (`packages/sim-core/src/theme.ts`, SPEC #19): gold crowns at the same numbers; Guild Fund (index fund), trading voyages (stocks), counting-house vault (savings), cottages, cottages to let, horse and cart / fine carriage, moneylender's debt (the 24% card). **Ids, mechanics and numbers are unchanged** (`invest_index`, `trade_stocks`, … still the move ids). The model gets plain glosses ("the Guild Fund, a broad index fund"); without them d3 lost 8 points.
 - **Towns have a past**: 70 years of rules-driven history before month 0 (`growHistory`), movers aged 18–55, so every age is present; history-era milestones feed residents' life stories.
 - **"Why?" probes** exist: `probe(world, simId, changeId, decider)` / `npm run probe` (one fact changed, odds compared).
-- **Fine-tuning is parked** (`docs/finetune/`): our 0.8B (E06) ties d3 on the golden suite and beats it on red-flag situations; the retrain recipe for the medieval wording is ready (below).
+- **Fine-tuning** (`docs/finetune/`): **E07m, a 4B fine-tune on medieval-worded data, beats d3:4b on the medieval golden suite (77% / 57% pairs vs 70 / 48)**, winning red flags and memories, still losing the big deals (rentals, new businesses). Not yet the default: wiring it in means serving it (`serve_unsloth.py` on the desktop, or a GGUF export for Ollama) and a world run. User's call.
 
 ## Open tasks, in priority order
 
