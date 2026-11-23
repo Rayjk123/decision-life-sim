@@ -66,10 +66,12 @@ export async function handler(event: { rawPath: string; requestContext?: { http?
   const headers = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-type': 'text/plain; charset=utf-8' };
   if (event.requestContext?.http?.method !== 'GET') return { statusCode: 405, headers, body: 'Method not allowed' };
   const history = /^\/api\/town\/history\/([a-zA-Z0-9_-]{1,80})$/.exec(event.rawPath);
-  if (event.rawPath === '/api/town' || history) {
+  const mix = /^\/api\/town\/mix\/([1-9][0-9]{0,8})$/.exec(event.rawPath);
+  if (event.rawPath === '/api/town' || history || mix) {
     try {
       const town = await world;
-      const body = history ? { months: await town.residentHistory(history[1]) } : await town();
+      const body = history ? { months: await town.residentHistory(history[1]) }
+        : mix ? await town.decisionMix(Number(mix[1])) : await town();
       return { statusCode: 200, headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) };
     }
     catch (error) { console.error(error); return { statusCode: 503, headers, body: 'Town temporarily unavailable' }; }

@@ -554,6 +554,83 @@ function renderPanels(){
   },$('ranking'));
 }
 
+let mixView, selectedMixGroup;
+function decisionMixPanel(month){
+  if(mixView?.month===month)return mixView.details;
+  const wasOpen=mixView?.details.open;
+  const details=element('details',null,'decision-details decision-mix');
+  mixView={month,details};
+  const summary=element('summary','Decision mix by personality');
+  summary.dataset.focusKey='decision-mix';
+  const body=element('div');
+  details.append(summary,body);
+  let loading=false,loaded=false;
+  async function load(){
+    if(!details.open||loading||loaded)return;
+    loading=true;
+    body.replaceChildren(element('p','Loading recorded decisions…'));
+    try{
+      const response=await fetch('/api/town/mix/'+month);
+      if(!response.ok)throw Error();
+      const {months,decisions,missingArchetype,groups}=await response.json();
+      body.replaceChildren();
+      if(months.length){
+        const start=months[0].label,end=months.at(-1).label;
+        body.append(element('p',(start===end?start:start+' to '+end)+' · '+decisions.toLocaleString()+' decisions'));
+      }
+      if(missingArchetype)body.append(element('p',missingArchetype.toLocaleString()+' older decisions lack personality labels and are excluded from the breakdown.'));
+      if(!groups.length){
+        body.append(element('p','No decisions with a recorded personality are available for these months.'));
+        loaded=true;
+        return;
+      }
+      const select=element('select');
+      select.dataset.focusKey='decision-mix-group';
+      const label=element('label','Personality and decision source');
+      label.append(select);
+      const result=element('div');
+      groups.sort((a,b)=>a.label.localeCompare(b.label)||decisionSource(a).localeCompare(decisionSource(b)));
+      for(const group of groups){
+        const option=element('option',group.label+' · '+decisionSource(group));
+        option.value=JSON.stringify([group.arch,group.provider,group.model]);
+        option.selected=option.value===selectedMixGroup;
+        select.append(option);
+      }
+      body.append(label,result);
+      function showGroup(){
+        const group=groups[select.selectedIndex];
+        selectedMixGroup=select.value;
+        const table=element('table',null,'mix-table');
+        const header=element('tr');
+        for(const name of ['Move','Picked','Offered','Picked when offered']){
+          const cell=element('th',name);cell.scope='col';header.append(cell);
+        }
+        const head=element('thead');head.append(header);
+        const tbody=element('tbody');
+        for(const row of group.moves){
+          const entry=element('tr');
+          const name=element('th',title(row.move));name.scope='row';
+          entry.append(name,element('td',String(row.picked)),
+            element('td',group.knownOffers?String(row.offered):'—'),
+            element('td',row.offered?row.pickedWhenOffered+'/'+row.offered+' · '+percent(row.pickedWhenOffered/row.offered):'—'));
+          tbody.append(entry);
+        }
+        table.append(head,tbody);
+        result.replaceChildren(element('p',group.decisions.toLocaleString()+' decisions · Offer lists saved for '+group.knownOffers.toLocaleString()),
+          element('p','Move variants are grouped. Offered counts use saved offer lists.'),table);
+      }
+      select.addEventListener('change',showGroup);
+      showGroup();
+      loaded=true;
+    }catch{
+      body.replaceChildren(element('p','Decision mix unavailable. Close and reopen to retry.'));
+    }finally{loading=false;}
+  }
+  details.addEventListener('toggle',load);
+  details.open=Boolean(wasOpen);
+  return details;
+}
+
 function renderWorld(){
   const live=$('world-live');
   renderPanel(live,panel=>{
@@ -569,7 +646,7 @@ function renderWorld(){
       ['Mortgage rate',percent(frame.rate)],
       ['Last index return',percent(frame.change)],
       ['World decider',title(frame.decider)||'Unavailable'],
-    ]),element('h3','Current decision feed'));
+    ]),decisionMixPanel(frame.month),element('h3','Current decision feed'));
     const active=decisions.filter(sim=>sim.move!=='nothing');
     if(!active.length){
       panel.append(element('p',decisions.length?'All recorded decisions were Nothing.':'No decisions recorded this month.'));

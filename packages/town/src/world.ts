@@ -1,4 +1,4 @@
-import { ARRIVAL_MONTHS, CAREER, ageInt, balanceSheet, createWorld, heuristicDecider, runMonth, type Decider, type World } from '../../sim-core/src/index.ts';
+import { ARCHETYPE, ARRIVAL_MONTHS, CAREER, ageInt, balanceSheet, createWorld, heuristicDecider, runMonth, type Decider, type World } from '../../sim-core/src/index.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
 export const DAY = 90_000;
@@ -36,11 +36,11 @@ async function next(world: World, decider: Decider) {
 type Frame = Awaited<ReturnType<typeof next>>;
 type ResidentFrame = Frame['sims'][number];
 type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
-  & Partial<Pick<ResidentFrame, 'probabilities' | 'draw' | 'decision'>>;
+  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move, probabilities, draw, decision }: ResidentFrame): ResidentMonth {
-  return { age, nw, cash, debt, move, probabilities, draw, decision };
+function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision };
 }
 
 export interface Checkpoint {
@@ -111,8 +111,71 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
     return months;
   }
 
+  async function decisionMix(through: number) {
+    const saved = await storage.load();
+    type Counts = { move: string; picked: number; offered: number; pickedWhenOffered: number };
+    type Group = {
+      arch: string; label: string; provider?: string; model?: string;
+      decisions: number; knownOffers: number; moves: Map<string, Counts>;
+    };
+    const groups = new Map<string, Group>();
+    let decisions = 0, missingArchetype = 0;
+    function count(resident: ResidentMonth) {
+      if (!resident.move) return;
+      decisions++;
+      const arch = resident.arch;
+      if (!arch) { missingArchetype++; return; }
+      const provider = resident.decision?.provider, model = resident.decision?.model;
+      const key = JSON.stringify([arch, provider, model]);
+      let group = groups.get(key);
+      if (!group) {
+        group = { arch, label: ARCHETYPE[arch]?.label ?? arch, provider, model, decisions: 0, knownOffers: 0, moves: new Map() };
+        groups.set(key, group);
+      }
+      const active = group;
+      function moveCounts(move: string) {
+        const existing = active.moves.get(move);
+        if (existing) return existing;
+        const counts = { move, picked: 0, offered: 0, pickedWhenOffered: 0 };
+        active.moves.set(move, counts);
+        return counts;
+      }
+      active.decisions++;
+      const picked = moveKindOf(resident.move);
+      moveCounts(picked).picked++;
+      if (!resident.decision?.offered) return;
+      active.knownOffers++;
+      // An offer counts once per decision even if several options share a move kind.
+      for (const move of new Set(resident.decision.offered.map(moveKindOf))) {
+        const counts = moveCounts(move);
+        counts.offered++;
+        if (move === picked) counts.pickedWhenOffered++;
+      }
+    }
+    const months: number[] = [];
+    if (saved) {
+      const { current, history = [] } = saved.value;
+      for (const month of history) {
+        if (month.month > through) continue;
+        months.push(month.month);
+        for (const resident of Object.values(month.residents)) count(resident);
+      }
+      if (current.month <= through) {
+        months.push(current.month);
+        for (const resident of current.sims) count(resident);
+      }
+    }
+    return {
+      months: months.map(month => ({ month, label: monthLabel(month) })),
+      decisions, missingArchetype,
+      groups: [...groups.values()].map(group => ({
+        ...group, moves: [...group.moves.values()].sort((a, b) => b.picked - a.picked || b.offered - a.offered || a.move.localeCompare(b.move)),
+      })),
+    };
+  }
+
   return Object.assign(
     (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; }),
-    { residentHistory },
+    { residentHistory, decisionMix },
   );
 }

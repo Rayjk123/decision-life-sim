@@ -22,6 +22,12 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.ok(first.sims.length > 0);
   assert.equal(await town(now + 1000).then(x => x.month), 121);
   assert.equal(saved!.pending?.month, 122);
+  const firstMix = await town.decisionMix(122);
+  assert.deepEqual(firstMix.months.map(row => row.month), [121]);
+  assert.equal(firstMix.decisions, first.sims.filter(sim => sim.move).length);
+  assert.equal(firstMix.missingArchetype, 0);
+  assert.ok(firstMix.groups.every(group => group.provider === 'heuristic' && group.knownOffers === group.decisions));
+  assert.ok(firstMix.groups.every(group => group.moves.every(move => move.offered <= group.knownOffers && move.pickedWhenOffered <= move.offered)));
   const original = first.sims.find(sim => sim.decision?.sampling && saved!.pending!.sims.some(next => next.id === sim.id))!;
   const id = original.id;
   const recorded = saved!.current.sims.find(sim => sim.id === id)!.decision;
@@ -38,6 +44,8 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(history[0].decision, recorded);
   assert.deepEqual(history[0].probabilities, original.probabilities);
   assert.equal(history[0].draw, original.draw);
+  assert.equal(history[0].arch, original.arch);
+  assert.deepEqual(await restarted.decisionMix(121), firstMix);
   assert.deepEqual(await restarted.residentHistory('toString'), []);
   const wake = await restarted(now + DAY + 16 * 60_000);
   assert.equal(wake.month, 122);

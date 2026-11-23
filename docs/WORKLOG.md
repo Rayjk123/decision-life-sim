@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 20
+
+- World now includes a decision mix by personality and recorded source for the retained months. It shows recorded picks, known offers, and picks among those offers. Older unclassified decisions are counted separately.
+- Next, determine which recorded decisions can support a reproducible one-fact counterfactual. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 19
 
 - A retained timeline control stays visible if a new month pushes it outside the viewport. When exact sampling controls disappear, keyboard focus returns to Advanced.
