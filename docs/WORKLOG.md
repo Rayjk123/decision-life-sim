@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 10
+
+- Follow and Stop following are available directly beside the resident’s name. Opening or closing the profile leaves Follow as it was. Profiles and rankings use the simulation’s player-facing occupation labels.
+- The first ten watch-focused rounds are complete. The next phase starts with a retained resident timeline and month rollover behavior. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 9
 
 - Cottage hearth sparks and small shifts in posture add motion to quiet stops. Reduced motion leaves settled interiors still. The town clock shows time of day alongside the resident’s individual activity.

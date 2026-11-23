@@ -115,9 +115,10 @@ let advancedFor=null;
 let connection='connecting';
 const knownMoney=value=>Number.isFinite(value)?money(value):'Unavailable';
 const percent=value=>Number.isFinite(value)?(value*100).toFixed(1)+'%':'Unavailable';
+const occupation=sim=>sim.occupation||title(sim.career)||'Occupation unavailable';
 
 function choose(id){
-  if(selected!==id||view==='street'){
+  if(selected!==id){
     if(scene)streetPan=(canvas.clientWidth*.5-scene.x)/scene.width;
     following=false;
     snapFollow=false;
@@ -133,14 +134,16 @@ function followButton(){
   const button=element('button','Follow','follow');
   button.dataset.focusKey='follow';
   button.setAttribute('aria-pressed',following);
-  button.onclick=()=>{
-    if(following)leaveFollow();
-    else{
-      following=true;snapFollow=true;streetPan=null;
-      camera.zoom=Math.max(camera.zoom,3.5);updateCameraControls();renderPanels();
-    }
-  };
+  button.onclick=toggleFollow;
   return button;
+}
+function toggleFollow(){
+  if(!get())return;
+  if(following){leaveFollow();return;}
+  following=true;snapFollow=true;streetPan=null;
+  camera.zoom=Math.max(camera.zoom,3.5);
+  updateCameraControls();
+  renderPanels();
 }
 
 function statGrid(entries){
@@ -208,7 +211,7 @@ function renderPanels(){
     const neighbors=frame.sims.filter(s=>homeBlock(s)===place||workBlock(s)===place||civic[destinationFor(s)]===place);
     panel.append(element('p',neighbors.length?'Residents who live, work, or have errands here this month.':'No residents assigned here this month.'));
     const list=element('div',null,'list');
-    for(const s of neighbors.slice(0,10))list.append(residentButton(s,s.name+' · '+title(s.career)));
+    for(const s of neighbors.slice(0,10))list.append(residentButton(s,s.name+' · '+occupation(s)));
     const close=element('button','Close place');
     close.dataset.focusKey='close';
     close.onclick=()=>{place=null;renderPanels();canvas.focus();};
@@ -227,7 +230,9 @@ function renderPanels(){
     close.dataset.focusKey='close';
     close.onclick=()=>{
       if(view==='ranking'){view='resident';renderPanels();$('ranking').focus();return;}
-      leaveFollow(false);selected=null;advancedFor=null;renderPanels();canvas.focus();
+      view='street';
+      renderPanels();
+      (streetMode?$('street-resident'):canvas).focus();
     };
     const header=element('div',null,'panel-heading');
     const actions=element('div',null,'resident-actions');
@@ -248,7 +253,7 @@ function renderPanels(){
         if(index===0||s.nw!==ranked[index-1].nw)rank=index+1;
         const row=element('li');
         row.value=rank;
-        row.append(residentButton(s,s.name+' · '+knownMoney(s.nw)));
+        row.append(residentButton(s,s.name+' · '+occupation(s)+' · '+knownMoney(s.nw)));
         list.append(row);
       }
       panel.append(list);
@@ -261,7 +266,7 @@ function renderPanels(){
     const portraitBrush=portrait.getContext('2d');portraitBrush.imageSmoothingEnabled=false;
     portraitBrush.drawImage(sprite,(24-sprite.width*portraitScale)/2,32-sprite.height*portraitScale,sprite.width*portraitScale,sprite.height*portraitScale);
     const identity=element('div',null,'resident-identity');
-    identity.append(portrait,element('p',sim.age+' · '+title(sim.career)),element('span',title(sim.arch),'badge'));
+    identity.append(portrait,element('p',sim.age+' · '+occupation(sim)),element('span',title(sim.arch),'badge'));
     panel.append(identity,statGrid([['Net worth',knownMoney(sim.nw)],['Cash',knownMoney(sim.cash)],['Debt',knownMoney(sim.debt)]]));
     panel.append(element('p','Recorded move · '+(sim.move?title(sim.move):'No decision recorded this month')),decisionDetails(sim));
     panel.append(element('h3','Recent life events'));
@@ -631,19 +636,17 @@ function showStory(person,p){
   const errandActivity=activity==='outbound'||activity==='errand';
   const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
   const message=recordedErrand?actions[activity]+' · Recorded move: '+title(person.move):'Ambient routine · '+actions[activity];
-  const key=person.id+message;
+  const key=person.id+':'+following+':'+message;
   if(key===storyText)return;
   storyText=key;
   const inspect=$('street-resident');
   inspect.textContent=person.name;
-  inspect.onclick=()=>{
-    view='resident';place=null;
-    if(!$('world').hidden)setWorld(false,false);
-    renderPanels();
-    $('resident-title')?.focus();
-  };
+  inspect.setAttribute('aria-label','Open '+person.name+'’s profile');
+  inspect.onclick=()=>choose(person.id);
+  $('street-follow').textContent=following?'Stop following':'Follow';
   $('street-activity').textContent=message;
 }
+$('street-follow').onclick=toggleFollow;
 async function poll(){
   if(inFlight||document.hidden)return;
   inFlight=true;lastPoll=Date.now();

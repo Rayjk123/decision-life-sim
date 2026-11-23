@@ -65,4 +65,11 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - At rest, residents occasionally shift their weight. Their feet stay planted, and the gesture varies by scene. The cottage hearth has a few slow sparks. Both effects respect reduced motion and use the local playhead.
 - The town clock describes the time of day. The resident caption alone describes the resident's activity.
 - Isolated Chrome verified changing cottage pixels and a workplace posture shift at 1440 × 900. At 320 × 640 with reduced motion, the same settled cottage stayed pixel-identical as time advanced.
-- The independent review is running against the prior build. Round 10 should address its highest-impact remaining watch issue before moving into the deeper data phase.
+- The independent review confirmed same-day playback and map continuity. It found that Follow was hard to discover on the scene, occupation labels were unclear, and the next month could replace a paused frame. Round 10 addresses the scene controls and occupation labels.
+
+## Round 10
+
+- Follow and Stop following are on the scene. The resident name opens the profile independently. Opening and closing the profile preserves Follow and the selected resident.
+- Profiles, rankings and place lists show the career label from the simulation. The town API derives it from the saved career key, so existing checkpoints can return it.
+- Isolated Chrome at 1440 × 900 and 320 × 640 verified stop and resume from the scene, opening and closing the profile during Follow, and distinguishing two people with the same name by occupation in the leaderboard.
+- The next phase starts with a retained timeline and predictable behavior across the shared month boundary. The review also flagged sprite clearance under overlays, player-facing financial terms, and explaining the limits of the current decision odds. Carry these into the next passes.

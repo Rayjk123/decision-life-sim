@@ -69,7 +69,10 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
   }
 
   function response(value: Checkpoint, now: number) {
-    const sims = value.current.sims.map(sim => ({ ...sim, workplace: CAREER[sim.career]?.workplace }));
+    const sims = value.current.sims.map(sim => {
+      const career = CAREER[sim.career];
+      return { ...sim, workplace: career?.workplace, occupation: career?.label };
+    });
     return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }
 
