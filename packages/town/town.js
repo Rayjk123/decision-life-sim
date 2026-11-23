@@ -27,6 +27,8 @@ function sceneArt(name){
 }
 const castArt=art('cast');
 const redCoatArt=art('red-coat-walk');
+const walkArt=art('resident-walk');
+const walkPoses=12, castSize=6, walkCycleMs=1080;
 let castSprites=[], redCoatFrames=[];
 const ready=image=>image.complete&&image.naturalWidth>0;
 const lightModes=['Auto light','Daylight','Evening'];
@@ -802,7 +804,13 @@ function position(s,t){
     const q=[[a[0],a[1]],[a[0],a[1]-10],[a[0]-a[0]%140+7,a[1]-10],[a[0]-a[0]%140+7,b[1]-10],[b[0],b[1]-10],b];
     const lengths=q.slice(1).map((v,i)=>Math.abs(v[0]-q[i][0])+Math.abs(v[1]-q[i][1]));
     let left=p*lengths.reduce((x,y)=>x+y,0);
-    for(let i=0;i<lengths.length;i++){if(lengths[i]&&left<lengths[i]){const f=left/lengths[i];return [q[i][0]+(q[i+1][0]-q[i][0])*f,q[i][1]+(q[i+1][1]-q[i][1])*f];}left-=lengths[i];}
+    for(let i=0;i<lengths.length;i++){
+      if(lengths[i]&&left<lengths[i]){
+        const f=left/lengths[i],dx=q[i+1][0]-q[i][0],dy=q[i+1][1]-q[i][1];
+        return [q[i][0]+dx*f,q[i][1]+dy*f,dx<0||(!dx&&b[0]<a[0])?-1:1];
+      }
+      left-=lengths[i];
+    }
     return b;
   }
   const [activity,progress]=routine(s,t);
@@ -841,7 +849,7 @@ function drawInterior(placeKey,person,progress,w,h,p,animated){
   const acrossFloor=clamp(edge/.16,0,1);
   const leaving=acrossFloor<1&&(atHome?morning:progress>.5);
   const clock=p*frame.duration;
-  const stride=acrossFloor<1?clock*Math.PI/240:null;
+  const stride=walkTimeFor(person,p,acrossFloor<1&&animated);
   const transition=1-clamp(edge/.06,0,1);
   const workplace=workplaceScenes[placeKey];
   const idlePeriod=atHome ? 7200 : workplace ? 4400 : 5600;
@@ -983,10 +991,8 @@ function streetPosition(person,p){
   }
   return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing,walking};
 }
-function drawPerson(person,x,y,height,phase,focused,facing=1,lean=0){
-  const cycle=lookIndex(person.id)===0&&redCoatFrames.length===9;
-  const frameIndex=phase===null?8:Math.floor(phase*8/(Math.PI*4))%8;
-  const sprite=cycle?redCoatFrames[frameIndex]:appearance(person.id);
+function drawPerson(person,x,y,height,walkTime,focused,facing=1,lean=0){
+  const sprite=appearance(person.id);
   const width=height*sprite.width/sprite.height;
   const alpha=ctx.globalAlpha;
   ctx.globalAlpha=alpha*.32;
@@ -997,33 +1003,25 @@ function drawPerson(person,x,y,height,phase,focused,facing=1,lean=0){
   ctx.translate(Math.round(x),Math.round(y-height));
   ctx.scale(facing,1);
   if(lean)ctx.transform(1,0,-lean,1,lean*height,0);
-  if(cycle||phase===null||height<24){
-    ctx.drawImage(sprite,-Math.round(width/2),0,Math.round(width),Math.round(height));
-  }else{
-    drawStride(sprite,Math.round(width),Math.round(height),phase);
-  }
+  drawPose(person.id,sprite,height,walkTime);
   ctx.restore();
 }
-
-function drawStride(sprite,width,height,phase){
-  const ankleBand=Math.floor(sprite.height*.74);
-  const split=Math.floor(sprite.width/2);
-  const seam=Math.round(height*ankleBand/sprite.height);
-  const left=-Math.round(width/2);
-  const sway=Math.sin(phase);
-  const halves=[[0,split,left,-sway],[split,sprite.width-split,0,sway]];
-  for(const [sourceX,sourceWidth,x,step] of halves){
-    ctx.save();
-    ctx.translate(x,seam-1);
-    // Pivot at the seam. Only the raised foot shortens, keeping the opposite
-    // shoe on the ground and the torso steady.
-    ctx.transform(1,0,step*.23,1,0,0);
-    const lift=Math.max(0,step)*height*.065;
-    const half=Math.round(width*sourceWidth/sprite.width);
-    ctx.drawImage(sprite,sourceX,ankleBand,sourceWidth,sprite.height-ankleBand,0,0,half,height-seam+1-lift);
-    ctx.restore();
+function drawPose(id,sprite,height,walkTime){
+  if(walkTime!==null){
+    const look=lookIndex(id);
+    if(ready(walkArt)){
+      const cellWidth=walkArt.naturalWidth/walkPoses,cellHeight=walkArt.naturalHeight/castSize;
+      const pose=Math.floor(walkTime*walkPoses/walkCycleMs)%walkPoses;
+      const width=Math.round(height*cellWidth/cellHeight);
+      ctx.drawImage(walkArt,pose*cellWidth,look*cellHeight,cellWidth,cellHeight,-Math.round(width/2),0,width,Math.round(height));
+      return;
+    }
+    if(look===0&&redCoatFrames.length===9){
+      sprite=redCoatFrames[Math.floor(walkTime*8/walkCycleMs)%8];
+    }
   }
-  ctx.drawImage(sprite,0,0,sprite.width,ankleBand, left,0,width,seam);
+  const width=Math.round(height*sprite.width/sprite.height);
+  ctx.drawImage(sprite,-Math.round(width/2),0,width,Math.round(height));
 }
 
 function drawStreet(focus,p,w,h){
@@ -1050,7 +1048,7 @@ function drawStreet(focus,p,w,h){
   const pointed=hover&&nearest(hover.x,hover.y)?.sim;
   for(const {sim,sx,sy,walking,facing,opacity} of hits){
     ctx.globalAlpha=opacity;
-    const stride=walking?(p*frame.duration+hash(sim.id)%480)*Math.PI/240:null;
+    const stride=walkTimeFor(sim,p,walking);
     drawPerson(sim,sx,sy,heightOfPerson,stride,sim===focus,facing);
     if(sim===focus||sim===pointed){
       ctx.font='600 13px system-ui';ctx.textAlign='center';
@@ -1092,6 +1090,9 @@ function showStory(person,p){
   inspect.onclick=()=>choose(person.id);
   $('street-follow').textContent=following?'Stop following':'Follow';
   $('street-activity').textContent=message;
+}
+function walkTimeFor(sim,p,walking){
+  return walking&&!reducedMotion.matches?p*frame.duration+hash(sim.id)%walkCycleMs:null;
 }
 $('street-follow').onclick=toggleFollow;
 function displayFrame(next){
@@ -1195,10 +1196,10 @@ function drawFrame(time){
     ctx.globalAlpha=eveningAmount(p)*.34;draw(ctx,0,0,840,600,'#19234e');ctx.globalAlpha=1;
     const visible=[];
     for(const sim of streetMode?streetCast(focus):frame.sims){
-      const [px,py]=sim===focus?focusPoint:position(sim,p);
+      const [px,py,facing]=sim===focus?focusPoint:position(sim,p);
       const sx=px*scale+x,sy=py*scale+y;
       if(sx<-15||sx>w+15||sy<-15||sy>h+20)continue;
-      visible.push({sim,px,py,sx,sy});
+      visible.push({sim,px,py,sx,sy,facing});
     }
     visible.sort((a,b)=>a.py-b.py);
     // Keep the street readable when many residents share the same destinations.
@@ -1209,9 +1210,17 @@ function drawFrame(time){
     }
     hits=shown;
     const pointed=hover&&nearest(hover.x,hover.y);
-    for(const {sim,px,py} of shown){
+    for(const {sim,px,py,facing} of shown){
       if(sim===focus)draw(ctx,px-5,py-11,11,13,'#fbd15a');
-      ctx.drawImage(appearance(sim.id),Math.round(px)-6,Math.round(py)-13,12,16);
+      if(facing===undefined){
+        ctx.drawImage(appearance(sim.id),Math.round(px)-6,Math.round(py)-13,12,16);
+        continue;
+      }
+      ctx.save();
+      ctx.translate(Math.round(px),Math.round(py)-13);
+      ctx.scale(facing,1);
+      drawPose(sim.id,appearance(sim.id),16,walkTimeFor(sim,p,true));
+      ctx.restore();
     }
     ctx.resetTransform();
     const occupied=[];
@@ -1233,7 +1242,7 @@ function drawFrame(time){
 }
 
 const outfits=new Map();
-const lookIndex=id=>hash(id+'portrait')%6;
+const lookIndex=id=>hash(id+'portrait')%castSize;
 function readAtlas(image,columns,rows){
   const atlas=element('canvas');
   atlas.width=image.naturalWidth;atlas.height=image.naturalHeight;

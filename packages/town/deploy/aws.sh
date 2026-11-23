@@ -27,7 +27,7 @@ output() {
 }
 site=$(output SiteBucket)
 distribution=$(output DistributionId)
-for asset in index.html town.css town.js audio.js art/street-day.png art/street-evening.png art/bakery.png art/cottage.png art/cottage-day.png art/cast.png art/red-coat-walk.png packages/town/art/work-*.png; do
+for asset in index.html town.css town.js audio.js art/street-day.png art/street-evening.png art/bakery.png art/cottage.png art/cottage-day.png art/cast.png art/red-coat-walk.png art/resident-walk.png packages/town/art/work-*.png; do
   asset=${asset#packages/town/}
   aws s3 cp "packages/town/$asset" "s3://$site/$asset" --region "$region" --only-show-errors
 done

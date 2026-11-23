@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 27
+
+- Added twelve full-body walk poses to each of the six existing resident designs. The town uses the same foot-aligned sprites on streets, on the overview map, and in doorways.
+- Desktop and phone Chrome verified cycle playback, pause and reduced motion. The live d3 walkthrough is still open. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 26
 
 - World names the configured model while individual records identify their actual decision source. Desktop and phone Chrome verified the distinction using a local response fixture, and the full verification gate passed.

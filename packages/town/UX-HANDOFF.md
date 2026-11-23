@@ -4,6 +4,8 @@
 
 The street is the landing page. A first-time visitor can watch a day unfold without opening a panel. Keep the selected lighting, playback speed, camera, and audio through panel navigation. Music defaults on and starts with the first town interaction when the browser requires a gesture. Use a quiet original lo-fi loop, offer volume control, and remember local preferences. Audio settings belong to the viewer.
 
+The walk atlas contains twelve poses per character across six rows in cast order. Each cell shares the same foot baseline. Street, Overview and interior entrances use the local playhead for the cycle. A paused walk holds its current pose, and the reduced-motion setting uses the still portrait sprite.
+
 Selecting a resident opens a small card. Show their portrait, occupation, age, actual balances and latest available move. Show balances in crowns and use the town frame's presentation labels for personalities and choices. Follow is an explicit control. An ordinary trip should read as part of a daily routine. Where the financial decision assigned the destination, link the errand to that month's decision. Avoid inferring motives from a sprite or assigning a purchase to an ambient bakery visit.
 
 Resident Advanced should expose one dated decision with available options, raw odds, the actual draw, and outcome. Keep unavailable fields inside this expanded view. For example, show “Decision inputs weren’t saved for this month” when the input snapshot is absent. A resident can legitimately have no decision this month. Missing provider data and an actual heuristic fallback are distinct states. World shows the configured model separately from the recorded source in resident details and the decision mix.

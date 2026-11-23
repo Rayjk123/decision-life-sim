@@ -183,3 +183,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - World displays the configured decision model's identifier. Resident evidence and the mix continue to label the recorded source, including fallbacks. Isolated Chrome at 1440 × 900 and 320 × 640 verified both labels against a local response fixture with successful decisions and deliberate fallbacks.
 - The desktop Ollama tags endpoint listed the 4.8B and 2.4B d3 models, but the initial live town frame and a direct inference both timed out after 25 seconds. The GPU was at 100% utilization with approximately 11.7 GiB of its 12 GiB in use. Existing desktop processes were left running.
 - The full repository gate passed. The live d3 release check still needs one successful recorded decision and double-coin comparison in an isolated town.
+
+## Round 27
+
+- All six resident designs now walk with twelve full-body frames each. Each frame shares a ground line and a stable head anchor. Street, Overview and doorway walks use the same atlas. Pausing holds the displayed pose, and reduced motion shows a still sprite.
+- The built-in ImageGen prompts used the existing cast as identity references and requested one transparent four-column, three-row sheet per resident. The sheets show heel contact, weight transfer, passing, knee lift and the next heel contact. Arms, clothes and props move with the steps. The finished poses are packed in `art/resident-walk.png`.
+- Isolated Chrome at 1440 × 900 and 320 × 640 observed all 72 poses in Street and checked pose continuity through Pause, animation in Overview and workplace doorways, and a still pose with reduced motion. The full repository verification gate passed.
+- The live d3 release walkthrough remains open.
