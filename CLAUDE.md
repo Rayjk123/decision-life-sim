@@ -3,15 +3,18 @@
 Read these first, every session:
 1. `docs/SPEC.md`: what we're building, every decision made, the eval design, and the roadmap of improvements.
 2. `docs/WORKLOG.md`: what's done, current numbers, what is and isn't verified, and the next steps. Start with the newest session entry.
+3. `docs/HANDOFF.md`: the open tasks in priority order, with the commands and rules that bite.
 
 ## What this is
-A town of sims living out their financial lives month by month. The rules engine (`packages/sim-core`) decides what is legal and keeps the books. A decision model picks what each sim does among legal moves: any model speaking the `/v1/systemone` API (best so far **d3:4b** on Ollama, 77% / 61% pairs; Kev-0.8B/4B via `scripts/kev.sh`; see `docs/results.md`). A seeded dice roll makes the final pick. Behaviour is "act in character", with no explicit goals yet.
+A medieval market town of sims living out their financial lives month by month (gold crowns, the Guild Fund, trading voyages; words in `packages/sim-core/src/theme.ts`, mechanics unchanged). The rules engine (`packages/sim-core`) decides what is legal and keeps the books. A decision model picks what each sim does among legal moves: any model speaking the `/v1/systemone` API (the chosen model: **d3:4b** on Ollama, 70% overall / 48% pairs on the medieval golden suite; Kev-0.8B/4B via `scripts/kev.sh`; see `docs/results.md`). A seeded dice roll makes the final pick. Behaviour is "act in character", with no explicit goals yet.
 
 ## Commands
 ```bash
-npm install && npm test                                   # 51 tests, all must pass
+npm install && npm test                                   # ~96 tests, all must pass
 npm run verify                                            # the quality gate: types, tests, eval regression, sim health, docs sync, leak scan
-npm run ux                                                # real Chrome drives the dashboard over a fresh world (20 checks + screenshots)
+npm run ux                                                # real Chrome drives the dashboard over a fresh world (38 checks + screenshots)
+npm run probe -- --world <dir> [--sim <id>] [--decider model --decision-url … --model d3]   # "why?": one fact changed, odds compared
+npx tsx scripts/decision-mix.ts <world-dir>               # what each personality picks; signature move offered vs picked
 npm run health [-- --record]                              # 50-year worlds x 3 seeds: integrity, realism bands, time budget
 npm run sim -- --months 600 --pop 200                     # heuristic mode, ~10 s
 npm run dashboard                                         # http://localhost:5173 over ./world (PORT=... to change; use 127.0.0.1 if another app holds localhost)

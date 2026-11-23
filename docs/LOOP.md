@@ -64,6 +64,8 @@ Attack the project as a skeptic would, and file each finding as a backlog item w
 
 ## Backlog
 
+> **Handoff (2026-11-22): the current, prioritised open tasks are in [`docs/HANDOFF.md`](HANDOFF.md)** (P0 d3 world baseline; P1 behaviour; P2 realism; P3 performance). The lists below are the history they came from.
+
 Priority order. Size: S (< 1 iteration), M (1–2), L (split it). Move done items to the log.
 
 **A. Verification infrastructure (do first)**

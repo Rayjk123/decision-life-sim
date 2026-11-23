@@ -1,0 +1,40 @@
+# decision-life-sim · guide for Codex
+
+Read these first, every session:
+1. `docs/SPEC.md`: what we're building, every decision made, the eval design, and the roadmap of improvements.
+2. `docs/WORKLOG.md`: what's done, current numbers, what is and isn't verified, and the next steps. Start with the newest session entry.
+3. `docs/HANDOFF.md`: the open tasks in priority order, with the commands and rules that bite.
+
+## What this is
+A medieval market town of sims living out their financial lives month by month (gold crowns, the Guild Fund, trading voyages; words in `packages/sim-core/src/theme.ts`, mechanics unchanged). The rules engine (`packages/sim-core`) decides what is legal and keeps the books. A decision model picks what each sim does among legal moves: any model speaking the `/v1/systemone` API (the chosen model: **d3:4b** on Ollama, 70% overall / 48% pairs on the medieval golden suite; Kev-0.8B/4B via `scripts/kev.sh`; see `docs/results.md`). A seeded dice roll makes the final pick. Behaviour is "act in character", with no explicit goals yet.
+
+## Commands
+```bash
+npm install && npm test                                   # ~96 tests, all must pass
+npm run verify                                            # the quality gate: types, tests, eval regression, sim health, docs sync, leak scan
+npm run ux                                                # real Chrome drives the dashboard over a fresh world (38 checks + screenshots)
+npm run probe -- --world <dir> [--sim <id>] [--decider model --decision-url … --model d3]   # "why?": one fact changed, odds compared
+npx tsx scripts/decision-mix.ts <world-dir>               # what each personality picks; signature move offered vs picked
+npm run health [-- --record]                              # 50-year worlds x 3 seeds: integrity, realism bands, time budget
+npm run sim -- --months 600 --pop 200                     # heuristic mode, ~10 s
+npm run dashboard                                         # http://localhost:5173 over ./world (PORT=... to change; use 127.0.0.1 if another app holds localhost)
+npm run eval -- --verbose                                 # golden suite: random + heuristic baselines
+./scripts/kev.sh                                          # Kev-0.8B on http://127.0.0.1:8009 (macOS uses MLX on the GPU)
+npm run kev:check                                         # one real Kev decision vs heuristic + throughput
+npm run eval -- --decider model --style all --verbose       # Kev on the golden suite, all state wordings
+npm run eval:compare -- <new.json> [--against <base.json>] # flips + regression verdict between two eval runs
+npm run experiment -- --deciders heuristic,model --seeds 1 --years 10
+npm run sim -- --decider model --months 24 --pop 200 [--resume]
+```
+Run `./scripts/kev.sh` in the background (or a second terminal) and wait for "serving ..." before calling it. First run clones Kev into `.kev/`, installs its env with `uv`, and downloads weights from Hugging Face.
+
+## Conventions
+- Money is integer cents in today's dollars. Every cash change goes through `post(sim, kind, amount)` (`ledger.ts`); the ledger test must keep passing.
+- All randomness is keyed: `rngFor(seed, purpose, month, simId)`. Never use `Math.random`. Same seed must replay identically (there's a test).
+- The model never decides legality: add a move in `rules.ts` (with real costs in its description), apply it in `executor.ts` (re-check, then post flows), and teach `heuristic.ts` about it.
+- Changing the rules can invalidate golden scenarios: `npm test` checks every scenario's expected options are still legal. Fix the scenario spec, not the test.
+- Keep `docs/SPEC.md` (decisions) and `docs/WORKLOG.md` (progress, numbers, next steps) updated at the end of every session.
+- Commit at the end of each piece of work with a clear message. `npm run verify` must pass first (CI runs it on every push).
+- Changing anything the model sees (state wording, move descriptions, questions, golden scenarios) changes the golden requests: `npm run eval:fingerprint` fails. Re-run the model evals, or accept with `-- --write` and mark the stale results in `docs/results.md`. Never accept silently.
+- New realism must come with a health metric or band in `scripts/health.baseline.json`, and rules changes with an invariant in `packages/worker/test/adversarial.test.ts` where one applies.
+- Autonomous improvement work follows `docs/LOOP.md` on the `improve/loop` branch.

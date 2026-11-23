@@ -7,6 +7,15 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+
+## Session 2026-11-22 (late): fine-tuning parked, d3 kept; town history; medieval re-theme; behaviour work; handoff
+
+- **Fine-tuning study** (`docs/finetune/`): labels were the lever (same 0.8B: heuristic labels 62% of gold moves, d3 61%, Haiku 96%); on the independent golden suite the best fine-tune (E06) ties d3:4b (71/48 vs 72/48), beating it on red flags and losing on signature deals. **User: stick with d3.**
+- **Loop 31** towns with a past (every age from month 0); **32** medieval re-theme (SPEC #19); **33** d3 re-measured and re-worded (64/38 → 68/43); **34** market news as consequences, red-flag warnings, memories up, rentals legal more often, bankruptcy frees tenants, older residents' full life stories (d3 70/48, published); **35** "Why?" probes.
+- **Numbers:** d3:4b `words` 70% overall / 48% pairs (medieval); heuristic 82.7 / 66.7; health: largest age group 0.22-0.26, median retirement 62-67.
+- **Verified:** `npm run verify` green at every commit (types, ~96 tests, eval regression, health, UX smoke 38 checks, docs sync, leak scan). **Not verified:** the 20-year d3 world on the medieval town (running at handoff).
+- **Next:** `docs/HANDOFF.md`.
+
 ## Maple Hollow · isolated pixel-town branch
 
 - Added a watch-only town with a shared 90-second month clock, resident follow mode, leaderboard, and an optional decision feed showing actual move probabilities and draws.
