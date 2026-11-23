@@ -7,6 +7,10 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 24
+
+- Independent desktop and phone review passed the full watch route and decision walkthrough. Fixed two findings by refreshing retained history during paused playback and identifying the viewed month in World.
+- Real Chrome regression checks covered probe expiry, pinned playback, and focus. Next, align the town’s labels with the medieval theme and walk through a real d3 decision. [UX loop](../packages/town/UX-LOOP.md)
 
 ## Maple Hollow · round 23
 

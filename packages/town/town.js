@@ -278,8 +278,20 @@ function appendDecisionEvidence(details,record,residentId=record.id){
     if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
   details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));
-  if(record.hasProbe)details.append(probePanel(residentId,record.month??frame.month));
-  else details.append(element('p','Counterfactual inputs were not retained for this decision.'));
+  let probe;
+  function updateProbe(available){
+    if(probe&&Boolean(available)===probe.matches('.counterfactual'))return;
+    const next=available?probePanel(residentId,record.month??frame.month)
+      :element('p','Counterfactual inputs are unavailable for this decision.');
+    if(probe){
+      const hadFocus=probe.contains(document.activeElement);
+      probe.replaceWith(next);
+      if(hadFocus)details.querySelector(':scope > summary').focus({preventScroll:true});
+    }else details.append(next);
+    probe=next;
+  }
+  updateProbe(record.hasProbe);
+  return updateProbe;
 }
 
 function probePanel(id,month){
@@ -400,13 +412,14 @@ function timelineRow(row,residentId){
   const balances=statGrid([['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)]]);
   const comparison=element('div');
   details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
+  let updateProbe;
   if(row.move&&(row.decision||row.probabilities)){
     const evidence=element('details',null,'decision-details past-decision');
     const evidenceSummary=element('summary','Decision evidence');
     evidenceSummary.dataset.focusKey='evidence-'+row.month;
     evidence.append(evidenceSummary);
     evidence.addEventListener('toggle',()=>{
-      if(evidence.open&&evidence.childElementCount===1)appendDecisionEvidence(evidence,row,residentId);
+      if(evidence.open&&!updateProbe)updateProbe=appendDecisionEvidence(evidence,row,residentId);
     });
     details.append(evidence);
   }else if(row.move){
@@ -444,7 +457,10 @@ function timelineRow(row,residentId){
     previousDecision=previous;
     renderComparison();
   }
-  return {item,compare,compareDecision};
+  return {item,compare,compareDecision,setProbe(available){
+    row.hasProbe=available;
+    updateProbe?.(available);
+  }};
 }
 
 let historyDisclosure;
@@ -460,7 +476,8 @@ function residentHistory(sim,month){
   const list=element('ol',null,'timeline');
   const rows=new Map();
   details.append(summary,message,list);
-  let shownMonth,loading=false;
+  let shownKey,loading=false;
+  const coverageKey=()=>month+':'+(liveFrame?.month??month);
   function updateRows(visible){
     const active=document.activeElement;
     const restoreFocus=list.contains(active);
@@ -473,6 +490,7 @@ function residentHistory(sim,month){
     for(const [i,row] of visible.entries()){
       if(!rows.has(row.month))rows.set(row.month,timelineRow(row,sim.id));
       const retainedRow=rows.get(row.month);
+      retainedRow.setProbe(row.hasProbe);
       const previous=visible[i+1];
       retainedRow.compare(previous?.month===row.month-1?previous:undefined);
       retainedRow.compareDecision(visible.slice(i+1).find(month=>month.move));
@@ -482,39 +500,40 @@ function residentHistory(sim,month){
       if(list.contains(active)){
         if(document.activeElement!==active)active.focus({preventScroll:true});
         if(wasVisible&&!visibleInPanel(active,panel))active.scrollIntoView({block:'nearest'});
-      }else summary.focus();
+      }else if(!list.contains(document.activeElement))summary.focus();
     }
   }
-  async function load(){
-    if(!details.open||loading||shownMonth===month)return;
-    const requested=month;
+  async function load(force=false){
+    const requested=month,key=coverageKey();
+    if(!details.open||loading||(!force&&shownKey===key))return;
     loading=true;
-    if(shownMonth===undefined)message.textContent='Loading recorded months…';
+    if(shownKey===undefined)message.textContent='Loading recorded months…';
     try{
       const response=await fetch('/api/town/history/'+encodeURIComponent(sim.id));
       if(!response.ok)throw Error();
       const {months}=await response.json();
-      if(requested!==month)return;
+      if(key!==coverageKey())return;
       const visible=months.filter(row=>row.month<=requested).reverse();
       message.textContent=visible.length
         ?'Net worth change by month. Open a row for month-end balances.'
         :'No months are available for this resident yet.';
-      const initial=shownMonth===undefined;
+      const initial=shownKey===undefined;
       updateRows(visible);
       if(initial&&document.activeElement===summary&&matchMedia('(max-width: 570px)').matches){
         list.firstElementChild?.scrollIntoView({block:'nearest'});
       }
-      shownMonth=requested;
+      shownKey=key;
     }catch{
-      if(requested===month)message.textContent='Timeline unavailable. Close and reopen to retry.';
+      if(key===coverageKey())message.textContent=shownKey===undefined
+        ?'Timeline unavailable. Close and reopen to retry.'
+        :'Refresh unavailable. Showing the last received months.';
     }finally{
       loading=false;
-      if(requested!==month)load();
+      if(key!==coverageKey())load();
     }
   }
-  details.addEventListener('toggle',load);
-  historyDisclosure={id:sim.id,details,setMonth(next){
-    if(month===next)return;
+  details.addEventListener('toggle',()=>load(true));
+  historyDisclosure={id:sim.id,details,refresh:load,setMonth(next){
     month=next;
     load();
   }};
@@ -695,14 +714,14 @@ function renderWorld(){
       return;
     }
     const decisions=frame.sims.filter(sim=>sim.move);
-    panel.append(element('p',frame.label+(connection==='offline'?' · Last received snapshot':'')),statGrid([
+    panel.append(element('p','Viewed month · '+frame.label+(connection==='offline'?' · Last received snapshot':'')),statGrid([
       ['Residents',frame.sims.length.toLocaleString()],
       ['Recorded decisions',decisions.length.toLocaleString()],
       ['Market',title(frame.market)||'Unavailable'],
       ['Mortgage rate',percent(frame.rate)],
       ['Last index return',percent(frame.change)],
       ['World decider',title(frame.decider)||'Unavailable'],
-    ]),decisionMixPanel(frame.month),element('h3','Current decision feed'));
+    ]),decisionMixPanel(frame.month),element('h3','Decision feed'));
     const active=decisions.filter(sim=>sim.move!=='nothing');
     if(!active.length){
       panel.append(element('p',decisions.length?'All recorded decisions were Nothing.':'No decisions recorded this month.'));
@@ -1077,11 +1096,13 @@ async function poll(){
     const res=await fetch('/api/town');if(!res.ok)throw Error();
     const next=await res.json();
     offset=next.serverTime-Date.now();
-    if(next.month!==liveFrame?.month)liveProgress=0;
+    const sharedMonthChanged=next.month!==liveFrame?.month;
+    if(sharedMonthChanged)liveProgress=0;
     liveFrame=next;
     const reconnected=connection!=='live';
     connection='live';
     if(!frame||localProgress===null)displayFrame(next);
+    if(sharedMonthChanged&&historyDisclosure?.details.isConnected)historyDisclosure.refresh();
     if(reconnected&&!$('world').hidden)renderWorld();
   }catch{
     if(connection!=='offline'){connection='offline';if(!$('world').hidden)renderWorld();}

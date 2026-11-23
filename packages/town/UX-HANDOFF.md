@@ -8,7 +8,7 @@ Selecting a resident opens a small card. Show their portrait, occupation, age, a
 
 Resident Advanced should expose one dated decision with available options, raw odds, the actual draw, and outcome. Keep unavailable fields inside this expanded view. For example, show “Decision inputs weren’t saved for this month” when the input snapshot is absent. A resident can legitimately have no decision this month. Missing provider data and an actual heuristic fallback are distinct states.
 
-Leaderboard opens from the street, sorts living residents by current net worth, and lets the visitor inspect anyone listed. World dashboard shows the current shared month, population, market conditions and decision activity. Keep these views bound to the street's world. Preserve the scene when returning. The existing historical dashboard is the reference for charts, decisions and Hall of Fame.
+Leaderboard opens from the street, sorts living residents by net worth in the viewed month, and lets the visitor inspect anyone listed. World dashboard labels the viewed month and shows its population, market conditions and decision activity. The resident timeline refreshes coverage and probe availability as the shared world advances, including when the scene is paused. Keep these views bound to the street's world. Preserve the scene when returning. The existing historical dashboard is the reference for charts, decisions and Hall of Fame.
 
 ## Data handoff
 

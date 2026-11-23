@@ -163,3 +163,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Reopening the disclosure or World refreshes retained coverage without moving the paused scene. A failed refresh explicitly labels the last received mix.
 - Isolated Chrome at 1440 × 900 and 320 × 640 verified single-line short headers and two expired months dropping from the mix while the scene stayed paused. The selected group survived refreshes.
 - Round 24 should independently assess the release candidate across the full watch route, resident timeline, decision evidence and comparisons, decision mix, and the counterfactual.
+
+## Round 24
+
+- Independent Chrome review passed audio and preference persistence, cottage-to-infirmary-to-bakery follow, local playback, twelve-month history, exact sampling, decision comparisons, mix counts, and current and archived heuristic probes. It found a stale probe on a paused timeline and an ambiguous World date during local playback.
+- The timeline now refreshes retention when the shared month changes or the disclosure reopens. It removes expired rows and updates probe availability in place for retained rows. The scene stays on the viewed month. World labels that month explicitly.
+- Isolated Chrome at 1440 × 900 and 320 × 640 ran a real heuristic probe, advanced a twelve-month checkpoint, and checked that the expired row disappeared while playback remained pinned. Desktop covered an open timeline and focus recovery. Phone covered closing and reopening the timeline. Both checked the World date.
+- Next, align the remaining town currency and move labels with the medieval setting, then verify a featured decision against live d3.
