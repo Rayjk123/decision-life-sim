@@ -1,4 +1,4 @@
-import { ARRIVAL_MONTHS, ageInt, balanceSheet, createWorld, heuristicDecider, runMonth, type Decider, type World } from '../../sim-core/src/index.ts';
+import { ARRIVAL_MONTHS, CAREER, ageInt, balanceSheet, createWorld, heuristicDecider, runMonth, type Decider, type World } from '../../sim-core/src/index.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
 export const DAY = 90_000;
@@ -69,7 +69,8 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
   }
 
   function response(value: Checkpoint, now: number) {
-    return { ...value.current, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
+    const sims = value.current.sims.map(sim => ({ ...sim, workplace: CAREER[sim.career]?.workplace }));
+    return { ...value.current, sims, startedAt: value.startedAt, serverTime: now, duration: DAY, decider: decider.name };
   }
 
   return (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; });

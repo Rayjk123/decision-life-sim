@@ -10,7 +10,20 @@ function art(name){
   return image;
 }
 const streetArt={day:art('street-day'),evening:art('street-evening')};
-const bakeryArt=art('bakery');
+const workplaceScenes={
+  hospital:{name:'Infirmary',block:2,art:'infirmary'},
+  office:{name:'Guildhall',block:3,art:'guildhall'},
+  shop:{name:'Market Shop',block:4,art:'market'},
+  factory:{name:'Workshop',block:5,art:'workshop'},
+  realtor:{name:'Land Office',block:10,art:'land-office'},
+  civic:{name:'Watch Hall',block:15,art:'watchhall'},
+  school:{name:'Schoolhouse',block:19,art:'schoolhouse'},
+};
+const interiorArt=new Map();
+function sceneArt(name){
+  if(!interiorArt.has(name))interiorArt.set(name,art(name));
+  return interiorArt.get(name);
+}
 const castArt=art('cast');
 const redCoatArt=art('red-coat-walk');
 let castSprites=[], redCoatFrames=[];
@@ -29,7 +42,7 @@ function eveningAmount(p){
   return Math.max(0,Math.min(1,(p-.68)/.14));
 }
 const g = map.getContext('2d');
-const blocks = ['homes','homes','HOLLOW GENERAL','OFFICES','SHOPS','FACTORY','homes','homes','BANK','SHOPS','REALTOR','SHOPS','homes','homes','SHOPS','CITY HALL','CAR LOT','SHOPS','homes','SCHOOL','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
+const blocks = ['homes','homes','INFIRMARY','GUILDHALL','SHOPS','WORKSHOP','homes','homes','BANK','SHOPS','LAND OFFICE','SHOPS','homes','homes','SHOPS','CITY HALL','CAR LOT','SHOPS','homes','SCHOOLHOUSE','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
 const civic = { bank: 8, realtor: 10, city_hall: 15, car_lot: 16 };
 const shops = ['CAFE','BAKERY','BARBER','DELI','PHARMACY','BOOKS','PIZZA','FLORIST','MARKET'];
 const colors = ['#a74937','#38678e','#755091','#c2883d','#35766b'];
@@ -186,7 +199,7 @@ function renderPanels(){
     if(panel.hidden)return;
     const name=blocks[place]==='homes'?'Residential block':title(blocks[place].toLowerCase());
     panel.append(element('h2',name));
-    const neighbors=frame.sims.filter(s=>homeBlock(s)===place||workBlock(s)===place||civic[s.errand]===place);
+    const neighbors=frame.sims.filter(s=>homeBlock(s)===place||workBlock(s)===place||civic[destinationFor(s)]===place);
     panel.append(element('p',neighbors.length?'Residents who live, work, or have errands here this month.':'No residents assigned here this month.'));
     const list=element('div',null,'list');
     for(const s of neighbors.slice(0,10))list.append(residentButton(s,s.name+' · '+title(s.career)));
@@ -299,9 +312,9 @@ function lot(index, slot=0){
   return [index%6*140+21+slot%13*8,Math.floor(index/6)*120+19+Math.floor(slot/13)*5];
 }
 const homes=blocks.flatMap((b,i)=>b==='homes'?[i]:[]);
-const workplaces=[2,3,4,5,13,14,20,23];
 const homeBlock=s=>homes[hash(s.id)%homes.length];
-const workBlock=s=>s.working?workplaces[(hash(s.id)>>>5)%workplaces.length]:null;
+const workplaceFor=s=>s.working?(workplaceScenes[s.workplace]??workplaceScenes.shop):null;
+const workBlock=s=>workplaceFor(s)?.block;
 function routine(s,t){
   const h=hash(s.id), stagger=(h%101)/100;
   const morning=.04+stagger*.20, arriving=morning+.09+(h%7)/100;
@@ -339,7 +352,7 @@ function position(s,t){
 }
 function openStreet(){
   if(!frame?.sims.length)return;
-  const person=frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
+  const person=get()??frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
   selected=person.id;place=null;view='street';streetMode=true;streetPan=null;
   Object.assign(camera,{zoom:6.2,following:true});
   snapFollow=true;updateCameraControls();renderPanels();
@@ -347,7 +360,7 @@ function openStreet(){
 const interiors={
   bakery:{name:'Maple Bakery',wall:'#e6b998',trim:'#a34835',counter:'Pastries',shelf:'#d99148'},
   bank:{name:'Hollow Bank',wall:'#c2ccb0',trim:'#426952',counter:'Teller',shelf:'#a7a168'},
-  realtor:{name:'Real Estate Office',wall:'#e1cfaa',trim:'#835840',counter:'Listings',shelf:'#b88461'},
+  realtor:{name:'Land Office',wall:'#e1cfaa',trim:'#835840',counter:'Listings',shelf:'#b88461'},
   car_lot:{name:'Auto Showroom',wall:'#c1cbd1',trim:'#485970',counter:'Sales desk',shelf:'#7097b2'},
   city_hall:{name:'City Hall',wall:'#d9c7ab',trim:'#765b49',counter:'Permits',shelf:'#a7885e'},
 };
@@ -359,20 +372,24 @@ function destinationFor(s){
   return !s.errand&&(hash(s.id)>>>12)%4===0?'bakery':null;
 }
 function drawInterior(placeKey,person,progress,w,h,p){
-  if(placeKey==='bakery'&&ready(bakeryArt)){
+  const workplace=workplaceScenes[placeKey];
+  const imageName=workplace?'work-'+workplace.art:placeKey==='bakery'?'bakery':placeKey==='realtor'?'work-land-office':null;
+  const artwork=imageName&&sceneArt(imageName);
+  if(artwork&&ready(artwork)){
     ctx.resetTransform();draw(ctx,0,0,w,h,'#171e35');
-    const scale=Math.min(w/bakeryArt.width,h/bakeryArt.height);
-    const width=bakeryArt.width*scale,height=bakeryArt.height*scale;
+    const scale=Math.min(w/artwork.width,h/artwork.height);
+    const width=artwork.width*scale,height=artwork.height*scale;
     const x=(w-width)/2,y=(h-height)/2;
-    ctx.imageSmoothingEnabled=false;ctx.drawImage(bakeryArt,x,y,width,height);
+    ctx.imageSmoothingEnabled=false;ctx.drawImage(artwork,x,y,width,height);
     if(eveningAmount(p)<1){
       ctx.globalAlpha=.12*(1-eveningAmount(p));draw(ctx,x,y,width,height,'#ffd7a1');ctx.globalAlpha=1;
     }
-    drawPerson(person,x+width*.51,y+height*(.87-.15*Math.min(1,progress*5)),height*.23,progress<.2?progress*95:null,true);
+    const entering=Math.min(1,progress*5);
+    drawPerson(person,x+width*(.28+.23*entering),y+height*(.89-.09*entering),height*.23,progress<.2?progress*95:null,true);
     hits=[];scene=null;
     return;
   }
-  const room=interiors[placeKey];
+  const room=workplace?{name:workplace.name,wall:'#dfbd91',trim:'#774935',shelf:'#b68154',counter:'Work bench'}:interiors[placeKey];
   const scale=Math.min(w/242,h/170);
   ctx.resetTransform();draw(ctx,0,0,w,h,'#1c243b');
   ctx.setTransform(scale,0,0,scale,(w-240*scale)/2,(h-168*scale)/2);
@@ -529,14 +546,23 @@ function showStory(person,p){
   const [activity]=routine(person,p);
   const stop=destinationFor(person);
   const destination=interiors[stop]?.name??'the neighborhood';
-  const actions={home:'At home',commute:person.working?'On the way to work':'Heading out',work:'At work',outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
+  const workplace=workplaceFor(person)?.name;
+  const actions={home:'At home',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
   const errandActivity=activity==='outbound'||activity==='errand';
   const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
   const message=recordedErrand?actions[activity]+' · Recorded move: '+title(person.move):'Ambient routine · '+actions[activity];
   const key=person.id+message;
   if(key===storyText)return;
   storyText=key;
-  box.replaceChildren(element('strong',person.name),element('div',message));
+  const inspect=$('street-resident');
+  inspect.textContent=person.name;
+  inspect.onclick=()=>{
+    view='resident';place=null;
+    if(!$('world').hidden)setWorld(false,false);
+    renderPanels();
+    $('resident-title')?.focus();
+  };
+  $('street-activity').textContent=message;
 }
 async function poll(){
   if(inFlight||document.hidden)return;
@@ -576,15 +602,16 @@ function drawFrame(time){
     $('date').textContent=frame.label+' · '+String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
     $('day').value=p;
     $('market').textContent=frame.sims.length+' residents · '+title(frame.market)+' · Mortgages '+(frame.rate*100).toFixed(1)+'%';
-    $('phase').textContent=(paused?'Paused locally · ':'')+(p<.30?'Morning commute':p<.48?'At work':p<.78?'Afternoon errands':p<1?'Heading home':'Waiting for next month');
+    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+(p<.30?'Morning commute':p<.48?'At work':p<.78?'Afternoon errands':p<1?'Heading home':'Waiting for next month');
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
     const w=Math.max(1,canvas.clientWidth), h=Math.max(1,canvas.clientHeight);
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
     const focus=get(), focusPoint=focus&&position(focus,p);
     showStory(focus,p);
-    const destination=focus&&destinationFor(focus);
-    const stop=focus&&destination&&routine(focus,p)[0]==='errand'&&streetMode&&camera.following;
-    const stopId=stop?frame.month+':'+focus.id+':'+destination:null;
+    const activity=focus&&routine(focus,p)[0];
+    const destination=activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
+      :activity==='errand'?destinationFor(focus):null;
+    const stopId=destination&&streetMode&&camera.following?frame.month+':'+focus.id+':'+activity+':'+destination:null;
     const inside=$('inside');
     inside.hidden=!stopId;
     if(stopId){
@@ -593,7 +620,7 @@ function drawFrame(time){
       inside.onclick=()=>{outsideStop=viewing?stopId:null;};
       if(viewing){
         const h=hash(focus.id);
-        const arrived=.44+((h>>>8)%100)/480;
+        const arrived=activity==='work'?.13+(h%101)/500+(h%7)/100:.44+((h>>>8)%100)/480;
         drawInterior(destination,focus,Math.max(0,(p-arrived)/.14),w,canvas.height,p);
         requestAnimationFrame(drawFrame);
         return;
@@ -821,7 +848,7 @@ $('zoom-in').onclick=()=>zoom(1.4);
 $('zoom-out').onclick=()=>zoom(1/1.4);
 $('street').onclick=openStreet;
 $('overview').onclick=()=>{
-  streetMode=false;streetPan=null;scene=null;place=null;selected=null;view='resident';Object.assign(camera,{x:420,y:300,zoom:1,following:false});updateCameraControls();renderPanels();
+  streetMode=false;streetPan=null;scene=null;place=null;if(view==='street')view='resident';Object.assign(camera,{x:420,y:300,zoom:1});updateCameraControls();renderPanels();
 };
 canvas.addEventListener('keydown',event=>{
   if(event.key==='+'||event.key==='=')zoom(1.4);

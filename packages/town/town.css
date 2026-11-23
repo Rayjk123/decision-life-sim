@@ -27,7 +27,7 @@ aside{scrollbar-gutter:stable;overflow-anchor:none}
 @media(min-width:901px){body{height:100dvh}main{min-height:0}header{flex:none}}
 
 .street-story{position:absolute;top:16px;left:16px;max-width:min(350px,calc(100% - 32px));padding:12px 15px;background:#fff5df;color:#292619;border:2px solid #423729;border-radius:7px;box-shadow:0 3px #312c2b66;pointer-events:none;font-size:14px;line-height:1.35}
-.street-story strong{display:block;font-size:16px;margin-bottom:3px}
+.street-story button{display:block;margin-bottom:3px;padding:2px 6px;font-size:16px;font-weight:700;pointer-events:auto}
 #place button{margin-top:8px}#phase{width:auto;max-width:42%}
 @media(max-width:570px){.street-story{top:8px;left:8px;padding:8px 10px;max-width:calc(100% - 16px)}.camera-controls{gap:3px}.camera-controls button{padding-inline:6px}}
 

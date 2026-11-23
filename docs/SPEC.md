@@ -132,6 +132,8 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 - Inflation, capital gains tax and progressive taxes are simplified (real terms, flat effective tax).
 
 **6. The pixel town.** The first Maple Hollow build uses a Canvas street grid and frames projected from the same simulation engine. The remaining roadmap includes:
+- Follow view opens one of seven illustrated workplace interiors based on the resident’s career category. The [UX loop](../packages/town/UX-LOOP.md) tracks improvements to the watch experience before deeper history and decision views.
+
 - A month plays as a ~90 s "day in town": dawn commute, payday, midday errands driven by decisions, evening home. The next month's decisions are computed while the current month plays ("decide ahead, play behind"); a month stretches if decisions aren't ready.
 - Movement is computed in the browser from the street grid, each sim's home/work/errand lot and a shared seed, so every viewer sees identical paths and month files stay ~100–150 KB.
 - Click a sim to follow it; side panel with life story and money; decision-model sidebar toggled off by default. UI mock-ups exist on claude.ai (Life Sim — Town UI).

@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 1
+
+- Following a working resident opens one of seven illustrated workplace scenes based on their career. The resident name opens their card from inside or outside. The overview keeps the selected resident.
+- The [UX loop](../packages/town/UX-LOOP.md) records the initial independent review and the next priorities.
+
 ## Session 2026-11-22 (late): fine-tuning parked, d3 kept; town history; medieval re-theme; behaviour work; handoff
 
 - **Fine-tuning study** (`docs/finetune/`): labels were the lever (same 0.8B: heuristic labels 62% of gold moves, d3 61%, Haiku 96%); on the independent golden suite the best fine-tune (E06) ties d3:4b (71/48 vs 72/48), beating it on red flags and losing on signature deals. **User: stick with d3.**

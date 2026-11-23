@@ -6,7 +6,9 @@ import { sharedWorld, type Storage } from './world.ts';
 import { kevDecider } from '../../worker/src/kev.ts';
 
 const assets = new Map([['/', ['index.html', 'text/html']], ['/audio.js', ['audio.js', 'text/javascript']], ['/town.js', ['town.js', 'text/javascript']], ['/town.css', ['town.css', 'text/css']]]);
-for (const name of ['street-day.png', 'street-evening.png', 'bakery.png', 'cast.png', 'red-coat-walk.png']) {
+for (const name of ['street-day.png', 'street-evening.png', 'bakery.png', 'cast.png', 'red-coat-walk.png',
+  'work-infirmary.png', 'work-guildhall.png', 'work-market.png', 'work-workshop.png',
+  'work-land-office.png', 'work-watchhall.png', 'work-schoolhouse.png']) {
   assets.set('/art/' + name, ['art/' + name, 'image/png']);
 }
 const assetDir = process.env.TOWN_ASSETS ?? fileURLToPath(new URL('../', import.meta.url));
