@@ -41,7 +41,8 @@ export function stepMarket(seed: number, month: number, m: Market): { market: Ma
   const q = REGIMES[regime];
   const idxR = rng.normal(q.idxMean, q.idxSd);
   const stockR = 1.15 * idxR - 0.0015; // shared part of single-stock returns; each sim adds its own noise in upkeep
-  const homeR = rng.normal(q.homeMean, q.homeSd);
+  // Prices are in today's dollars, so they can't outrun incomes forever: a gentle pull back toward 1.0 (~2%/yr per 1.0 above) keeps a century-long town affordable.
+  const homeR = rng.normal(q.homeMean, q.homeSd) - 0.0015 * Math.log(m.homeIndex);
   const rate = clamp(m.mortgageRate + (q.rateTarget - m.mortgageRate) * 0.08 + rng.normal(0, 0.0008), 0.025, 0.095);
   // the public jobs signal is noisy: it usually, but not always, matches the hidden regime
   const jobs = rng.chance(0.8) ? q.jobs : rng.pick(['strong', 'steady', 'weak'] as const);

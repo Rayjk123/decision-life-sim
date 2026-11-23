@@ -5,7 +5,7 @@
 // Bands are deliberately wide: they catch a broken economy, not normal tuning. Tighten them as realism work lands.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { createWorld, heuristicDecider, runMonth, type SimEvent } from '@dls/sim-core';
+import { createWorld, growHistory, heuristicDecider, runMonth, type SimEvent } from '@dls/sim-core';
 import { healthMetrics, integrityViolations, outOfBand, type Band, type HealthMetrics } from './health-lib.ts';
 
 const cfg = JSON.parse(readFileSync(join(import.meta.dirname, 'health.baseline.json'), 'utf8')) as {
@@ -17,7 +17,7 @@ let failures = 0;
 const rows: Array<HealthMetrics & { seed: number; seconds: number }> = [];
 for (const seed of cfg.seeds) {
   const t0 = Date.now();
-  const world = createWorld(seed, cfg.pop);
+  const world = await growHistory(createWorld(seed, cfg.pop));   // a town with every age, not one cohort
   const events: SimEvent[] = [];
   let simMonths = 0;
   while (world.month < cfg.months) {

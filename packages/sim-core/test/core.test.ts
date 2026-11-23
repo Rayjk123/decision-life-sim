@@ -60,6 +60,6 @@ test('savers end with more cash than spenders on the same seed', async () => {
   const w = createWorld(5, 300);
   for (let i = 0; i < 300; i++) await runMonth(w, heuristicDecider);
   const median = (xs: number[]) => [...xs].sort((a, b) => a - b)[Math.floor(xs.length / 2)];
-  const by = (key: string) => median(w.sims.filter((s) => s.archetype === key && s.employed).map((s) => s.cash + s.index));
+  const by = (key: string) => median(w.sims.filter((s) => s.archetype === key && s.employed).map((s) => s.cash + (s.savings ?? 0) + s.index + s.stocks)); // liquid money: savers keep theirs in savings accounts
   assert.ok(by('saver') > by('spender'), `saver ${by('saver')} vs spender ${by('spender')}`);
 });

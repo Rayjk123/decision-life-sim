@@ -175,6 +175,13 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### Iteration 31 · towns with a past (realism, user: focus on behaviour and realism; "fuzzy is good enough")
+- **Problem:** every sim arrived at 18 within ten years, so the town aged as one cohort (year 50: 86 of 200 in their 60s, 3 in their 40s), which skewed retirement ages, inequality and the decision mix.
+- **Fix:** `growHistory` (sim-core `history.ts`) runs 70 years of rules-driven history under a derived seed, then re-bases the clock to month 0 (history-era asset ids tagged `-h`, Hall of Fame cleared); `runWorld` and `health` use it by default (`--history-years 0` restores the old start). Newcomers arrive aged 18-55 (`arrivalAgeFor`, half at 18) already working at their career's salary for that age, with a little savings and the unpaid part of any student loan. Home prices get a gentle pull back toward today's level (they compounded to 13× over a century and homeownership fell to 0%).
+- **Result:** largest age group 0.22-0.26 (was ~0.8); median retirement 62-67 (was 57-63). New health metric `largestAgeGroup` (≤ 0.4); other bands widened on purpose. Tests: `history.test.ts` (age mix, determinism, re-based clock, unique asset ids); three tests updated for movers (savers vs spenders now counts savings accounts, which it had silently missed).
+- Next realism items stay fuzzy; the user's direction is the medieval re-theme and model behaviour.
+
+
 | # | Date | Type | Change | Gates | Result |
 |---|---|---|---|---|---|
 | 0 | 2026-11-21 | setup | Loop created; branch `improve/loop`; backlog seeded | G1–G2 green, 37 tests | d3:4b 77% / 61% pairs is the bar |

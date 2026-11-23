@@ -6,7 +6,8 @@ import { post } from './ledger.ts';
 import { remember } from './memory.ts';
 import { fmt } from './money.ts';
 import { rngFor, type Rng } from './rng.ts';
-import { dollars } from './money.ts';
+import { amortizedPayment, dollars } from './money.ts';
+import { careerSalary } from './finance.ts';
 
 /** Months over which the first population arrives (so ages are mixed instead of 1,000 identical 18-year-olds). */
 export const ARRIVAL_MONTHS = 120;
@@ -54,6 +55,16 @@ function triangular(rng: Rng, lo: number, mode: number, hi: number): number {
   return u < f ? lo + Math.sqrt(u * (hi - lo) * (mode - lo)) : hi - Math.sqrt((1 - u) * (hi - lo) * (hi - mode));
 }
 
+/**
+ * Age at which a newcomer moves to town, from its own keyed stream (so no other spawn draw shifts). About half arrive
+ * at 18 as before; the rest are movers aged 19-55, most in their mid-20s. Without movers, every replacement is 18 and
+ * the town ages in waves (an "echo" of the first cohort's deaths).
+ */
+export function arrivalAgeFor(seed: number, n: number): number {
+  const r = rngFor(seed, 'arrival-age', n);
+  return r.chance(0.5) ? 18 : Math.round(triangular(r, 19, 26, 55));
+}
+
 export function spawnSim(world: World, month: number): Sim {
   const n = world.nextSimNumber++;
   const rng = rngFor(world.seed, 'spawn', n);
@@ -63,11 +74,13 @@ export function spawnSim(world: World, month: number): Sim {
   const traits = Object.fromEntries(
     Object.entries(base).map(([key, v]) => [key, Math.round(clamp01(v + rng.normal(0, 0.1)) * 100) / 100]),
   ) as unknown as Traits;
-  const birthMonth = month - 18 * 12;
-  const lifespan = triangular(rng, 35, 65, 95);
+  const arrivalAge = arrivalAgeFor(world.seed, n);
+  const birthMonth = month - arrivalAge * 12;
+  const lifespan = Math.max(triangular(rng, 35, 65, 95), arrivalAge + 1.5);
   const c = CAREERS.find((x) => x.key === careerKey)!;
   const startMonth = birthMonth + c.startAge * 12;
-  const employed = c.startAge <= 18;
+  const employed = c.startAge <= arrivalAge;
+  const yearsWorked = Math.max(0, arrivalAge - c.startAge);
   const sim: Sim = {
     id: `s${String(n).padStart(5, '0')}`,
     name: `${rng.pick(FIRST_NAMES)} ${rng.pick(LAST_NAMES)}`,
@@ -98,7 +111,9 @@ export function spawnSim(world: World, month: number): Sim {
     bankruptcies: 0,
     flows: {},
   };
-  post(sim, 'arrival', dollars(2000));
+  if (employed) sim.salary = careerSalary(sim, month);
+  // Movers bring what a few years of their career let them put aside (modest: most people arrive with little).
+  post(sim, 'arrival', dollars(2000) + Math.round(yearsWorked * sim.salary * 0.03 * (sim.saveHabit ?? 1)));
   // An heir: a newcomer inherits the estate of someone who died (after 10% estate costs), invested in the index.
   const estate = world.pendingEstates.shift();
   if (estate) {
@@ -109,7 +124,18 @@ export function spawnSim(world: World, month: number): Sim {
     remember(sim, `Inherited ${fmt(inheritance)} from ${estate.fromName}${heirs > 1 ? ` (a 1/${heirs} share)` : ''}`);
   }
   if (c.debtAtStart > 0) {
-    sim.loans.push({ id: `${sim.id}-student`, kind: 'student', balance: 0, annualRate: 0.055, payment: 0, deferredUntil: startMonth });
+    if (arrivalAge <= 18) sim.loans.push({ id: `${sim.id}-student`, kind: 'student', balance: 0, annualRate: 0.055, payment: 0, deferredUntil: startMonth });
+    else if (arrivalAge < c.startAge) {
+      // Still in school: the loan has grown for the school years already done.
+      const schoolMonths = Math.max(1, (c.startAge - 18) * 12);
+      const done = (arrivalAge - 18) * 12;
+      sim.loans.push({ id: `${sim.id}-student`, kind: 'student', balance: Math.round((c.debtAtStart * done) / schoolMonths), annualRate: 0.055, payment: 0, deferredUntil: startMonth });
+    } else if (yearsWorked < 10) {
+      // Working already: the part of a ten-year repayment still left.
+      const left = Math.round(c.debtAtStart * (1 - yearsWorked / 10));
+      const months = Math.max(12, Math.round((10 - yearsWorked) * 12));
+      sim.loans.push({ id: `${sim.id}-student`, kind: 'student', balance: left, annualRate: 0.055, payment: amortizedPayment(left, 0.055, months) });
+    }
   }
   return sim;
 }

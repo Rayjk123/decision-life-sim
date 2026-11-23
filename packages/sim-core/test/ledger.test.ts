@@ -66,7 +66,8 @@ test('inheritance: a newcomer inherits 90% of a pending estate', () => {
   w.pendingEstates.push({ fromId: 'x', fromName: 'Ada Lovelace', amount: k(500) });
   const heir = spawnSim(w, 300);
   assert.equal(heir.flows.inheritance, k(450));
-  assert.equal(heir.cash, k(450) + 200_000);
+  assert.ok((heir.flows.arrival ?? 0) >= 200_000, 'arrives with at least $2k (movers bring savings too)');
+  assert.equal(heir.cash, k(450) + (heir.flows.arrival ?? 0));
   assert.match(heir.name, /Lovelace$/);
   assert.match(heir.memory[0], /Inherited/);
   assert.equal(w.pendingEstates.length, 0);

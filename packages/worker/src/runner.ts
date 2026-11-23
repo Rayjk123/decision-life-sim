@@ -1,7 +1,7 @@
 // Runs a world for N months with a decider, writing everything through WorldStore. Shared by the CLI,
 // the experiment and the integration tests.
 import { join } from 'node:path';
-import { createWorld, runMonth, type DecisionRecord, type Decider, type MonthResult, type StateStyle, type World } from '@dls/sim-core';
+import { createWorld, growHistory, HISTORY_YEARS, runMonth, type DecisionRecord, type Decider, type MonthResult, type StateStyle, type World } from '@dls/sim-core';
 import { WorldStore } from './store.ts';
 
 export interface RunOptions {
@@ -14,6 +14,8 @@ export interface RunOptions {
   style?: StateStyle;
   concurrency?: number;
   resume?: boolean;
+  /** Years of rules-driven history before month 0, so the town starts with every age (default HISTORY_YEARS; 0 = a town of 18-year-olds). */
+  historyYears?: number;
   onMonth?: (world: World, r: MonthResult, ms: number) => void;
 }
 
@@ -22,7 +24,7 @@ export async function runWorld(o: RunOptions): Promise<{ world: World; decisions
   let world: World;
   let resumedFrom: number | null = null;
   if (o.resume && (resumedFrom = store.latestSnapshot()) !== null) world = store.resume(resumedFrom);
-  else world = createWorld(o.seed, o.pop);
+  else world = await growHistory(createWorld(o.seed, o.pop), o.historyYears ?? HISTORY_YEARS);
   const decisions: DecisionRecord[] = [];
   let calls = 0, fallbacks = 0;
   while (world.month < o.months) {

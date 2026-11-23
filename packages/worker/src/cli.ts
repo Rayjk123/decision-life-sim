@@ -16,6 +16,7 @@ const { values: a } = parseArgs({
     pop: { type: 'string', default: '200' },
     seed: { type: 'string', default: '1' },
     decider: { type: 'string', default: 'heuristic' },          // heuristic | model (alias: kev)
+    'history-years': { type: 'string', default: '70' },   // town history before month 0 (0 = a town of 18-year-olds)
     'decision-url': { type: 'string' },                // decision model endpoint (or DECISION_URL); --kev-url / KEV_URL still work
     'kev-url': { type: 'string' },
     model: { type: 'string', default: process.env.KEV_MODEL ?? 'kev-latest' },
@@ -46,7 +47,7 @@ if (a.decider === 'kev') {
 const t0 = Date.now();
 console.log(`decision-life-sim · seed ${seed} · ${a.pop} sims · ${a.months} months · decider ${decider.name}${a.decider === 'kev' ? ` (model ${a.model})` : ''} · policy ${a.policy} · style ${a.style} · out ${out}`);
 const res = await runWorld({
-  seed, pop: Number(a.pop), months: Number(a.months), decider, outDir: out, resume: a.resume,
+  historyYears: Number(a['history-years']), seed, pop: Number(a.pop), months: Number(a.months), decider, outDir: out, resume: a.resume,
   policy: a.policy as 'events' | 'monthly', style: a.style as StateStyle, concurrency: Number(a.concurrency),
   onMonth: (world, r, ms) => {
     if (!a.quiet && (r.month % 12 === 0 || kev)) {

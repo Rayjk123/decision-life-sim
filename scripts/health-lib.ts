@@ -13,6 +13,7 @@ export interface HealthMetrics {
   creditSpread: number;             // p90 - p10 credit score: 0 means every sim has the same score (iteration 8 bug)
   noStocksShare: number;            // share of living adults with < $1k in the index or stocks (US: ~40% own none)
   savingsHolders: number;           // share of living adults with a savings account balance
+  largestAgeGroup: number;          // share of living adults in the biggest of 18-29 / 30s / 40s / 50s / 60s / 70+ (one cohort ≈ 0.8; real towns ≈ 0.2-0.3)
 }
 
 const median = (xs: number[]) => { if (!xs.length) return NaN; const s = [...xs].sort((a, b) => a - b); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
@@ -46,6 +47,7 @@ export function healthMetrics(world: World, events: SimEvent[], simMonths: numbe
     noStocksShare: adults.length ? adults.filter((s) => s.index + s.stocks < 100_000).length / adults.length : 0,
     savingsHolders: adults.length ? adults.filter((s) => (s.savings ?? 0) > 0).length / adults.length : 0,
     creditMedian: median(adults.map((s) => s.creditScore)),
+    largestAgeGroup: (() => { const g: Record<string, number> = {}; for (const s of adults) { const a = ageInt(s, m); const k = a < 30 ? 'a' : a < 70 ? String(Math.floor(a / 10)) : 'z'; g[k] = (g[k] ?? 0) + 1; } return adults.length ? Math.max(...Object.values(g)) / adults.length : 0; })(),
     creditSpread: (() => { const xs = adults.map((s) => s.creditScore).sort((a, b) => a - b); return xs.length ? xs[Math.floor(0.9 * (xs.length - 1))] - xs[Math.floor(0.1 * (xs.length - 1))] : 0; })(),
   };
 }

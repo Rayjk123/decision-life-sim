@@ -21,8 +21,10 @@ test('journeys match the logs: one row per month alive, every event and every de
   const decisions = lines(join(out, 'log/decisions.ndjson'));
   for (const s of world.sims.slice(0, 15)) {
     const j = JSON.parse(readFileSync(join(people, `${s.id}-journey.json`), 'utf8')) as Journey;
-    assert.equal(j.m[0], s.arrivedMonth, `${s.id} starts the month it arrived`);
-    assert.equal(j.m.length, world.month - s.arrivedMonth + 1, `${s.id} has a row for every month`);
+    // Sims from the town's history start at the first visible month; newcomers start the month they arrived.
+    const start = Math.max(s.arrivedMonth, 1);
+    assert.equal(j.m[0], start, `${s.id} starts the month it arrived (or month 1, if it arrived during the history)`);
+    assert.equal(j.m.length, world.month - start + 1, `${s.id} has a row for every month`);
     for (const k of ['cash', 'savings', 'invested', 'property', 'other', 'debt', 'spend', 'inflow', 'outflow'] as const) assert.equal(j[k].length, j.m.length);
     assert.equal(j.events.length, events.filter((e) => e.simId === s.id && e.type !== 'decision').length, `${s.id} events`);
     assert.equal(j.decisions.length, decisions.filter((d) => d.simId === s.id).length, `${s.id} decisions`);

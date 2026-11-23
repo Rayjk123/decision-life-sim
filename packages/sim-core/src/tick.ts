@@ -80,7 +80,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
   for (let n = arrivalsDue(world); n > 0; n--) {
     const s = spawnSim(world, m);
     world.sims.push(s);
-    events.push({ month: m, simId: s.id, type: 'arrived', text: `${s.name} moved to town at 18 (${ARCHETYPE[s.archetype].label.toLowerCase()}, ${(CAREER[s.career]?.label ?? s.career).toLowerCase()})` });
+    events.push({ month: m, simId: s.id, type: 'arrived', text: `${s.name} moved to town at ${ageInt(s, m)} (${ARCHETYPE[s.archetype].label.toLowerCase()}, ${(CAREER[s.career]?.label ?? s.career).toLowerCase()})` });
     if (s.flows.inheritance) events.push({ month: m, simId: s.id, type: 'inherited', text: `${s.name} inherited ${fmt(s.flows.inheritance)}` });
   }
 
