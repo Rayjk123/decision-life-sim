@@ -44,6 +44,18 @@ function endpoint(server: ChildProcess) {
 async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType<typeof town>>, resident: typeof frame.sims[number], events: string[]) {
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
+  await page.addInitScript(() => {
+    const draw = CanvasRenderingContext2D.prototype.drawImage;
+    CanvasRenderingContext2D.prototype.drawImage = new Proxy(draw, {
+      apply(target, brush: CanvasRenderingContext2D, args) {
+        const [image] = args;
+        if (image instanceof HTMLImageElement && /\/art\/(?:street-\w+|town-overview)\.(?:png|jpg)$/.test(image.src)) {
+          brush.canvas.dataset.drawnArtwork = image.src.split('/').at(-1);
+        }
+        return Reflect.apply(target, brush, args);
+      },
+    });
+  });
   const atlas = page.waitForResponse(response => response.url() === url + '/art/resident-walk.png');
   await page.goto(url);
   assert((await atlas).ok(), 'Walk atlas should load');
@@ -76,6 +88,25 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
     assert(rail && rail.y >= canvas.y + canvas.height - 1, 'Phone camera controls should stay below the scene');
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 320, 'Phone layout should fit the viewport');
   }
+  const day = await page.locator('#day').getAttribute('value');
+  const caption = await page.locator('#street-activity').textContent();
+  await page.locator('#overview').click();
+  await stage.and(page.locator('[data-drawn-artwork="town-overview.jpg"]')).waitFor();
+  const pins = page.locator('#district-pins button');
+  assert.equal(await pins.count(), 4);
+  const occupancy = await pins.evaluateAll(nodes => nodes.reduce((sum, node) =>
+    sum + Number(node.getAttribute('aria-label')?.match(/(\d+) here now/)?.[1]), 0));
+  assert.equal(occupancy, frame.sims.length, 'Every resident should occupy one street');
+  const followedPin = page.locator('#district-pins .followed');
+  const district = await followedPin.getAttribute('data-district');
+  assert(district);
+  await followedPin.click();
+  await page.locator('#district-panel').getByRole('heading', { name: 'Who’s here' }).waitFor();
+  assert.equal(await page.locator('#overview').getAttribute('aria-pressed'), 'true');
+  await page.locator('#district-panel').getByRole('button', { name: 'Zoom to street' }).click();
+  assert.equal(await page.locator('#street').getAttribute('aria-pressed'), 'true');
+  assert.equal(await page.locator('#day').getAttribute('value'), day);
+  assert.equal(await page.locator('#street-activity').textContent(), caption);
 
   await page.locator('#street-resident').click();
   await profile.getByText('Monthly timeline', { exact: true }).click();
@@ -92,12 +123,14 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await current.getByText('Discretionary spending', { exact: true }).waitFor();
   await current.getByRole('heading', { name: 'Selected cash flows', exact: true }).waitFor();
   await current.getByText('Cash change also reflects purchases, investments, and transfers between accounts.', { exact: true }).waitFor();
-  assert.equal(await rows.count(), 2, 'Timeline should show both retained months');
+  assert.equal(await rows.count(), 12, 'Timeline should include the retained warm-up months');
+  assert(await rows.getByText('No recorded decision', { exact: true }).count() > 0);
   const earlier = rows.last();
   await earlier.locator(':scope > details > summary').click();
   await earlier.getByText('Income and outgoings were not retained for this month.', { exact: true }).waitFor();
   await earlier.getByText('Life events were not retained for this month.', { exact: true }).waitFor();
   await profile.getByText('Lifetime history', { exact: true }).click();
+  await profile.locator('.recent-milestones strong').first().waitFor();
   const lifetime = profile.locator('.resident-lifetime');
   await lifetime.getByRole('img', { name: /Net worth from/ }).waitFor();
   const year = lifetime.getByLabel('Browse by year');
@@ -143,6 +176,14 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await page.locator('#close-world').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('#street-resident').textContent(), resident.name);
+  for (const district of ['market', 'guild', 'square']) {
+    await page.locator('#overview').click();
+    const pin = page.locator(`#district-pins [data-district="${district}"]`);
+    await pin.click();
+    const panel = page.locator('#district-panel');
+    await panel.getByRole('button', { name: 'Zoom to street' }).click();
+    await stage.and(page.locator(`[data-drawn-artwork="street-${district}.jpg"]`)).waitFor();
+  }
   assert.deepEqual(errors, [], 'Town should have no uncaught browser errors');
 }
 

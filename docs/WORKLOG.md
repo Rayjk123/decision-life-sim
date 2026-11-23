@@ -7,6 +7,12 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · four streets and dated milestones
+
+- Resident profiles show dates on recent milestones. New towns retain the final eleven months of real warm-up decision history. Quiet months explain the difference between no recorded decision and a recorded decision to do nothing.
+- Overview now has four selectable streets with resident counts, indoor counts, and a roster drawn from the same routes as Street. Pin selection inspects the district and Zoom to street opens its illustrated scene. Follow carries the camera across district boundaries.
+- Built-in ImageGen used the waterfront and overview as references for three side-on autumn streets with clear foreground walking lanes and aligned entrances. Added Market Lane, Guild Row, and Town Square as lazy-loaded scenes. Their evening treatment uses the town's tint. Existing checkpoints keep their saved history.
+
 ## Maple Hollow · lifetime history
 
 - Residents have an on-demand Lifetime history with dated milestones, a year picker, and a net-worth chart. World → Past residents searches completed lives and shows recorded deaths and final net worth.

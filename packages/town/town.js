@@ -3,27 +3,31 @@ const canvas = $('town');
 const ctx = canvas.getContext('2d');
 const phaseStatus = $('phase');
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
-const map = document.createElement('canvas');
-map.width = 840;
-map.height = 600;
-function art(name){
+function art(name,extension='png'){
   const image=new Image();
-  image.src='/art/'+name+'.png';
+  image.src='/art/'+name+'.'+extension;
   return image;
 }
 const streetArt={day:art('street-day'),evening:art('street-evening')};
+const districts={
+  waterfront:{name:'Waterfront',x:.24,y:.21},
+  market:{name:'Market Lane',x:.74,y:.21,art:'street-market'},
+  guild:{name:'Guild Row',x:.23,y:.63,art:'street-guild'},
+  square:{name:'Town Square',x:.76,y:.60,art:'street-square'},
+};
+const districtKeys=Object.keys(districts);
 const workplaceScenes={
-  hospital:{name:'Infirmary',block:2,art:'infirmary'},
-  office:{name:'Guildhall',block:3,art:'guildhall'},
-  shop:{name:'Market Shop',block:4,art:'market'},
-  factory:{name:'Workshop',block:5,art:'workshop'},
-  realtor:{name:'Land Office',block:10,art:'land-office'},
-  civic:{name:'Watch Hall',block:15,art:'watchhall'},
-  school:{name:'Schoolhouse',block:19,art:'schoolhouse'},
+  hospital:{name:'Infirmary',art:'infirmary'},
+  office:{name:'Guildhall',art:'guildhall'},
+  shop:{name:'Market Shop',art:'market'},
+  factory:{name:'Workshop',art:'workshop'},
+  realtor:{name:'Land Office',art:'land-office'},
+  civic:{name:'Watch Hall',art:'watchhall'},
+  school:{name:'Schoolhouse',art:'schoolhouse'},
 };
 const interiorArt=new Map();
-function sceneArt(name){
-  if(!interiorArt.has(name))interiorArt.set(name,art(name));
+function sceneArt(name,extension){
+  if(!interiorArt.has(name))interiorArt.set(name,art(name,extension));
   return interiorArt.get(name);
 }
 const castArt=art('cast');
@@ -34,7 +38,7 @@ let castSprites=[], redCoatFrames=[];
 const ready=image=>image.complete&&image.naturalWidth>0;
 const lightModes=['Auto light','Daylight','Evening'];
 let lightMode=0;
-let scene=null, streetPan=null;
+let scene=null;
 $('light').onclick=()=>{
   lightMode=(lightMode+1)%lightModes.length;
   const button=$('light');
@@ -45,11 +49,6 @@ function eveningAmount(p){
   if(lightMode)return lightMode===2?1:0;
   return Math.max(0,Math.min(1,(p-.68)/.14));
 }
-const g = map.getContext('2d');
-const blocks = ['homes','homes','INFIRMARY','GUILDHALL','SHOPS','WORKSHOP','homes','homes','COUNTING HOUSE','SHOPS','LAND OFFICE','SHOPS','homes','homes','SHOPS','CITY HALL','CARRIAGE YARD','SHOPS','homes','SCHOOLHOUSE','SHOPS','TOWN PARK','TOWN PARK','WAREHOUSE','homes','homes','SHOPS','SHOPS','SHOPS','homes'];
-const civic = { bank: 8, realtor: 10, city_hall: 15, car_lot: 16 };
-const shops = ['CAFE','BAKERY','BARBER','DELI','PHARMACY','BOOKS','PIZZA','FLORIST','MARKET'];
-const colors = ['#a74937','#38678e','#755091','#c2883d','#35766b'];
 const draw = (c,x,y,w,h,color) => { c.fillStyle=color; c.fillRect(x,y,w,h); };
 const hash = str => [...str].reduce((n,c) => Math.imul(n ^ c.charCodeAt(0),16777619) >>> 0,2166136261);
 const title = str => (str || '').replaceAll('_',' ').replace(/\b\w/g,c => c.toUpperCase());
@@ -79,58 +78,16 @@ function label(c,x,y,name,bg='#25252c') {
   const w=c.measureText(name).width+8;
   draw(c,x-w/2,y-9,w,12,bg); c.fillStyle='#fff9e5'; c.fillText(name,x,y);
 }
-function building(x,y,w,h,roof,brand) {
-  draw(g,x+3,y+4,w,h,'#546b50'); draw(g,x,y,w,h,'#dfb28c');
-  draw(g,x-2,y-3,w+4,10,roof);
-  for(let row=0;row<3;row++){
-    draw(g,x-1,y-2+row*3,w+2,1,'#201e344c');
-    for(let col=x+row*3;col<x+w-2;col+=7)draw(g,col,y-1+row*3,1,2,'#f3b98255');
-  } draw(g,x-2,y+5,w+4,3,'#4c4d49');
-  for(let wx=x+4;wx<x+w-5;wx+=9) {
-    draw(g,wx,y+12,5,6,'#6d8195'); draw(g,wx,y+13,4,1,'#e8b77d');draw(g,wx+2,y+13,1,5,'#26283e');
-  }
-  draw(g,x+w/2-3,y+h-9,6,9,'#655048');
-  if(brand) label(g,x+w/2,y-1,brand);
-}
-draw(g,0,0,840,600,'#3e465d');
-for(let y=0;y<600;y+=120)for(let x=0;x<840;x+=9){
-  draw(g,x,y+3,8,1,'#596079');draw(g,x+3,y+11,6,1,'#282f49');
-}
-for(let x=0;x<840;x+=140) for(let y=0;y<600;y+=12) draw(g,x+6,y,2,6,'#b08a70');
-for(let y=0;y<600;y+=120) for(let x=0;x<840;x+=14) draw(g,x,y+6,7,2,'#b08a70');
-for(const [i,b] of blocks.entries()){
-  const x=i%6*140+15,y=Math.floor(i/6)*120+15;
-  draw(g,x,y,125,105,'#84737a'); draw(g,x+4,y+4,117,97,'#707857');
-  if(b==='homes'){
-    for(let j=0;j<6;j++){
-      const px=x+9+j%3*37,py=y+12+Math.floor(j/3)*42;
-      building(px,py,26,25,colors[(i+j)%colors.length]);
-      draw(g,px+19,py+27,11,5,'#bdd8b6'); draw(g,px-4,py+24,6,8,'#4b783a');
-    }
-  }else if(b==='TOWN PARK'){
-    draw(g,x+55,y+7,8,92,'#d8c29a');draw(g,x+5,y+48,115,8,'#d8c29a');
-    draw(g,x+74,y+61,39,23,'#5aadc1');draw(g,x+80,y+66,29,12,'#77c9cf');
-    for(let j=0;j<8;j++)draw(g,x+12+j%4*26,y+15+Math.floor(j/4)*22,9,9,'#945247');
-    label(g,x+62,y+95,b);
-  }else{
-    if(b!=='SHOPS') building(x+10,y+16,105,36,colors[i%colors.length],b);
-    for(let j=0;j<(b==='SHOPS'?6:3);j++)building(x+9+j%3*39,y+(b==='SHOPS'?20+Math.floor(j/3)*44:65),28,25,colors[(i+j)%colors.length],shops[(i+j)%shops.length]);
-  }
-  for(const [tx,ty] of [[x+8,y+92],[x+118,y+10]]){
-    draw(g,tx,ty+3,2,6,'#543647');draw(g,tx-4,ty,10,5,'#773b4d');
-    draw(g,tx-2,ty-3,7,7,'#a05051');draw(g,tx-1,ty-3,3,3,'#c87455');
-  }
-}
 let frame, liveFrame, selected, view = 'resident', paused=false, speed=1, localProgress=null, lastTime=0, offset=0;
-let hits=[], transform={scale:1,x:0,y:0}, inFlight=false, lastPoll=0;
+let hits=[], inFlight=false, lastPoll=0;
 const streetFitZoom=6.2;
-const streetCamera={x:420,y:300,zoom:streetFitZoom};
-const overviewCamera={x:420,y:300,zoom:1};
-let camera=streetCamera;
+const streetCamera={zoom:streetFitZoom,pan:null};
 let following=false;
 let interiorOpen=false;
-let hover=null, drag=null, liveProgress=0, snapFollow=false;
+let hover=null, drag=null, liveProgress=0;
 let streetMode=true, opened=false, place=null, storyText="";
+let activeStreet='waterfront', inspectedStreet='market', inspectorOpen=false, rosterExpanded=false;
+let districtSnapshot, districtPanelKey;
 const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
 const get = () => frame?.sims.find(s => s.id===selected);
 const element = (tag,text,className) => { const n=document.createElement(tag); if(text!=null)n.textContent=text; if(className)n.className=className; return n; };
@@ -142,9 +99,8 @@ const occupation=sim=>sim.occupation||title(sim.career)||'Occupation unavailable
 
 function choose(id){
   if(selected!==id){
-    if(scene)streetPan=(canvas.clientWidth*.5-scene.x)/scene.width;
+    if(scene)streetCamera.pan=(canvas.clientWidth*.5-scene.x)/scene.width;
     following=false;
-    snapFollow=false;
     advancedFor=null;
   }
   selected=id;view='resident';place=null;
@@ -163,8 +119,8 @@ function followButton(){
 function toggleFollow(){
   if(!get())return;
   if(following){leaveFollow();return;}
-  following=true;snapFollow=true;streetPan=null;
-  camera.zoom=Math.max(camera.zoom,3.5);
+  following=true;streetCamera.pan=null;
+  streetCamera.zoom=Math.max(streetCamera.zoom,3.5);
   updateCameraControls();
   renderPanels();
 }
@@ -427,7 +383,7 @@ function timelineRow(row,residentId){
   const details=element('details');
   const summary=element('summary');
   const heading=element('span',null,'timeline-heading');
-  const outcome=row.move?moveName(row.move):'No recorded move';
+  const outcome=row.move?moveName(row.move):'No recorded decision';
   heading.append(element('strong',row.label),element('small',outcome));
   const delta=element('span',null,'timeline-change');
   summary.append(heading,delta);
@@ -555,7 +511,7 @@ function residentHistory(sim,month){
       if(key!==coverageKey())return;
       const visible=months.filter(row=>row.month<=requested).reverse();
       message.textContent=visible.length
-        ?'Open a month for life events, balances, and selected cash flows.'
+        ?'Open a month for events and balances. Residents get periodic reviews or a review after a significant event, so some months have no recorded decision.'
         :'No months are available for this resident yet.';
       const initial=shownKey===undefined;
       updateRows(visible);
@@ -600,7 +556,7 @@ function lifetimeTrend(points){
   return chart;
 }
 
-function lifetimeView(){
+function lifetimeView(onLife){
   const body=element('div',null,'lifetime-view');
   let request=0, selectedYear, selectedResident;
   async function load(id,month){
@@ -613,6 +569,7 @@ function lifetimeView(){
       if(!response.ok)throw Error();
       const {life}=await response.json();
       if(token!==request)return;
+      onLife?.(life);
       if(!life){
         body.replaceChildren(element('p','No lifetime records are available for this resident.'));
         return;
@@ -656,6 +613,7 @@ function lifetimeView(){
       if(focused&&document.activeElement===document.body)year.focus({preventScroll:true});
     }catch{
       if(token!==request)return;
+      onLife?.(null);
       const retry=element('button','Retry lifetime history');
       retry.onclick=()=>load(id,month);
       body.replaceChildren(element('p','Lifetime history is unavailable.'),retry);
@@ -668,23 +626,40 @@ let profileLife, pastResidentsView;
 function residentLifetime(sim,month){
   if(profileLife?.id===sim.id){
     profileLife.setMonth(month);
-    return profileLife.details;
+    return profileLife.section;
   }
   const details=element('details',null,'decision-details resident-lifetime');
   const summary=element('summary','Lifetime history');
   summary.dataset.focusKey='lifetime';
-  const life=lifetimeView();
+  const section=element('div');
+  const recent=element('div',null,'recent-milestones');
+  const life=lifetimeView(record=>{
+    recent.replaceChildren();
+    const events=record?.events.slice(-6).reverse();
+    if(events?.length){
+      const list=element('ul',null,'lifetime-events');
+      for(const event of events){
+        const row=element('li');
+        row.append(element('strong',event.label),element('p',event.text));
+        list.append(row);
+      }
+      recent.append(list);
+    }else recent.append(element('p','No dated milestones are available.'));
+  });
   details.append(summary,life.body);
+  section.append(details,element('h3','Recent milestones'),recent);
   let shownMonth;
   function refresh(){
-    if(details.open&&month!==shownMonth){
+    if(month!==shownMonth){
       shownMonth=month;
+      recent.replaceChildren(element('p','Loading dated milestones…'));
       life.load(sim.id,month);
     }
   }
   details.addEventListener('toggle',refresh);
-  profileLife={id:sim.id,details,setMonth(next){month=next;refresh();}};
-  return details;
+  profileLife={id:sim.id,section,setMonth(next){month=next;refresh();}};
+  refresh();
+  return section;
 }
 
 function pastResidentsPanel(month){
@@ -753,15 +728,17 @@ function pastResidentsPanel(month){
 
 function renderPanels(){
   const resident=$('resident'), location=$('place'), sim=get();
+  $('district-panel').hidden=streetMode||!inspectorOpen||view!=='street'||place!==null;
   const disclosure=resident.querySelector('details');
   if(disclosure&&disclosure.dataset.residentId===sim?.id)advancedFor=disclosure.open?sim.id:null;
   location.hidden=place===null;
   renderPanel(location, panel=>{
     if(panel.hidden)return;
-    const name=blocks[place]==='homes'?'Residential block':title(blocks[place].toLowerCase());
-    panel.append(element('h2',name));
-    const neighbors=frame.sims.filter(s=>homeBlock(s)===place||workBlock(s)===place||civic[destinationFor(s)]===place);
-    panel.append(element('p',neighbors.length?'Residents who live, work, or have errands here this month.':'No residents assigned here this month.'));
+    panel.append(element('h2',place.name));
+    const neighbors=(districtSnapshot?.streets[activeStreet]??[]).filter(({sim,journey})=>
+      journey.inside&&place.stops.includes(journey.activity==='work'?(sim.workplace??'shop')
+        :journey.activity==='errand'?destinationFor(sim):'home')).map(({sim})=>sim);
+    panel.append(element('p',neighbors.length?'Residents here now.':'Nobody is here right now.'));
     const list=element('div',null,'list');
     for(const s of neighbors.slice(0,10))list.append(residentButton(s,s.name+' · '+occupation(s)));
     const close=element('button','Close place');
@@ -823,13 +800,6 @@ function renderPanels(){
     panel.append(element('p','Recorded move · '+(sim.move?moveName(sim.move):'No decision recorded this month')),decisionDetails(sim));
     panel.append(residentHistory(sim,frame.month));
     panel.append(residentLifetime(sim,frame.month));
-    panel.append(element('h3','Recent life events'));
-    const memories=sim.memories??[];
-    if(memories.length){
-      const list=element('ul');
-      for(const event of memories)list.append(element('li',event));
-      panel.append(list);
-    }else panel.append(element('p','No recent life events.'));
     if(sim.persona)panel.append(element('h3','Personality'),element('p',sim.persona));
   },$('ranking'));
 }
@@ -954,7 +924,7 @@ function renderWorld(){
 function setWorld(open,moveFocus=true){
   $('world').hidden=!open;
   $('toggle').setAttribute('aria-expanded',open);
-  for(const id of ['resident','place'])$(id).inert=open;
+  for(const id of ['resident','place','district-panel','district-pins'])$(id).inert=open;
   if(open){
     renderWorld();
     mixView?.load();
@@ -962,13 +932,7 @@ function setWorld(open,moveFocus=true){
   }
   if(moveFocus)$(open?'close-world':'toggle').focus({preventScroll:true});
 }
-function lot(index, slot=0){
-  return [index%6*140+21+slot%13*8,Math.floor(index/6)*120+19+Math.floor(slot/13)*5];
-}
-const homes=blocks.flatMap((b,i)=>b==='homes'?[i]:[]);
-const homeBlock=s=>homes[hash(s.id)%homes.length];
 const workplaceFor=s=>s.working?(workplaceScenes[s.workplace]??workplaceScenes.shop):null;
-const workBlock=s=>workplaceFor(s)?.block;
 function routine(s,t){
   const h=hash(s.id), stagger=(h%101)/100;
   const morning=.04+stagger*.20, arriving=morning+.09+(h%7)/100;
@@ -982,41 +946,154 @@ function routine(s,t){
   if(t<end)return ['returning',(t-evening)/(end-evening)];
   return ['home',(t-end)/(1-end)];
 }
-function position(s,t){
-  const h=hash(s.id), slot=(h>>>10)%39;
-  const home=lot(homeBlock(s),slot);
-  const work=lot(workBlock(s)??[21,22,14,20][(h>>>6)%4],slot);
-  const destination=destinationFor(s);
-  const errand=lot(destination==='bakery'?4:civic[destination]??[4,11,21,22][(h>>>12)%4],slot);
-  function walk(a,b,p){
-    if(a[0]===b[0]&&a[1]===b[1])return a;
-    // Walk the two local streets and the connecting avenue.
-    const q=[[a[0],a[1]],[a[0],a[1]-10],[a[0]-a[0]%140+7,a[1]-10],[a[0]-a[0]%140+7,b[1]-10],[b[0],b[1]-10],b];
-    const lengths=q.slice(1).map((v,i)=>Math.abs(v[0]-q[i][0])+Math.abs(v[1]-q[i][1]));
-    const distance=p*lengths.reduce((x,y)=>x+y,0);
-    let left=distance;
-    for(let i=0;i<lengths.length;i++){
-      if(lengths[i]&&left<lengths[i]){
-        const f=left/lengths[i],dx=q[i+1][0]-q[i][0],dy=q[i+1][1]-q[i][1];
-        return [q[i][0]+dx*f,q[i][1]+dy*f,dx<0||(!dx&&b[0]<a[0])?-1:1,distance];
-      }
-      left-=lengths[i];
+const workDistrict={office:'guild',factory:'guild',shop:'market',hospital:'square',realtor:'square',civic:'square',school:'square'};
+const errandDistrict={bakery:'waterfront',bank:'square',realtor:'square',city_hall:'square',car_lot:'market'};
+const workDoor={hospital:.14,school:.48,office:.69,factory:.50,shop:.52};
+const doors={
+  waterfront:[{x:.13,name:'Waterfront cottages',stops:['home']},{x:.523,name:'Maple Bakery',stops:['bakery']}],
+  market:[{x:.13,name:'Market Lane homes',stops:['home']},{x:workDoor.shop,name:'Market Shop',stops:['shop']}],
+  guild:[{x:.13,name:'Guild Row homes',stops:['home']},{x:workDoor.factory,name:'Workshop',stops:['factory']},{x:workDoor.office,name:'Guildhall',stops:['office']}],
+  square:[{x:workDoor.hospital,name:'Infirmary',stops:['hospital']},{x:workDoor.school,name:'Schoolhouse',stops:['school']},{x:.70,name:'Civic Hall',stops:['bank','realtor','city_hall','civic']}],
+};
+const homeDistrict=sim=>districtKeys[hash(sim.id)%districtKeys.length];
+function streetJourney(sim,p){
+  const [activity,progress]=routine(sim,p);
+  const home=homeDistrict(sim);
+  const work=sim.working?(workDistrict[sim.workplace]??'market'):home;
+  const stop=destinationFor(sim);
+  const errand=errandDistrict[stop]??work;
+  const legs={commute:[home,work],outbound:[work,errand],returning:[errand,home]};
+  const leg=legs[activity];
+  const district=leg?leg[progress<.5?0:1]:activity==='home'?home:activity==='errand'?errand:work;
+  const inside=activity==='home'||activity==='work'||(activity==='errand'&&Boolean(stop));
+  return {activity,progress,district,inside,leg};
+}
+function streetActivity(person,activity,p){
+  const stop=destinationFor(person);
+  const destination=interiors[stop]?.name??'the neighborhood';
+  const workplace=workplaceFor(person)?.name;
+  const actions={home:p<.5?'At home · A quiet morning':'At home · Winding down',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
+  const recorded=(activity==='outbound'||activity==='errand')&&person.move&&person.errand&&stop;
+  return {description:actions[activity],move:recorded?person.move:null};
+}
+
+const districtPins=new Map();
+for(const [id,district] of Object.entries(districts)){
+  const button=element('button',null,'district-pin');
+  const tip=element('span',null,'district-tip');
+  button.type='button';
+  button.dataset.district=id;
+  tip.setAttribute('aria-hidden','true');
+  button.append(tip);
+  button.onclick=()=>{
+    if(inspectedStreet!==id)rosterExpanded=false;
+    inspectedStreet=id;
+    inspectorOpen=true;
+    if(!$('world').hidden)setWorld(false,false);
+    place=null;view='street';
+    renderPanels();
+  };
+  $('district-pins').append(button);
+  districtPins.set(id,{button,tip});
+}
+function updateDistrictPanel(snapshot,p){
+  const panel=$('district-panel');
+  if(panel.hidden)return;
+  const entries=snapshot.streets[inspectedStreet];
+  const shown=rosterExpanded?entries:entries.slice(0,6);
+  const inside=entries.filter(entry=>entry.journey.inside).length;
+  const key=JSON.stringify([snapshot.month,inspectedStreet,entries.length,inside,rosterExpanded,
+    shown.map(({sim,journey})=>[sim.id,journey.activity,sim.move,p<.5])]);
+  if(key===districtPanelKey)return;
+  districtPanelKey=key;
+  renderPanel(panel,body=>{
+    const title=element('h2',districts[inspectedStreet].name);
+    const close=element('button','Close');
+    close.dataset.focusKey='district-close';
+    close.onclick=()=>{inspectorOpen=false;renderPanels();districtPins.get(inspectedStreet).button.focus();};
+    const header=element('div',null,'panel-heading');
+    header.append(title,close);
+    const enter=element('button','Zoom to street →','district-enter');
+    enter.dataset.focusKey='district-enter';
+    enter.onclick=()=>{
+      activeStreet=inspectedStreet;
+      if(!get()||streetJourney(get(),Number($('day').value)).district!==activeStreet)leaveFollow(false);
+      streetCamera.pan=null;
+      switchMap(true);
+      $('overview').focus({preventScroll:true});
+    };
+    body.append(header,element('p',entries.length+' here now · '+inside+' indoors'),enter,element('h3','Who’s here'));
+    if(!entries.length)body.append(element('p','This street is quiet right now.'));
+    const list=element('ul',null,'list district-roster');
+    for(const {sim,journey} of shown){
+      const row=element('li');
+      const activity=streetActivity(sim,journey.activity,p);
+      const button=residentButton(sim,sim.name);
+      button.setAttribute('aria-label','Follow '+sim.name+' · '+activity.description);
+      const description=activity.description+(activity.move?' · Recorded move: '+moveName(activity.move):'');
+      button.append(element('small',description));
+      button.onclick=()=>{
+        activeStreet=inspectedStreet;
+        switchMap(true);
+        choose(sim.id);
+        if(!following)toggleFollow();
+      };
+      row.append(button);list.append(row);
     }
-    return b;
+    body.append(list);
+    if(entries.length>6){
+      const more=element('button',rosterExpanded?'Show fewer':'Show everyone ('+entries.length+')');
+      more.dataset.focusKey='district-more';
+      more.onclick=()=>{rosterExpanded=!rosterExpanded;updateDistrictPanel(snapshot,p);};
+      body.append(more);
+    }
+  },districtPins.get(inspectedStreet).button);
+}
+function updateDistrictSnapshot(p,minute){
+  if(!districtSnapshot||districtSnapshot.month!==frame.month||districtSnapshot.minute!==minute){
+    const streets=Object.fromEntries(districtKeys.map(id=>[id,[]]));
+    for(const sim of frame.sims){
+      const journey=streetJourney(sim,p);
+      streets[journey.district].push({sim,journey});
+    }
+    districtSnapshot={month:frame.month,minute,streets};
   }
-  const [activity,progress]=routine(s,t);
-  if(activity==='commute')return walk(home,work,progress);
-  if(activity==='outbound')return walk(work,errand,progress);
-  if(activity==='returning')return walk(errand,home,progress);
-  if(activity==='home')return home;
-  return activity==='errand'?errand:work;
+}
+function drawDistrictOverview(focus,p,w,h){
+  const artwork=sceneArt('town-overview','jpg');
+  const mapPins=$('district-pins');
+  if(!ready(artwork)){
+    mapPins.hidden=true;
+    ctx.resetTransform();
+    draw(ctx,0,0,w,h,'#171e35');
+    return;
+  }
+  const scale=Math.min(w/artwork.width,h/artwork.height);
+  const width=artwork.width*scale,height=artwork.height*scale;
+  const x=(w-width)/2,y=(h-height)/2;
+  ctx.resetTransform();
+  draw(ctx,0,0,w,h,'#171e35');
+  ctx.drawImage(artwork,x,y,width,height);
+  mapPins.hidden=false;
+  const followed=focus&&following?streetJourney(focus,p).district:null;
+  for(const [id,{button,tip}] of districtPins){
+    const district=districts[id];
+    const count=districtSnapshot.streets[id].length;
+    const hint=district.name+' · '+count+' here now'+(id===followed?' · Following '+focus.name:'');
+    button.style.left=x+width*district.x+'px';
+    button.style.top=y+height*district.y+'px';
+    button.setAttribute('aria-pressed',String(inspectorOpen&&id===inspectedStreet));
+    button.classList.toggle('followed',id===followed);
+    if(tip.textContent!==hint){tip.textContent=hint;button.setAttribute('aria-label',hint);}
+  }
+  updateDistrictPanel(districtSnapshot,p);
 }
 function startStreet(){
   if(!frame?.sims.length)return;
   sceneArt('cottage');
   const person=get()??frame.sims.find(s=>lookIndex(s.id)===0&&destinationFor(s)==='bakery'&&s.working)??frame.sims.find(s=>lookIndex(s.id)===0)??frame.sims.find(s=>s.errand&&s.working)??frame.sims[0];
   selected=person.id;place=null;view='street';following=true;
-  snapFollow=true;updateCameraControls();renderPanels();
+  updateCameraControls();renderPanels();
 }
 const interiors={
   home:{name:'Home',wall:'#dfbd91',trim:'#774935',counter:'Hearth',shelf:'#b68154'},
@@ -1129,24 +1206,6 @@ function shadeDoorway(w,h,amount){
   draw(ctx,0,0,w,h,'#171e35');
   ctx.globalAlpha=1;
 }
-// Reserve one neighbor per illustrated look. A new snapshot refreshes their
-// finances and routines while keeping their place in this neighborhood.
-let neighbors=[];
-function refreshNeighbors(sims){
-  const byId=new Map(sims.map(sim=>[sim.id,sim]));
-  neighbors=neighbors.map(previous=>byId.get(previous.id)).filter(Boolean);
-  const looks=new Set(neighbors.map(sim=>lookIndex(sim.id)));
-  for(const sim of sims){
-    const look=lookIndex(sim.id);
-    if(!looks.has(look)){neighbors.push(sim);looks.add(look);}
-    if(looks.size===6)break;
-  }
-}
-function streetCast(focus){
-  if(!focus)return neighbors;
-  const look=lookIndex(focus.id);
-  return [...neighbors.filter(sim=>lookIndex(sim.id)!==look),focus];
-}
 function doorwayVisibility(activity,t,working){
   if(activity==='outside')return 1;
   if(activity==='home'||activity==='work'||activity==='errand')return 0;
@@ -1155,12 +1214,14 @@ function doorwayVisibility(activity,t,working){
   return clamp(Math.min(entering?t/.09:1,exiting?(1-t)/.09:1),0,1);
 }
 function streetPosition(person,p,aspect){
-  const [activity,progress]=routine(person,p);
+  const journey=streetJourney(person,p);
+  const {activity,leg}=journey;
+  let {progress}=journey;
   const lane=(hash(person.id)%9)*.008;
   const destination=destinationFor(person);
-  const home=.13, work=person.working?.665:.78;
-  // Civic buildings are across the bridge. Only the bakery is on this block.
-  const errand=destination==='bakery' ? .523 : destination ? .88 : .58;
+  const home=homeDistrict(person)==='square'?.045:.13;
+  const work=person.working?(workDoor[person.workplace]??.70):.78;
+  const errand=destination==='bakery'?.523:destination==='car_lot'?.95:destination?.70:.58;
   const sidewalk=.77+lane, threshold=.681;
   const workY=person.working?threshold:sidewalk;
   const errandY=destination?threshold:sidewalk;
@@ -1175,7 +1236,17 @@ function streetPosition(person,p,aspect){
   let facing=1;
   let distance=null;
   if(walking){
-    const [from,fromY,to,toY]=routes[activity];
+    let [from,fromY,to,toY]=routes[activity];
+    if(leg[0]!==leg[1]){
+      const exit=districts[leg[1]].x>districts[leg[0]].x?.99:.01;
+      if(progress<.5){
+        progress*=2;
+        to=exit;toY=sidewalk;
+      }else{
+        progress=(progress-.5)*2;
+        from=1-exit;fromY=sidewalk;
+      }
+    }
     const across=clamp((progress-.16)/.68,0,1);
     x=from+(to-from)*across;
     y=progress<.16?fromY+(sidewalk-fromY)*progress/.16
@@ -1187,7 +1258,7 @@ function streetPosition(person,p,aspect){
       distance=Math.abs(sidewalk-fromY)+Math.abs(x-from)*aspect+Math.abs(y-sidewalk);
     }
   }
-  return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing,distance};
+  return {x,y,visibility:doorwayVisibility(activity,journey.progress,person.working),facing,distance};
 }
 function drawPerson(person,x,y,height,walkPhase,focused,facing=1,lean=0){
   const sprite=appearance(person.id);
@@ -1223,26 +1294,47 @@ function drawPose(id,sprite,height,walkPhase){
 }
 
 function drawStreet(focus,p,w,h){
-  const day=ready(streetArt.day)?streetArt.day:streetArt.evening;
-  const night=ready(streetArt.evening)?streetArt.evening:day;
-  if(!ready(day))return false;
+  const district=districts[activeStreet];
+  const day=district.art?sceneArt(district.art,'jpg'):streetArt.day;
+  const night=district.art?day:streetArt.evening;
+  if(!ready(day)){
+    ctx.resetTransform();
+    draw(ctx,0,0,w,h,'#171e35');
+    ctx.fillStyle='#f4dfba';
+    ctx.font='600 14px system-ui';
+    ctx.textAlign='center';
+    ctx.fillText((day.complete?'Street artwork unavailable · ':'Entering ')+district.name,w/2,h/2);
+    hits=[];scene=null;
+    return true;
+  }
   const tone=eveningAmount(p);
   const aspect=day.width/day.height;
-  const point=focus&&streetPosition(focus,p,aspect);
-  const scale=Math.max(w/day.width,h/day.height)*Math.max(1,camera.zoom/streetFitZoom);
+  const localFocus=focus&&streetJourney(focus,p).district===activeStreet?focus:null;
+  const point=localFocus&&streetPosition(localFocus,p,aspect);
+  const scale=Math.max(w/day.width,h/day.height)*streetCamera.zoom/streetFitZoom;
   const width=day.width*scale,height=day.height*scale;
-  const target=streetPan??(following?point?.x:.5)??.5;
-  const x=clamp(w*.5-width*target,Math.min(0,w-width),0);
-  const y=clamp(h*.76-height*.77,Math.min(0,h-height),0);
+  const target=streetCamera.pan??(following?point?.x:.5)??.5;
+  const x=width<=w?(w-width)/2:clamp(w*.5-width*target,w-width,0);
+  const y=height<=h?(h-height)/2:clamp(h*.76-height*.77,h-height,0);
   scene={x,y,width,height};
   ctx.resetTransform();ctx.imageSmoothingEnabled=false;
   ctx.drawImage(day,x,y,width,height);
-  if(night!==day&&tone>0){ctx.globalAlpha=tone;ctx.drawImage(night,x,y,width,height);ctx.globalAlpha=1;}
-  const cast=streetCast(focus);
+  if(tone>0){
+    if(night!==day&&ready(night)){ctx.globalAlpha=tone;ctx.drawImage(night,x,y,width,height);ctx.globalAlpha=1;}
+    else{ctx.globalAlpha=tone*.36;draw(ctx,x,y,width,height,'#1b2655');ctx.globalAlpha=1;}
+  }
+  const looks=new Set(localFocus?[lookIndex(localFocus.id)]:[]);
+  const cast=localFocus?[localFocus]:[];
+  for(const {sim,journey} of districtSnapshot.streets[activeStreet]){
+    const look=lookIndex(sim.id);
+    if(journey.inside||looks.has(look)||streetJourney(sim,p).district!==activeStreet)continue;
+    cast.push(sim);looks.add(look);
+    if(looks.size===6)break;
+  }
   const heightOfPerson=clamp(height*.105,43,100);
   hits=cast.map(sim=>{
-    const pt=sim===focus?point:streetPosition(sim,p,aspect);
-    return {sim,sx:x+pt.x*width,sy:y+pt.y*height,distance:pt.distance,facing:pt.facing,height:heightOfPerson,opacity:sim===focus?1:pt.visibility};
+    const pt=sim===localFocus?point:streetPosition(sim,p,aspect);
+    return {sim,sx:x+pt.x*width,sy:y+pt.y*height,distance:pt.distance,facing:pt.facing,height:heightOfPerson,opacity:sim===localFocus?1:pt.visibility};
   }).filter(hit=>hit.opacity>0&&hit.sx>-50&&hit.sx<w+50&&hit.sy>0&&hit.sy<h).sort((a,b)=>a.sy-b.sy);
   const pointed=hover&&nearest(hover.x,hover.y)?.sim;
   for(const {sim,sx,sy,distance,facing,opacity} of hits){
@@ -1258,28 +1350,25 @@ function drawStreet(focus,p,w,h){
     }
   }
   ctx.globalAlpha=1;
-  if(focus&&following&&!reducedMotion.matches){
+  if(streetMode&&focus&&following&&!reducedMotion.matches){
     const [activity,progress]=routine(focus,p);
     const hasErrand=Boolean(destinationFor(focus));
     const atDeparture=activity==='commute'||(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
     const atArrival=activity==='returning'||(activity==='commute'&&focus.working)||(activity==='outbound'&&hasErrand);
-    const edge=Math.min(atDeparture?progress:1,atArrival?1-progress:1);
+    const leg=streetJourney(focus,p).leg;
+    const crossing=leg&&leg[0]!==leg[1]?Math.abs(progress-.5):1;
+    const edge=Math.min(atDeparture?progress:1,atArrival?1-progress:1,crossing);
     shadeDoorway(w,h,1-clamp(edge/.06,0,1));
   }
   return true;
 }
 function showStory(person,p){
   const box=$('street-story');
-  box.hidden=!streetMode||!person;
+  box.hidden=!person||!streetMode||streetJourney(person,p).district!==activeStreet;
   if(box.hidden)return;
   const [activity]=routine(person,p);
-  const stop=destinationFor(person);
-  const destination=interiors[stop]?.name??'the neighborhood';
-  const workplace=workplaceFor(person)?.name;
-  const actions={home:p<.5?'At home · A quiet morning':'At home · Winding down',commute:workplace?'Heading to '+workplace:'Heading out',work:'Working at '+workplace,outside:'Out in town',outbound:'Heading to '+destination,errand:'At '+destination,returning:'Heading home'};
-  const errandActivity=activity==='outbound'||activity==='errand';
-  const recordedErrand=errandActivity&&person.move&&person.errand&&stop;
-  const message=recordedErrand?actions[activity]+' · Recorded move: '+moveName(person.move):'Ambient routine · '+actions[activity];
+  const {description,move}=streetActivity(person,activity,p);
+  const message=districts[activeStreet].name+' · '+description+(move?' · Recorded move: '+moveName(move):' · Ambient routine');
   const key=person.id+':'+following+':'+message;
   if(key===storyText)return;
   storyText=key;
@@ -1299,7 +1388,6 @@ function displayFrame(next){
   const newMonth=next.month!==frame?.month;
   frame=next;
   if(!newMonth)return;
-  refreshNeighbors(next.sims);
   if(selected&&!get()){leaveFollow(false);selected=null;advancedFor=null;}
   const living=new Set(next.sims.map(sim=>sim.id));
   for(const id of outfits.keys())if(!living.has(id))outfits.delete(id);
@@ -1353,8 +1441,20 @@ function drawFrame(time){
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
     const w=Math.max(1,canvas.clientWidth), h=Math.max(1,canvas.clientHeight);
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
-    const focus=get(), focusPoint=focus&&position(focus,p);
+    const focus=get();
+    updateDistrictSnapshot(p,minutes);
+    if(focus&&following)activeStreet=streetJourney(focus,p).district;
+    const streetName=$('street-name');
+    streetName.hidden=!streetMode;
+    if(streetName.textContent!==districts[activeStreet].name)streetName.textContent=districts[activeStreet].name;
     showStory(focus,p);
+    if(!streetMode){
+      $('inside').hidden=true;
+      drawDistrictOverview(focus,p,w,h);
+      requestAnimationFrame(drawFrame);
+      return;
+    }
+    $('district-pins').hidden=true;
     const [activity,progress]=focus?routine(focus,p):[];
     const destination=activity==='home'?'home':activity==='work'?(workplaceScenes[focus.workplace]?focus.workplace:'shop')
       :activity==='errand'?destinationFor(focus):null;
@@ -1376,68 +1476,7 @@ function drawFrame(time){
       requestAnimationFrame(drawFrame);
       return;
     }
-    if(streetMode&&drawStreet(focus,p,w,h)){
-      requestAnimationFrame(drawFrame);
-      return;
-    }
-    scene=null;
-    const scale=Math.min(w/840,h/600)*camera.zoom;
-    if(following&&focusPoint){
-      const blend=snapFollow?1:1-Math.exp(-Math.min(elapsed,100)/105);
-      camera.x+=(focusPoint[0]-camera.x)*blend;
-      camera.y+=(focusPoint[1]-camera.y)*blend;
-      snapFollow=false;
-    }
-    const center=(size,extent,target)=>extent<=size?(size-extent)/2:clamp(target,size-extent,0);
-    const x=center(w,840*scale,w/2-camera.x*scale),y=center(h,600*scale,h/2-camera.y*scale);
-    transform={scale,x,y};
-    camera.x=(w/2-x)/scale;camera.y=(h/2-y)/scale;
-    ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,w,h);
-    ctx.setTransform(scale,0,0,scale,x,y);ctx.imageSmoothingEnabled=false;ctx.drawImage(map,0,0);
-    ctx.globalAlpha=eveningAmount(p)*.34;draw(ctx,0,0,840,600,'#19234e');ctx.globalAlpha=1;
-    const visible=[];
-    for(const sim of streetMode?streetCast(focus):frame.sims){
-      const [px,py,facing,distance]=sim===focus?focusPoint:position(sim,p);
-      const sx=px*scale+x,sy=py*scale+y;
-      if(sx<-15||sx>w+15||sy<-15||sy>h+20)continue;
-      visible.push({sim,px,py,sx,sy,facing,distance});
-    }
-    visible.sort((a,b)=>a.py-b.py);
-    // Keep the street readable when many residents share the same destinations.
-    const shown=visible;
-    if(streetMode&&focus&&!shown.some(({sim})=>sim===focus)){
-      const resident=visible.find(({sim})=>sim===focus);
-      if(resident)shown.push(resident);
-    }
-    hits=shown;
-    const pointed=hover&&nearest(hover.x,hover.y);
-    for(const {sim,px,py,facing,distance} of shown){
-      if(sim===focus)draw(ctx,px-5,py-11,11,13,'#fbd15a');
-      if(facing===undefined){
-        ctx.drawImage(appearance(sim.id),Math.round(px)-6,Math.round(py)-13,12,16);
-        continue;
-      }
-      ctx.save();
-      ctx.translate(Math.round(px),Math.round(py)-13);
-      ctx.scale(facing,1);
-      drawPose(sim.id,appearance(sim.id),16,walkPhaseFor(sim,distance,16));
-      ctx.restore();
-    }
-    ctx.resetTransform();
-    const occupied=[];
-    const wanted=shown.filter(({sim})=>sim===focus||sim===pointed?.sim);
-    if(camera.zoom>=1.8)wanted.push(...shown.filter(({sim})=>sim!==focus&&sim!==pointed?.sim).sort((a,b)=>a.sim.id.localeCompare(b.sim.id)));
-    ctx.font='600 12px system-ui';ctx.textAlign='center';
-    for(const {sim,sx,sy} of wanted){
-      const width=ctx.measureText(sim.name).width+12;
-      const left=clamp(sx-width/2,2,Math.max(2,w-width-2));
-      const top=clamp(sy-12*scale-20,2,h-20);
-      if(occupied.some(box=>left<box.right&&left+width>box.left&&top<box.bottom&&top+18>box.top))continue;
-      occupied.push({left,right:left+width,top,bottom:top+18});
-      draw(ctx,left,top,width,18,sim===focus?'#ffd568':'#20232dee');
-      ctx.fillStyle=sim===focus?'#282413':'#fff';
-      ctx.fillText(sim.name,left+width/2,top+13);
-    }
+    drawStreet(focus,p,w,h);
   }
   requestAnimationFrame(drawFrame);
 }
@@ -1531,43 +1570,40 @@ function appearance(id){
 }
 
 function nearest(x,y){
-  let closest=null,distance=Math.max(9,transform.scale*6);
+  let closest=null,distance=9;
   for(const hit of hits){
-    const d=Math.hypot(hit.sx-x,hit.sy-(hit.height?hit.height*.46:transform.scale*5)-y);
+    const d=Math.hypot(hit.sx-x,hit.sy-hit.height*.46-y);
     if(d<(closest?distance:Math.max(distance,(hit.height??0)*.35))){closest=hit;distance=d;}
   }
   return closest;
 }
 function leaveFollow(refresh=true){
   if(!following)return;
-  if(scene)streetPan=(canvas.clientWidth*.5-scene.x)/scene.width;
-  following=false;snapFollow=false;
+  if(scene)streetCamera.pan=(canvas.clientWidth*.5-scene.x)/scene.width;
+  following=false;
   if(refresh)renderPanels();
 }
 function updateCameraControls(){
-  const fit=streetMode?streetFitZoom:1;
-  $('zoom-level').value=interiorOpen?'Fit':Number((camera.zoom/fit).toFixed(1))+'×';
-  $('zoom-out').disabled=interiorOpen||camera.zoom<=fit;
-  $('zoom-in').disabled=interiorOpen||camera.zoom>=maxZoom();
+  const fit=streetFitZoom;
+  $('zoom-level').value=interiorOpen?'Fit':Number((streetCamera.zoom/fit).toFixed(1))+'×';
+  $('zoom-out').disabled=interiorOpen||streetCamera.zoom<=fit;
+  $('zoom-in').disabled=interiorOpen||streetCamera.zoom>=maxZoom();
+  for(const id of ['zoom-out','zoom-in','zoom-level'])$(id).hidden=!streetMode;
 }
-const maxZoom=()=>streetMode?streetFitZoom*2:8;
-function zoom(factor,point){
-  if(interiorOpen)return;
-  const old=camera.zoom;
-  camera.zoom=clamp(old*factor,streetMode?streetFitZoom:1,maxZoom());updateCameraControls();
-  if(!point||following||scene)return;
-  const {x,y,scale}=transform;
-  const next=scale*camera.zoom/old;
-  camera.x=(point.x-x)/scale-(point.x-canvas.clientWidth/2)/next;
-  camera.y=(point.y-y)/scale-(point.y-canvas.clientHeight/2)/next;
+const maxZoom=()=>streetFitZoom*2;
+function zoom(factor){
+  if(interiorOpen||!streetMode)return;
+  const old=streetCamera.zoom;
+  streetCamera.zoom=clamp(old*factor,streetFitZoom,maxZoom());updateCameraControls();
+
 }
 const coords=event=>{
   const r=canvas.getBoundingClientRect();
   return {x:event.clientX-r.left,y:event.clientY-r.top};
 };
-canvas.addEventListener('wheel',event=>{event.preventDefault();zoom(Math.exp(clamp(-event.deltaY*.002,-.5,.5)),coords(event));},{passive:false});
+canvas.addEventListener('wheel',event=>{event.preventDefault();zoom(Math.exp(clamp(-event.deltaY*.002,-.5,.5)));},{passive:false});
 canvas.addEventListener('pointerdown',event=>{
-  if(event.button!==0||drag)return;
+  if(event.button!==0||drag||!streetMode)return;
   drag={...coords(event),id:event.pointerId,moving:false};
   canvas.setPointerCapture(event.pointerId);
 });
@@ -1579,8 +1615,7 @@ canvas.addEventListener('pointermove',event=>{
   if(!drag.moving&&Math.hypot(dx,dy)<5)return;
   if(!drag.moving&&event.pointerType==='touch'&&Math.abs(dy)>Math.abs(dx))return;
   leaveFollow();hover=null;canvas.classList.add('dragging');
-  if(scene){streetPan=clamp((streetPan??(canvas.clientWidth*.5-scene.x)/scene.width)-dx/scene.width,0,1);drag={...point,id:drag.id,moving:true};return;}
-  camera.x-=dx/transform.scale;camera.y-=dy/transform.scale;
+  if(scene){streetCamera.pan=clamp((streetCamera.pan??(canvas.clientWidth*.5-scene.x)/scene.width)-dx/scene.width,0,1);drag={...point,id:drag.id,moving:true};return;}
   drag={...point,id:drag.id,moving:true};
 });
 canvas.addEventListener('pointerleave',()=>{hover=null;});
@@ -1591,14 +1626,9 @@ function endDrag(event){
     if(hit)choose(hit.sim.id);
     else if(scene){
       const px=(x-scene.x)/scene.width,py=(y-scene.y)/scene.height;
-      if(py>.28&&py<.78){
-        place=px<.34?0:px<.68?4:3;
-        leaveFollow();renderPanels();
-      }
-    }else{
-      const px=(x-transform.x)/transform.scale,py=(y-transform.y)/transform.scale;
-      if(px>=0&&px<840&&py>=0&&py<600&&px%140>15&&py%120>15){
-        place=Math.floor(py/120)*6+Math.floor(px/140);
+      const door=py>.46&&py<.74&&doors[activeStreet].find(entry=>Math.abs(entry.x-px)<.055);
+      if(door){
+        place=door;
         leaveFollow();renderPanels();
       }
     }
@@ -1611,7 +1641,6 @@ $('zoom-out').onclick=()=>zoom(1/1.4);
 function switchMap(showStreet){
   if(streetMode===showStreet)return;
   streetMode=showStreet;
-  camera=showStreet?streetCamera:overviewCamera;
   scene=null;
   hover=null;
   hits=[];
@@ -1620,22 +1649,21 @@ function switchMap(showStreet){
   $('street').setAttribute('aria-pressed',String(showStreet));
   $('overview').setAttribute('aria-pressed',String(!showStreet));
   updateCameraControls();
-  if(place!==null){
-    place=null;
-    renderPanels();
-  }
+  place=null;
+  districtPanelKey=undefined;
+  renderPanels();
 }
 $('street').onclick=()=>switchMap(true);
 $('overview').onclick=()=>switchMap(false);
 canvas.addEventListener('keydown',event=>{
+  if(!streetMode)return;
   if(event.key==='+'||event.key==='=')zoom(1.4);
   else if(event.key==='-')zoom(1/1.4);
   else {
     const delta={ArrowUp:[0,-1],ArrowDown:[0,1],ArrowLeft:[-1,0],ArrowRight:[1,0]}[event.key];
     if(!delta)return;
     leaveFollow();
-    if(scene){streetPan=clamp((streetPan??(canvas.clientWidth*.5-scene.x)/scene.width)+delta[0]*65/scene.width,0,1);event.preventDefault();return;}
-    camera.x+=delta[0]*65/transform.scale;camera.y+=delta[1]*65/transform.scale;
+    if(scene){streetCamera.pan=clamp((streetCamera.pan??(canvas.clientWidth*.5-scene.x)/scene.width)+delta[0]*65/scene.width,0,1);event.preventDefault();return;}
   }
   event.preventDefault();
 });

@@ -1,6 +1,6 @@
 # Maple Hollow
 
-Watch one shared simulation advance on a 90-second day clock. Click a resident or select one from Residents to follow them. Open Decisions to see the selected resident's move odds and the latest town decisions. Speed and pause controls affect the local animation. Street opens the illustrated waterfront, while Overview shows the complete simulation map. Auto light follows the simulated clock. Use the lighting control to preview Daylight or Evening immediately. The waterfront and bakery are illustrated scenes, and the other interiors use the same palette with programmatic pixel art.
+Watch one shared simulation advance on a 90-second day clock. Click a resident or find one in Leaderboard. Open Advanced decision details to inspect a recorded move. Speed and pause controls affect the local animation. In Overview, inspect any of the four street pins to see who is there and what they are doing. Zoom to street opens the illustrated scene. Following a resident carries the camera between streets and into interiors. Use the lighting control to preview Daylight or Evening.
 
 The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspector views to current fields and the records needed for future historical detail.
 

@@ -24,8 +24,9 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(await town(now + 1000).then(x => x.month), 121);
   assert.equal(saved!.pending?.month, 122);
   const firstMix = await town.decisionMix(122);
-  assert.deepEqual(firstMix.months.map(row => row.month), [121]);
-  assert.equal(firstMix.decisions, first.sims.filter(sim => sim.move).length);
+  assert.deepEqual(firstMix.months.map(row => row.month), Array.from({ length: 12 }, (_, i) => 110 + i));
+  assert.equal(firstMix.decisions, first.sims.filter(sim => sim.move).length + saved!.history!
+    .flatMap(month => Object.values(month.residents)).filter(sim => sim.move).length);
   assert.equal(firstMix.missingArchetype, 0);
   assert.ok(firstMix.groups.every(group => group.provider === 'heuristic' && group.knownOffers === group.decisions));
   assert.ok(firstMix.groups.every(group => group.moves.every(move => move.offered <= group.knownOffers && move.pickedWhenOffered <= move.offered)));
@@ -44,12 +45,11 @@ test('viewers share one paced world, and a restart preserves its month', async (
   const { salary = 0, benefits = 0, pension = 0, part_time = 0, rent_received = 0, tax = 0, business_profit = 0 } = flows;
   assert.equal(source.cashFlow.income, salary + benefits + pension + part_time + rent_received + tax + Math.max(0, business_profit));
   assert.equal(source.cashFlow.discretionary, -(flows.discretionary ?? 0));
-  assert.deepEqual((await town.residentHistory(id))[0].cashFlow, source.cashFlow);
-  assert.deepEqual((await town.residentHistory(id)).map(row => row.month), [121]);
-  assert.equal((await store.load())!.value.history, undefined);
+  assert.deepEqual((await town.residentHistory(id)).at(-1)?.cashFlow, source.cashFlow);
+  assert((await town.residentHistory(id)).some(row => row.month < 121 && row.decision?.provider === 'heuristic' && !row.hasProbe));
   const restarted = sharedWorld(store, { pop: 12 });
   assert.equal(await restarted(now + DAY).then(x => x.month), 122);
-  const history = await restarted.residentHistory(id);
+  const history = (await restarted.residentHistory(id)).filter(row => row.month >= 121);
   assert.deepEqual(history.map(row => row.month), [121, 122]);
   const recordedLife = await restarted.residentLifetime(id, 121);
   assert(recordedLife && !recordedLife.partial);
@@ -68,7 +68,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(history[0].events, source.events);
   assert.equal(history[0].hasProbe, true);
   assert.ok(!Object.hasOwn(history[0], 'probe'));
-  assert.deepEqual(saved!.history?.[0].residents[id].probe, source.probe);
+  assert.deepEqual(saved!.history?.find(row => row.month === 121)?.residents[id].probe, source.probe);
   const beforeProbe = await store.load();
   const comparison = await restarted.counterfactual(id, 121);
   assert.equal(comparison.status, 'ready');
@@ -77,7 +77,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(comparison.afterCoin, comparison.beforeCoin * 2);
   assert.deepEqual(await store.load(), beforeProbe);
   assert.deepEqual(await restarted.counterfactual(id, 123), { status: 'unavailable' });
-  assert.deepEqual(await restarted.decisionMix(121), firstMix);
+  assert.deepEqual((await restarted.decisionMix(121)).months.map(row => row.month), firstMix.months.slice(1).map(row => row.month));
   assert.deepEqual(await restarted.residentHistory('toString'), []);
   const wake = await restarted(now + DAY + 16 * 60_000);
   assert.equal(wake.month, 122);
@@ -107,6 +107,7 @@ test('lifetime records expose published deaths and recover older checkpoints wit
   const id = resident.id;
   resident.deathMonth = first.month + 1;
   delete saved!.lifetimes;
+  delete saved!.history;
   const legacy = await town.residentLifetime(id, first.month);
   assert(legacy?.partial);
   assert.deepEqual(legacy.wealth.map(point => point.month), [first.month]);

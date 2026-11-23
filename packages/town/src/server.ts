@@ -11,6 +11,9 @@ for (const name of ['street-day.png', 'street-evening.png', 'bakery.png', 'cotta
   'work-land-office.png', 'work-watchhall.png', 'work-schoolhouse.png']) {
   assets.set('/art/' + name, ['art/' + name, 'image/png']);
 }
+for (const name of ['street-market.jpg', 'street-guild.jpg', 'street-square.jpg', 'town-overview.jpg']) {
+  assets.set('/art/' + name, ['art/' + name, 'image/jpeg']);
+}
 const assetDir = process.env.TOWN_ASSETS ?? fileURLToPath(new URL('../', import.meta.url));
 const modelOptions = process.env.DECISION_URL ? {
   url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'kev-latest', apiKey: process.env.KEV_API_KEY,
@@ -88,7 +91,7 @@ export async function handler(event: { rawPath: string; requestContext?: { http?
   }
   const asset = assets.get(event.rawPath);
   if (!asset) return { statusCode: 404, headers, body: 'Not found' };
-  const binary = asset[1] === 'image/png';
+  const binary = asset[1].startsWith('image/');
   const data = await readFile(join(assetDir, asset[0]));
   return {
     statusCode: 200,

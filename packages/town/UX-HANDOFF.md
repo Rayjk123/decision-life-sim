@@ -6,6 +6,8 @@ The street is the landing page. A first-time visitor can watch a day unfold with
 
 The header clock shows playback and connection status. The phone camera controls use a rail below the scene, including when a resident profile is open.
 
+Overview shows Waterfront, Market Lane, Guild Row, and Town Square on one illustrated map. A pin opens a roster and the indoor count for the viewed time. Zoom to street opens the selected scene. Choosing someone from the roster enters their street and follows them. Households use a stable district assignment, workplaces use career categories, and an inter-street walk changes districts halfway through that leg.
+
 The walk atlas contains twelve poses per character across six rows in cast order. Each cell shares the same foot baseline. Street, Overview and interior entrances advance through the cycle based on travel distance at the current playhead. Camera motion does not change the walk pose. A paused walk holds its current pose, and the reduced-motion setting uses the still portrait sprite.
 
 Selecting a resident opens a small card. Show their portrait, occupation, age, actual balances and latest available move. Show balances in crowns and use the town frame's presentation labels for personalities and choices. Follow is an explicit control. An ordinary trip should read as part of a daily routine. Where the financial decision assigned the destination, link the errand to that month's decision. Avoid inferring motives from a sprite or assigning a purchase to an ambient bakery visit.

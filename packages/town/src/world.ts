@@ -64,11 +64,11 @@ function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
   };
 }
 
-async function next(world: World, decider: Decider, archive: LifetimeArchive) {
+async function next(world: World, decider: Decider, archive: LifetimeArchive, captureProbes = true) {
   const probes = new Map<string, NonNullable<ReturnType<typeof captureProbe>>>();
   const result = await runMonth(world, decider, {
     onDecisionRequest(request) {
-      const capture = captureProbe(request, decider !== heuristicDecider);
+      const capture = captureProbes && captureProbe(request, decider !== heuristicDecider);
       if (capture) probes.set(request.sim.id, capture);
     },
   });
@@ -114,6 +114,10 @@ type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
 function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow, events }: ResidentFrame): ResidentMonth {
   return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow, events };
+}
+
+function archiveMonth(frame: Frame): HistoryMonth {
+  return { month: frame.month, residents: Object.fromEntries(frame.sims.map(sim => [sim.id, monthRecord(sim)])) };
 }
 
 function publicMonthRecord(resident: ResidentMonth) {
@@ -173,11 +177,15 @@ export function sharedWorld(storage: Storage, {
       if (!saved) {
         const world = createWorld(42, pop);
         const lifetimes: LifetimeArchive = {};
-        while (world.month < ARRIVAL_MONTHS) {
+        const history: HistoryMonth[] = [];
+        while (world.month < ARRIVAL_MONTHS - (HISTORY_MONTHS - 1)) {
           const result = await runMonth(world, heuristicDecider);
           recordLifeTick(lifetimes, world, result.events);
         }
-        value = { world, current: await next(world, decider, lifetimes), pending: null, startedAt: now, lastSeenAt: now, lifetimes };
+        while (world.month < ARRIVAL_MONTHS) {
+          history.push(archiveMonth(await next(world, heuristicDecider, lifetimes, false)));
+        }
+        value = { world, current: await next(world, decider, lifetimes), pending: null, startedAt: now, lastSeenAt: now, lifetimes, history };
       } else {
         value = saved.value;
         const lifetimes = value.lifetimes ??= lifetimeArchive(value);
@@ -185,8 +193,7 @@ export function sharedWorld(storage: Storage, {
         if (dormant) value.startedAt += now - value.lastSeenAt;
         // Keep the visible month stable while preparing the following one.
         if (now - value.startedAt >= DAY && value.pending) {
-          const residents = Object.fromEntries(value.current.sims.map(sim => [sim.id, monthRecord(sim)]));
-          value.history = [...(value.history ?? []), { month: value.current.month, residents }].slice(1 - HISTORY_MONTHS);
+          value.history = [...(value.history ?? []), archiveMonth(value.current)].slice(1 - HISTORY_MONTHS);
           for (const older of value.history.slice(0, -MODEL_PROBE_ARCHIVE_MONTHS)) {
             for (const resident of Object.values(older.residents)) {
               if (resident.probe?.modelRequest) delete resident.probe.modelRequest;
