@@ -45,6 +45,11 @@ On **200 held-out gold decisions** (towns never seen in training; labelled by Cl
 
 ## How to run it
 
+Download (the 2.6 GB Q4_K_M file and the loader's projector):
+```bash
+hf download bdleecs95/decision-life-sim-e07m gguf/model-Q4_K_M.gguf gguf/mmproj-Q8_0.gguf --local-dir e07m
+```
+
 **llama.cpp** (build b11443 or newer; no Python). A decision model reads the whole request in one pass, so raise the batch size to fit it (requests are up to ~1,400 tokens):
 ```bash
 llama-server -m model-Q4_K_M.gguf --mmproj mmproj-Q8_0.gguf --port 8010 -c 16384 -b 4096 -ub 4096
@@ -64,7 +69,8 @@ On a Mac it is fine for small towns and demos; a 1,000-person town needs a GPU (
 **Unsloth** (Python, GPU):
 ```python
 from unsloth import FastDecisionModel
-model, tokenizer = FastDecisionModel.from_pretrained("<this repo>/merged", load_in_4bit=True)
+# hf download bdleecs95/decision-life-sim-e07m --include "merged/*" --local-dir e07m
+model, tokenizer = FastDecisionModel.from_pretrained("e07m/merged", load_in_4bit=True)
 FastDecisionModel.for_inference(model)
 answers = FastDecisionModel.predict(model, tokenizer, state, questions)
 ```

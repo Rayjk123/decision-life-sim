@@ -88,7 +88,8 @@ npm run experiment                        # whole-world comparison across seeds
 E07m is our own fine-tuned decision model (a 4.7B LoRA fine-tune of Qwen3.5-4B, Apache-2.0). It runs on [llama.cpp](https://github.com/ggml-org/llama.cpp) (build b11443 or newer, which has the `/v1/systemone` decision API), on a Mac, Linux or Windows, GPU or CPU:
 
 ```bash
-# 1. get llama.cpp (prebuilt: github.com/ggml-org/llama.cpp/releases) and the model file (see the model card for the download)
+# 1. get llama.cpp (prebuilt: github.com/ggml-org/llama.cpp/releases) and the model files from https://huggingface.co/bdleecs95/decision-life-sim-e07m
+hf download bdleecs95/decision-life-sim-e07m gguf/model-Q4_K_M.gguf gguf/mmproj-Q8_0.gguf --local-dir e07m && cd e07m/gguf
 llama-server -m model-Q4_K_M.gguf --mmproj mmproj-Q8_0.gguf --port 8010 -c 16384 -b 4096 -ub 4096   # 2.6 GB; big batch: it reads each request in one pass
 # 2. point the town at it
 export DECISION_URL=http://localhost:8010
@@ -96,7 +97,7 @@ npm run sim -- --decider model --months 24 --pop 200
 npm run eval -- --decider model --style words      # reproduces 77% overall / 57% pairs (~1.2 decisions/s on an M3 Pro; ~13/s on an RTX 4070 Super)
 ```
 
-The model card (results, training data, recipe, limitations) is [`research/finetune/release/MODEL_CARD.md`](research/finetune/release/MODEL_CARD.md); the training data and the labelling rubric are published with it. With a GPU and Python you can also load the merged weights with Unsloth (`FastDecisionModel.from_pretrained`).
+Model, data and card on Hugging Face: **[bdleecs95/decision-life-sim-e07m](https://huggingface.co/bdleecs95/decision-life-sim-e07m)** (upload pending: the account is being set up) (source of the card: [`research/finetune/release/MODEL_CARD.md`](research/finetune/release/MODEL_CARD.md)); the training data and the labelling rubric are published with it. With a GPU and Python you can also load the merged weights with Unsloth (`FastDecisionModel.from_pretrained`).
 
 ## Run with Kev (macOS, Apple Silicon)
 

@@ -59,3 +59,7 @@ Written for the next agent picking up **decision behaviour and simulation** work
 - New realism needs a health metric or band (`scripts/health.baseline.json`); rules changes need an invariant in `packages/worker/test/adversarial.test.ts` where one applies.
 - Money is integer cents via `post()`; all randomness via `rngFor(...)`; same seed must replay identically.
 - Work on `improve/loop`, log each iteration in `docs/LOOP.md`, push; `main` is updated by fast-forward when the user asks.
+
+## Release of E07m (pending)
+- Planned Hugging Face repo: `bdleecs95/decision-life-sim-e07m` (account not created yet). README and model card already link to it.
+- Assemble with `research/finetune/release/build-release.sh <dir>` plus the GGUF files from the desktop (`C:\Users\User\dls-ft\release\e07m\gguf`: model-Q4_K_M.gguf, model-Q8_0.gguf, mmproj-Q8_0.gguf, export.json) and optionally `merged/` (8.9 GB). Then `hf auth login`, `hf repo create decision-life-sim-e07m`, `hf upload bdleecs95/decision-life-sim-e07m <dir> .`, and remove "(upload pending…)" from the README.
