@@ -175,6 +175,13 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### Iteration 33 · P0.1: d3 re-measured on the medieval wording, wording tuned (user: "stick with d3"; handle P0 and P1)
+- First medieval run: d3:4b `words` **64% overall, 38% pairs** (modern: 72% / 48%). Failures pointed at words: the entrepreneur's persona said "ventures" (= the risky investment's name) → A-biz picked it; "tavern tab" didn't read as 24% debt; "horse and cart" doesn't tempt a status seeker; golden memories were still modern ("Lost $20k on individual stocks").
+- Fixes, each re-measured: golden memories re-themed; stocks → **trading voyages** ("venture" means starting a business in plain English); expensive vehicles are a **fine carriage**; the card is "moneylender's debt (like a credit card)"; persona fixes (biz, status); **plain glosses for the model** ("the Guild Fund, a broad index fund"; "trading voyages, like single stocks"; "the counting-house vault, a high-yield savings account"); pay-debt says what the debt costs a year. Runs: 64/38 → 66/43 → 65/38 → 68/43 → **68/43** (plateau).
+- **Lesson:** d3's priors live in familiar finance words; pure flavour names cost 8 points, glosses recover half. Remaining gaps (S-card-debt, P-status-lawyer, A-status spend, 2 near-zero pairs) are P1 red-flag and status items.
+- Published as the current d3:4b `words` result (`docs/results/data/d3-4b-words.json`, golden v5 medieval); `compare.test.ts` now reads frozen fixtures instead of published files.
+
+
 ### Iteration 32 · the medieval re-theme (user direction: match the pixel town; "Guild Fund + ventures", gold crowns, everywhere including the model)
 - `sim-core/src/theme.ts` holds the setting's words (currency, Guild Fund, merchant ventures, counting-house vault, loan names, home and cart names, economy and jobs phrases); `data.ts` renames careers, archetypes, businesses, home tiers and spend items; `rules.ts` (move descriptions), `prompt.ts` (state), `executor.ts` / `lifecycle.ts` (memories, events) use them; `fmt` writes "12k crowns". Ids, mechanics and numbers unchanged. The model now reads business names ("a pie cart"), not keys (backlog C/M-TOP 8 done in passing).
 - Golden fingerprint accepted (204 of 204 requests changed); `docs/results.md` banner marks the model numbers stale. Re-run d3 and retrain the fine-tuned model on re-sampled states (deterministic, same ids, existing labels reusable) once the desktop GPU is free.

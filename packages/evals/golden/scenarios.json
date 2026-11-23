@@ -882,7 +882,7 @@
         "cash": 70000,
         "index": 25000,
         "memory": [
-          "Got a raise to $140k"
+          "Got a raise to 140k crowns"
         ]
       },
       "expect": {
@@ -952,9 +952,9 @@
           }
         ],
         "memory": [
-          "A rental went vacant",
-          "A rental went vacant",
-          "Cut the rent after 3 empty months"
+          "A tenant moved out and a cottage stands empty",
+          "A tenant moved out and a cottage stands empty",
+          "Cut the rent after the cottage stood empty for 3 months"
         ]
       },
       "economy": {
@@ -1001,8 +1001,8 @@
         "cash": 60000,
         "index": 10000,
         "memory": [
-          "Lost $20k on individual stocks",
-          "Sold the rest of the stocks at a loss"
+          "Lost 20k crowns when a merchant venture sank",
+          "Sold the rest of the venture stakes at a loss"
         ]
       },
       "expect": {
@@ -1047,8 +1047,8 @@
         "cash": 60000,
         "index": 10000,
         "memory": [
-          "The coffee shop failed",
-          "Lost $40k in the coffee shop"
+          "The tea house failed",
+          "Lost 40k crowns in the tea house"
         ]
       },
       "expect": {

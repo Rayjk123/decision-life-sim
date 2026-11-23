@@ -1,5 +1,5 @@
 // Applies a chosen move. Re-checks legality first; an invalid move becomes "nothing" and is reported.
-import { CART, FUND, RENTAL, VAULT, VENTURES } from './theme.ts';
+import { CARRIAGE, CARRIAGE_FROM, CART, FUND, RENTAL, VAULT, VENTURES } from './theme.ts';
 import type { Move, Sim, SimEvent, World } from './types.ts';
 import { BUSINESS, BUSINESS_PROFIT_SCALE } from './data.ts';
 import { amortizedPayment, fmt, k } from './money.ts';
@@ -143,7 +143,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       sim.assets.push({ id, kind: 'car', value: price, boughtMonth: m });
       sim.loans.push({ id: `${id}-loan`, kind: 'auto', balance: loanAmt, annualRate: rate, payment: amortizedPayment(loanAmt, rate, 60), assetId: id });
       pruneLoans(sim, m);
-      remember(sim, `Bought a ${CART} for ${fmt(price)}`);
+      remember(sim, `Bought a ${price >= CARRIAGE_FROM ? CARRIAGE : CART} for ${fmt(price)}`);
       return { valid: true, events: [ev('bought_car', `Bought a ${fmt(price)} car`, { price })] };
     }
 
@@ -167,7 +167,7 @@ export function applyMove(world: World, sim: Sim, move: Move, shareLevel: number
       }
       const fullTime = isFullTimeBusiness(b) && sim.employed;
       if (fullTime) { sim.employed = false; sim.selfEmployed = true; sim.salary = 0; }
-      remember(sim, `Started a ${b.label.toLowerCase()}${fullTime ? ' and gave up the trade' : ''}`);
+      remember(sim, `Started a ${b.label.toLowerCase()}${fullTime ? ' and left the craft to run it' : ''}`);
       return { valid: true, events: [ev('started_business', `Started a ${b.label.toLowerCase()}${fullTime ? ' and quit the job to run it' : ' on the side'}`, { businessType: b.key, startup: b.startup, fullTime })] };
     }
   }

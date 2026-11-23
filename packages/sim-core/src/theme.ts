@@ -9,8 +9,8 @@ export const CURRENCY = 'crowns';
 
 /** The steady, pooled investment (the code's index fund). */
 export const FUND = 'Guild Fund';
-/** The risky, single-bet investment (the code's stocks). */
-export const VENTURES = 'merchant ventures';
+/** The risky, single-bet investment (the code's stocks). Not "ventures": in plain English that means starting a business. */
+export const VENTURES = 'trading voyages';
 /** The safe account with a small return (the code's savings account). */
 export const VAULT = 'counting-house vault';
 
@@ -19,7 +19,7 @@ export const LOAN_NAME: Record<LoanKind, string> = {
   auto: 'cart loan',
   student: 'apprenticeship debt',
   business: 'business loan',
-  card: 'tavern tab',
+  card: "moneylender's debt (like a credit card)",
   past_due: 'overdue bills',
 };
 
@@ -28,6 +28,10 @@ export const HOME_NAME = { starter: 'cottage', family: 'townhouse', luxury: 'man
 /** A rental property and a vehicle. */
 export const RENTAL = 'cottage to let';
 export const CART = 'horse and cart';
+/** A costly vehicle (what a status seeker or a spender buys). */
+export const CARRIAGE = 'fine carriage';
+/** Price above which the vehicle is a carriage, not a cart (cents). */
+export const CARRIAGE_FROM = 3_500_000;
 
 /** Economy regimes as townsfolk would say them. */
 export const REGIME_NAME: Record<Regime, string> = {

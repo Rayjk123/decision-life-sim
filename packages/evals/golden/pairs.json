@@ -148,8 +148,8 @@
       "base": "A-picker",
       "change": {
         "sim.memory": [
-          "Lost $20k on individual stocks",
-          "Sold the rest of the stocks at a loss"
+          "Lost 20k crowns when a trading voyage sank",
+          "Sold the rest of the venture stakes at a loss"
         ]
       },
       "measure": "trade_stocks",
@@ -162,8 +162,8 @@
       "base": "A-biz",
       "change": {
         "sim.memory": [
-          "The coffee shop failed",
-          "Lost $40k in the coffee shop"
+          "The tea house failed",
+          "Lost 40k crowns in the tea house"
         ]
       },
       "measure": "start_*",
@@ -176,7 +176,7 @@
       "base": "A-balanced",
       "change": {
         "sim.memory": [
-          "Got a raise to $120k"
+          "Got a raise to 120k crowns"
         ]
       },
       "measure": [
@@ -264,7 +264,7 @@
       "base": "A-balanced",
       "change": {
         "sim.memory": [
-          "Got a raise to $120k"
+          "Got a raise to 120k crowns"
         ]
       },
       "measure": "spend",

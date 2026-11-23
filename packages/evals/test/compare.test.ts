@@ -3,8 +3,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { compareRuns, formatComparison, loadRun } from '../src/compare.ts';
 
-const words = loadRun('docs/results/data/d3-4b-words.json');
-const focused = loadRun('docs/results/data/d3-4b-focused.json');
+const words = loadRun('packages/evals/test/fixtures/d3-4b-words-v1.json')   // frozen copies: published results change, test fixtures don't;
+const focused = loadRun('packages/evals/test/fixtures/d3-4b-focused-v1.json');
 
 test('a run compared with itself has no deltas, flips or regression', () => {
   const c = compareRuns(words, words);
