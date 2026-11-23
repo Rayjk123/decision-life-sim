@@ -395,15 +395,19 @@ function drawInterior(placeKey,person,progress,w,h,p,animated){
   const artwork=atHome&&!ready(variant)?sceneArt('cottage'):variant;
   if(artwork&&ready(artwork)){
     ctx.resetTransform();draw(ctx,0,0,w,h,'#171e35');
-    const scale=Math.min(w/artwork.width,h/artwork.height);
+    const fit=Math.min(w/artwork.width,h/artwork.height);
+    // On tall screens, use more of the canvas and keep the resident in frame.
+    const scale=w<h?Math.max(fit,Math.min(h*.78/artwork.height,w*1.52/artwork.width)):fit;
     const width=artwork.width*scale,height=artwork.height*scale;
-    const x=(w-width)/2,y=(h-height)/2;
+    const standingX=atHome ? .67 : .51;
+    const residentX=.16+(standingX-.16)*acrossFloor;
+    const x=width>w?clamp(w/2-width*residentX,w-width,0):(w-width)/2;
+    const y=(h-height)/2;
     ctx.imageSmoothingEnabled=false;ctx.drawImage(artwork,x,y,width,height);
     if(!atHome&&eveningAmount(p)<1){
       ctx.globalAlpha=.12*(1-eveningAmount(p));draw(ctx,x,y,width,height,'#ffd7a1');ctx.globalAlpha=1;
     }
-    const standingX=atHome ? .67 : .51;
-    drawPerson(person,x+width*(.16+(standingX-.16)*acrossFloor),y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
+    drawPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1);
     shadeDoorway(w,h,transition);
     hits=[];scene=null;
     return;

@@ -40,3 +40,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The cottage has matching [daylight](art/cottage-day.png) and [evening](art/cottage.png) artwork. Both are built-in ImageGen outputs. The first prompt used the bakery as a style reference and requested a modest medieval living room with a left-hand door, right-hand hearth, autumn window, and open floor for a walking sprite. The daylight prompt kept the composition and switched the window and floor lighting to morning sunlight.
 - Chrome at 1440 × 900 and 320 × 640 checked that both assets loaded from the local town and followed one resident from the cottage to work, through an errand, and back home with Follow still on.
 - Round 6 should independently review the entire route and the quiet time spent at home. The cottage currently represents the home scene for every resident.
+
+## Round 6
+
+- Illustrated interiors fill more of a tall canvas. The crop follows the resident while preserving the wide illustration on desktop.
+- Chrome verified daylight cottage and infirmary framing at 320 × 640, 390 × 844, and 1440 × 900. Both phone views enlarged the interior and kept the resident visible. Opening the profile preserved Follow.
+- The independent Round 6 review was launched against the prior build and is still pending. Carry its findings into Round 7 when it returns.

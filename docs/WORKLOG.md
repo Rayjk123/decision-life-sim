@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow UX · round 6
+
+- Tall phone views bring the cottage and workplaces closer while keeping the followed resident in frame. Desktop interiors retain the wide composition.
+- Chrome verified the interior framing at 320 × 640, 390 × 844, and 1440 × 900. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow UX · round 5
 
 - A cottage interior completes the illustrated loop from home to work and back. The resident starts and ends the day by the hearth. Step outside applies to the current home visit.
