@@ -196,3 +196,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Walk poses now advance with distance along each route instead of a fixed clock. Residents take fewer steps on shorter walks and hold a still pose through portions of a route where they are already on the sidewalk and have yet to move. Camera movement leaves the stride phase alone.
 - Isolated Chrome at 1440 × 900 and 320 × 640 checked curb and sidewalk segments, a stationary start, overview distance, all six walk cycles, doorway motion, pause, and reduced motion. The full repository verification gate passed.
 - The desktop GPU was still fully occupied at this check. Retry the live d3 walkthrough when the GPU has room for inference.
+
+## Round 29
+
+- Independent review verified all 72 ground-aligned frames, recognizable costume details, and pixel-identical paused motion on desktop and phone. It found that the pause banner covered Malik's boots on a 320-pixel phone.
+- Playback and connection status now sit under the header clock. Phone camera controls sit below the scene, including while the resident profile is open.
+- Isolated Chrome at 1440 × 900 and 320 × 640 reproduced the paused walk with visible boots and confirmed the scene stayed frozen. Phone checks covered the camera rail with a profile open and the doorway control. Chrome also verified that the reconnecting status persists across animation frames.
+- The desktop GPU remained fully occupied. Next, verify the live d3 decision and counterfactual when inference can run, and commission the next release recheck.

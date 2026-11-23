@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 29
+
+- Moved playback status to the header and phone camera controls below the canvas after independent review found the pause banner covering the resident's boots. Real Chrome verified the fix on desktop and at 320 pixels, including the resident profile and doorway controls.
+- The live d3 walkthrough is still open while the desktop GPU is occupied. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 28
 
 - Walk cycles now follow travel distance across the street, overview and workplace doorways. Desktop and phone Chrome checks and the full repository gate passed.

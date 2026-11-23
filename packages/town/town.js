@@ -1,6 +1,7 @@
 const $ = id => document.getElementById(id);
 const canvas = $('town');
 const ctx = canvas.getContext('2d');
+const phaseStatus = $('phase');
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const map = document.createElement('canvas');
 map.width = 840;
@@ -1137,7 +1138,7 @@ async function poll(){
     if(reconnected&&!$('world').hidden)renderWorld();
   }catch{
     if(connection!=='offline'){connection='offline';if(!$('world').hidden)renderWorld();}
-    $('phase').textContent='Reconnecting to shared world…';
+    phaseStatus.textContent='Reconnecting…';
   }
   finally{inFlight=false;}
 }
@@ -1158,7 +1159,8 @@ function drawFrame(time){
     $('market').textContent=frame.sims.length+' residents · '+marketName(frame.market)+' · '+loanName()+' rate '+percent(frame.rate);
     const period=p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening'
       :localProgress===null?'Waiting for next month':'End of this day';
-    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+period;
+    const status=connection==='offline'?'Reconnecting…':(paused?'Paused · ':'')+period;
+    if(phaseStatus.textContent!==status)phaseStatus.textContent=status;
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
     const w=Math.max(1,canvas.clientWidth), h=Math.max(1,canvas.clientHeight);
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
