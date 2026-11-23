@@ -175,6 +175,12 @@ Each step is its own iteration with all gates green; the heuristic eval floor ma
 
 ## Iteration log
 
+### Iteration 32 · the medieval re-theme (user direction: match the pixel town; "Guild Fund + ventures", gold crowns, everywhere including the model)
+- `sim-core/src/theme.ts` holds the setting's words (currency, Guild Fund, merchant ventures, counting-house vault, loan names, home and cart names, economy and jobs phrases); `data.ts` renames careers, archetypes, businesses, home tiers and spend items; `rules.ts` (move descriptions), `prompt.ts` (state), `executor.ts` / `lifecycle.ts` (memories, events) use them; `fmt` writes "12k crowns". Ids, mechanics and numbers unchanged. The model now reads business names ("a pie cart"), not keys (backlog C/M-TOP 8 done in passing).
+- Golden fingerprint accepted (204 of 204 requests changed); `docs/results.md` banner marks the model numbers stale. Re-run d3 and retrain the fine-tuned model on re-sampled states (deterministic, same ids, existing labels reusable) once the desktop GPU is free.
+- Left for the UX agent: the dashboard and town still say "Expansion/Recession" and format money as dollars; `REGIME_NAME`, `JOBS_NAME` and `fmt` in sim-core have the town's words.
+
+
 ### Iteration 31 · towns with a past (realism, user: focus on behaviour and realism; "fuzzy is good enough")
 - **Problem:** every sim arrived at 18 within ten years, so the town aged as one cohort (year 50: 86 of 200 in their 60s, 3 in their 40s), which skewed retirement ages, inequality and the decision mix.
 - **Fix:** `growHistory` (sim-core `history.ts`) runs 70 years of rules-driven history under a derived seed, then re-bases the clock to month 0 (history-era asset ids tagged `-h`, Hall of Fame cleared); `runWorld` and `health` use it by default (`--history-years 0` restores the old start). Newcomers arrive aged 18-55 (`arrivalAgeFor`, half at 18) already working at their career's salary for that age, with a little savings and the unpaid part of any student loan. Home prices get a gentle pull back toward today's level (they compounded to 13× over a century and homeownership fell to 0%).

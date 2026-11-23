@@ -5,7 +5,8 @@
 //   numbers - exact figures and 0-1 trait scores
 //   terse   - minimal labels, archetype name instead of the persona sentence
 import type { Move, Sim, StateStyle, World } from './types.ts';
-import { ARCHETYPE, SPEND_LEVELS } from './data.ts';
+import { ARCHETYPE, BUSINESS, SPEND_LEVELS } from './data.ts';
+import { FUND, HOME_PRICES, JOBS_NAME, LOAN_NAME, RATE_NAME, VAULT, VENTURES } from './theme.ts';
 import { fmt } from './money.ts';
 import { SHARE_LABELS } from './executor.ts';
 import {
@@ -17,6 +18,8 @@ const level = (x: number) => (x >= 0.7 ? 'high' : x >= 0.4 ? 'medium' : 'low');
 const pct = (x: number) => `${x >= 0 ? '+' : ''}${(x * 100).toFixed(1)}%`;
 
 export function firstName(sim: Sim) { return sim.name.split(' ')[0]; }
+/** A business's readable name ("a pie cart"), not its key ("snack_cart"): the model reads this. */
+export const bizName = (key?: string) => (key && BUSINESS[key] ? BUSINESS[key].label.toLowerCase() : (key ?? '').replace(/_/g, ' '));
 
 // focused style: only the traits that stand out, as plain phrases (middling traits say nothing about a choice)
 const TRAIT_PHRASES: Array<[keyof Sim['traits'], string, string]> = [
@@ -31,11 +34,11 @@ function traitPhrases(t: Sim['traits']): string {
   return TRAIT_PHRASES.flatMap(([k, hi, lo]) => (t[k] >= 0.7 ? [hi] : t[k] < 0.3 ? [lo] : [])).join(', ');
 }
 
-// "Put $2.1k into the index fund" x6 becomes "Put $2.1k into the index fund (6 times)"; amounts are ignored for matching
+// "Put 2.1k crowns into the Guild Fund" x6 becomes "... (6 times)"; amounts are ignored for matching
 function dedupe(lines: string[]): string[] {
   const out: Array<{ text: string; key: string; n: number }> = [];
   for (const text of lines) {
-    const key = text.replace(/\$[\d.,]+[km]?/gi, '$');
+    const key = text.replace(/-?[\d.,]+[km]? crowns/gi, '#');
     const prev = out.find((o) => o.key === key);
     if (prev) prev.n++; else out.push({ text, key, n: 1 });
   }
@@ -60,7 +63,7 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
   const gross = grossMonthlyIncome(sim, m) + businessIncomeMonthly(sim);
   const takeHome = Math.round(gross * (1 - taxRate(gross * 12)));
   const spend = housingCost(sim, m) + scheduledLoanPayments(sim, m) + livingCost(sim, m);
-  const debts = sim.loans.filter((l) => l.balance > 0).map((l) => `${l.kind} ${fmt(l.balance)} at ${(l.annualRate * 100).toFixed(1)}%`);
+  const debts = sim.loans.filter((l) => l.balance > 0).map((l) => `${LOAN_NAME[l.kind]} ${fmt(l.balance)} at ${(l.annualRate * 100).toFixed(1)}%`);
   const rs = rentals(sim);
   const empty = rs.filter((r) => !r.tenantId).length;
   const biz = sim.assets.filter((a) => a.kind === 'business');
@@ -73,9 +76,9 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     return {
       who: `${firstName(sim)}, ${age}, ${ARCHETYPE[sim.archetype].label}`,
       work: workLine(sim, world),
-      cash: fmt(sim.cash), ...(sim.savings ? { savings: fmt(sim.savings) } : {}), invested: fmt(sim.index + sim.stocks), debt: fmt(bs.debt), net_worth: fmt(bs.netWorth),
-      home: h ? 'owns' : 'rents', rentals: rs.length, business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'none',
-      market: `index ${pct(mk.lastIndexReturn)}, homes ${homeDir}, rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs ${mk.jobsSignal}`,
+      coin: fmt(sim.cash), ...(sim.savings ? { vault: fmt(sim.savings) } : {}), invested: fmt(sim.index + sim.stocks), debt: fmt(bs.debt), net_worth: fmt(bs.netWorth),
+      home: h ? 'owns' : 'rents', cottages_let: rs.length, business: biz.length ? biz.map((b) => bizName(b.businessType)).join(', ') : 'none',
+      market: `${FUND} ${pct(mk.lastIndexReturn)}, ${HOME_PRICES} ${homeDir}, rates ${(mk.mortgageRate * 100).toFixed(1)}%, ${JOBS_NAME[mk.jobsSignal]}`,
       recent: sim.memory.slice(0, 3).join('; ') || 'none',
     };
   }
@@ -86,13 +89,13 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     const s: Record<string, unknown> = {
       who: `${sim.name}, ${age}, ${workLine(sim, world)}. ${sim.persona}`,
       character: traitPhrases(t) || 'average on every trait',
-      money: `${fmt(spare)} spare cash beyond a ${fmt(emergencyFloor(sim, m))} cushion; ${sim.savings ? `${fmt(sim.savings)} in a savings account; ` : ''}${fmt(sim.index + sim.stocks)} invested; net worth ${fmt(bs.netWorth)}; saves about ${fmt(Math.max(0, takeHome - spend))} a month`,
+      money: `${fmt(spare)} spare coin beyond a ${fmt(emergencyFloor(sim, m))} reserve; ${sim.savings ? `${fmt(sim.savings)} in the ${VAULT}; ` : ''}${fmt(sim.index + sim.stocks)} invested; net worth ${fmt(bs.netWorth)}; saves about ${fmt(Math.max(0, takeHome - spend))} a month`,
     };
     if (debts.length) s.debts = debts.join('; ');
-    s.home = h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`;
-    if (rs.length) s.rentals = `${rs.length} worth ${fmt(rs.reduce((sum, r) => sum + r.value, 0))}${empty ? `, ${empty} empty` : ''}`;
-    if (biz.length) s.business = biz.map((b) => (b.businessType ?? '').replace(/_/g, ' ')).join(', ');
-    s.economy = `index ${pct(mk.lastIndexReturn)} last month, home prices ${homeDir}, mortgage rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs report ${mk.jobsSignal}; ${econ.vacantUnits} of ${econ.rentalUnits} town rentals empty`;
+    s.home = h ? `owns a home worth ${fmt(h.value)}` : `rents for ${fmt(housingCost(sim, m))} a month`;
+    if (rs.length) s.cottages_let = `${rs.length} worth ${fmt(rs.reduce((sum, r) => sum + r.value, 0))}${empty ? `, ${empty} empty` : ''}`;
+    if (biz.length) s.business = biz.map((b) => bizName(b.businessType)).join(', ');
+    s.economy = `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${homeDir}, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(1)}%, ${JOBS_NAME[mk.jobsSignal]}; ${econ.vacantUnits} of ${econ.rentalUnits} cottages to let stand empty`;
     const recent = dedupe(sim.memory).slice(0, 4);
     if (recent.length) s.recent = recent.join('; ');
     return s;
@@ -102,21 +105,21 @@ export function buildState(sim: Sim, world: World, style: StateStyle = 'words'):
     ? `risk ${t.risk}, debt comfort ${t.debt}, status ${t.status}, patience ${t.patience}, discipline ${t.discipline}, herding ${t.herding}, loss aversion ${t.lossAversion} (0 to 1)`
     : `risk taking ${level(t.risk)}, comfort with debt ${level(t.debt)}, status seeking ${level(t.status)}, patience ${level(t.patience)}, discipline ${level(t.discipline)}, follows the crowd ${level(t.herding)}`;
   const market = style === 'numbers'
-    ? `index fund ${pct(mk.lastIndexReturn)} last month, home prices ${pct(mk.lastHomeReturn)} last month, mortgage rate ${(mk.mortgageRate * 100).toFixed(2)}%, jobs report ${mk.jobsSignal}`
-    : `index fund ${pct(mk.lastIndexReturn)} last month, home prices ${homeDir}, mortgage rates ${(mk.mortgageRate * 100).toFixed(1)}%, jobs report ${mk.jobsSignal}`;
+    ? `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${pct(mk.lastHomeReturn)} last month, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(2)}%, ${JOBS_NAME[mk.jobsSignal]}`
+    : `${FUND} ${pct(mk.lastIndexReturn)} last month, ${HOME_PRICES} ${homeDir}, ${RATE_NAME} ${(mk.mortgageRate * 100).toFixed(1)}%, ${JOBS_NAME[mk.jobsSignal]}`;
 
   return {
     person: `${sim.name}, ${age}, ${workLine(sim, world)}`,
     personality: sim.persona,
     traits,
-    money: `cash ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} as a cushion)${sim.savings ? `, savings account ${fmt(sim.savings)}` : ''}, index fund ${fmt(sim.index)}, stocks ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
+    money: `coin ${fmt(sim.cash)} (keeps ${fmt(emergencyFloor(sim, m))} in reserve)${sim.savings ? `, ${VAULT} ${fmt(sim.savings)}` : ''}, ${FUND} ${fmt(sim.index)}, ${VENTURES} ${fmt(sim.stocks)}, net worth ${fmt(bs.netWorth)}`,
     debts: debts.length ? debts.join('; ') : 'no debt',
-    monthly: `takes home ${fmt(takeHome)}, spends about ${fmt(spend)}, auto-invests ${Math.round(effectiveAutoInvest(sim) * 100)}% of what is left`,
-    housing: h ? `owns a ${fmt(h.value)} home` : `rents for ${fmt(housingCost(sim, m))} a month`,
-    property: rs.length ? `${rs.length} rental${rs.length > 1 ? 's' : ''} worth ${fmt(rs.reduce((s, a) => s + a.value, 0))}${empty ? `, ${empty} empty` : ''}` : 'no rentals',
-    business: biz.length ? biz.map((b) => b.businessType).join(', ') : 'no business',
+    monthly: `takes home ${fmt(takeHome)} a month after the lord's tax, spends about ${fmt(spend)}, puts ${Math.round(effectiveAutoInvest(sim) * 100)}% of what is left into the ${FUND}`,
+    housing: h ? `owns a home worth ${fmt(h.value)}` : `rents for ${fmt(housingCost(sim, m))} a month`,
+    property: rs.length ? `${rs.length} cottage${rs.length > 1 ? 's' : ''} let to tenants, worth ${fmt(rs.reduce((s, a) => s + a.value, 0))}${empty ? `, ${empty} standing empty` : ''}` : 'no cottages to let',
+    business: biz.length ? biz.map((b) => bizName(b.businessType)).join(', ') : 'no business',
     market,
-    town: `${econ.businessCount} local businesses (${econ.demandIndex >= 1.1 ? 'busy' : econ.demandIndex >= 0.8 ? 'healthy' : 'crowded'}), ${econ.vacantUnits} of ${econ.rentalUnits} rentals empty`,
+    town: `${econ.businessCount} shops and trades in town (${econ.demandIndex >= 1.1 ? 'busy' : econ.demandIndex >= 0.8 ? 'healthy' : 'crowded'}), ${econ.vacantUnits} of ${econ.rentalUnits} cottages to let stand empty`,
     recent: sim.memory.length ? sim.memory.join('; ') : 'nothing notable lately',
   };
 }

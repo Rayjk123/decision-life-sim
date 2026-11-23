@@ -1,3 +1,4 @@
+import { CURRENCY } from './theme.ts';
 import type { Cents } from './types.ts';
 
 export const dollars = (d: number): Cents => Math.round(d * 100);
@@ -11,16 +12,16 @@ export function amortizedPayment(principal: Cents, annualRate: number, months: n
   return Math.round((principal * r) / (1 - Math.pow(1 + r, -months)));
 }
 
-/** "$41k", "$1.2M", "$840", "-$3k" */
+/** "41k crowns", "1.2M crowns", "840 crowns", "-3k crowns" (the town's currency, see theme.ts) */
 export function fmt(c: Cents): string {
   const neg = c < 0;
   const d = Math.abs(c) / 100;
   let s: string;
-  if (d >= 1_000_000) s = `$${(d / 1_000_000).toFixed(d >= 10_000_000 ? 0 : 1)}M`;
-  else if (d >= 10_000) s = `$${Math.round(d / 1000)}k`;
-  else if (d >= 1000) s = `$${(d / 1000).toFixed(1)}k`;
-  else s = `$${Math.round(d)}`;
-  return neg ? `-${s}` : s;
+  if (d >= 1_000_000) s = `${(d / 1_000_000).toFixed(d >= 10_000_000 ? 0 : 1)}M`;
+  else if (d >= 10_000) s = `${Math.round(d / 1000)}k`;
+  else if (d >= 1000) s = `${(d / 1000).toFixed(1)}k`;
+  else s = `${Math.round(d)}`;
+  return `${neg ? '-' : ''}${s} ${CURRENCY}`;
 }
 
 export const round = (n: number): Cents => Math.round(n);

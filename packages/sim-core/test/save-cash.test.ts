@@ -17,7 +17,7 @@ test('with spare cash, saving is offered and moves money into savings through th
   const { w, s } = await setup();
   const move = legalMoves(s, w).find((m) => m.kind === 'save_cash');
   assert.ok(move, 'save_cash is legal with spare cash');
-  assert.match(move!.description, /savings account/);
+  assert.match(move!.description, /counting-house vault/);   // the savings account, in the town's words (theme.ts)
   const before = s.cash;
   const r = applyMove(w, s, move!, 4);
   assert.ok(r.valid);

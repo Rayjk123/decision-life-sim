@@ -334,7 +334,7 @@ export function bankrupt(world: World, sim: Sim): SimEvent[] {
   sim.creditScore = 520;
   sim.bankruptUntil = m + 84;
   sim.bankruptcies++;
-  remember(sim, 'Went bankrupt and lost everything but the student loans');
-  return [{ month: m, simId: sim.id, type: 'bankrupt', text: 'Declared bankruptcy' }];
+  remember(sim, 'Went bankrupt and lost everything but the apprenticeship debt');
+  return [{ month: m, simId: sim.id, type: 'bankrupt', text: 'Declared bankrupt before the magistrate' }];
 }
 

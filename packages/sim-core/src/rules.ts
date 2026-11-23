@@ -1,5 +1,6 @@
 // The rules engine: which moves are legal for a sim this month, with real costs.
 // The decision model only ever chooses among these, so it can never buy what a sim can't afford.
+import { CART, FUND, LOAN_NAME, RENTAL, VAULT, VENTURES } from './theme.ts';
 import type { Move, Sim, World } from './types.ts';
 import { BUSINESSES, BUSINESS_PROFIT_SCALE, CAREER, HOME_TIERS, STARTER_HOME, type BusinessType } from './data.ts';
 import { rngFor } from './rng.ts';
@@ -56,16 +57,16 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   const liquid = liquidAbove(sim, m); // purchases can sell investments for the down payment
 
   if (spare > dollars(2000)) {
-    moves.push({ id: 'invest_index', kind: 'invest_index', description: `Put spare cash in a broad index fund (up to ${fmt(spare)} available)` });
-    moves.push({ id: 'trade_stocks', kind: 'trade_stocks', description: `Buy individual stocks: bigger swings than the index (up to ${fmt(spare)})` });
-    moves.push({ id: 'save_cash', kind: 'save_cash', description: `Put spare cash in a high-yield savings account: safe, about +0.5%/yr after inflation (up to ${fmt(spare)})` });
+    moves.push({ id: 'invest_index', kind: 'invest_index', description: `Buy shares in the ${FUND}, the merchants' pooled fund: steady growth over the years (up to ${fmt(spare)} available)` });
+    moves.push({ id: 'trade_stocks', kind: 'trade_stocks', description: `Back ${VENTURES}: a stake in one ship's cargo or caravan, bigger swings than the ${FUND} (up to ${fmt(spare)})` });
+    moves.push({ id: 'save_cash', kind: 'save_cash', description: `Lock spare coin in the ${VAULT}: safe, about +0.5%/yr after rising prices (up to ${fmt(spare)})` });
   }
 
   const nonMortgage = sim.loans.filter((l) => l.kind !== 'mortgage' && l.balance > 0 && !(l.deferredUntil !== undefined && m < l.deferredUntil));
   if (nonMortgage.length && spare > dollars(1000)) {
     const worst = [...nonMortgage].sort((a, b) => b.annualRate - a.annualRate)[0];
     const total = nonMortgage.reduce((s, l) => s + l.balance, 0);
-    moves.push({ id: 'pay_debt', kind: 'pay_debt', description: `Pay down debt early: ${fmt(total)} owed, worst is ${worst.kind} at ${(worst.annualRate * 100).toFixed(1)}%` });
+    moves.push({ id: 'pay_debt', kind: 'pay_debt', description: `Pay down debt early: ${fmt(total)} owed, worst is the ${LOAN_NAME[worst.kind]} at ${(worst.annualRate * 100).toFixed(1)}%` });
   }
 
   const borrow = canBorrow(sim, m) && (sim.employed || sim.selfEmployed) && !sim.retired;
@@ -81,7 +82,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
       if (!ok) continue;
       moves.push({
         id, kind: 'buy_home', price: q.price, cashNeeded, homeTier: tierIdx,
-        description: `Buy a ${fmt(q.price)} ${q.tierLabel} home to live in: ${fmt(cashNeeded)} down and closing, ${fmt(q.payment + q.carry)}/mo all-in vs ${fmt(rentPaid(sim, m))}/mo rent now`,
+        description: `Buy a ${q.tierLabel} to live in for ${fmt(q.price)}: ${fmt(cashNeeded)} down and fees, ${fmt(q.payment + q.carry)} a month all-in vs ${fmt(rentPaid(sim, m))} a month rent now`,
       });
     }
   }
@@ -92,7 +93,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
     if (liquid >= cashNeeded && dti(sim, m, q.payment + q.carry, q.rent) <= MAX_DTI) {
       moves.push({
         id: 'buy_rental', kind: 'buy_rental', price: q.price, cashNeeded,
-        description: `Buy a ${fmt(q.price)} starter rental: ${fmt(cashNeeded)} down and closing, about ${signed(q.netMonthly)}/mo after mortgage and costs once rented${world.economy.vacantUnits > 0 ? ` (${world.economy.vacantUnits} of ${world.economy.rentalUnits} town rentals sit empty)` : ''}`,
+        description: `Buy a ${RENTAL} for ${fmt(q.price)}: ${fmt(cashNeeded)} down and fees, about ${signed(q.netMonthly)} a month after the loan and upkeep once a tenant moves in${world.economy.vacantUnits > 0 ? ` (${world.economy.vacantUnits} of ${world.economy.rentalUnits} cottages to let in town stand empty)` : ''}`,
       });
     }
   }
@@ -101,7 +102,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
   if (rs.length) {
     const best = [...rs].sort((a, b) => equity(sim, b.id, b.value) - equity(sim, a.id, a.value))[0];
     const proceeds = Math.round(best.value * 0.94) - (sim.loans.find((l) => l.assetId === best.id)?.balance ?? 0);
-    moves.push({ id: 'sell_rental', kind: 'sell_rental', assetId: best.id, description: `Sell a rental worth ${fmt(best.value)}: about ${signed(proceeds)} cash after the loan and fees` });
+    moves.push({ id: 'sell_rental', kind: 'sell_rental', assetId: best.id, description: `Sell a ${RENTAL} worth ${fmt(best.value)}: about ${signed(proceeds)} in coin after the loan and fees` });
   }
 
   const myCar = car(sim);
@@ -113,7 +114,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
     const down = Math.max(0, Math.round(price * 0.1) - tradeIn);
     const payment = amortizedPayment(price - Math.round(price * 0.1), offeredRate(sim, world, 'auto'), 60);
     if (liquid + floor * 0.5 >= down && dti(sim, m, payment) <= MAX_DTI) {
-      moves.push({ id: 'buy_car', kind: 'buy_car', price, cashNeeded: down, description: `Buy a ${fmt(price)} ${myCar ? 'new car, trading in the old one' : 'car'}: ${fmt(down)} down, ${fmt(payment)}/mo for 5 years` });
+      moves.push({ id: 'buy_car', kind: 'buy_car', price, cashNeeded: down, description: `Buy a ${myCar ? `new ${CART}, trading in the old one,` : CART} for ${fmt(price)}: ${fmt(down)} down, ${fmt(payment)} a month for 5 years` });
     }
   }
 
@@ -137,7 +138,7 @@ export function legalMoves(sim: Sim, world: World): Move[] {
       const fullTime = isFullTimeBusiness(b) && sim.employed;
       moves.push({
         id: `start_${b.key}`, kind: 'start_business', businessType: b.key, price: b.startup, cashNeeded,
-        description: `Start a ${b.label.toLowerCase()}${fullTime ? ' and quit the job to run it' : ' on the side'}: ${fmt(cashNeeded)} cash${b.startup > cashNeeded ? ` plus a ${fmt(b.startup - cashNeeded)} loan` : ''}, profit usually ${signed(Math.round(b.profitLo * BUSINESS_PROFIT_SCALE))} to ${signed(Math.round(b.profitHi * BUSINESS_PROFIT_SCALE))}/mo, ${Math.round(b.failYr1 * 100)}% fail in year one, ${rivals ? `${rivals} already in town` : 'none in town yet'}`,
+        description: `Start a ${b.label.toLowerCase()}${fullTime ? ' and give up the trade to run it' : ' on the side'}: ${fmt(cashNeeded)} in coin${b.startup > cashNeeded ? ` plus a ${fmt(b.startup - cashNeeded)} loan` : ''}, profit usually ${signed(Math.round(b.profitLo * BUSINESS_PROFIT_SCALE))} to ${signed(Math.round(b.profitHi * BUSINESS_PROFIT_SCALE))} a month, ${Math.round(b.failYr1 * 100)}% fail in year one, ${rivals ? `${rivals} already in town` : 'none in town yet'}`,
       });
     }
   }
