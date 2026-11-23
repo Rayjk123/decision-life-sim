@@ -194,12 +194,22 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   assert(Math.abs(variant.reduce((sum, weight) => sum + weight, 0) - 1) < 1e-8, 'The variant odds should sum to one');
   await evidence.getByText('With twice the coin', { exact: true }).waitFor();
 
-  await page.locator('#toggle').click();
+  await page.getByRole('button', { name: 'Technical view', exact: true }).click();
   const world = page.locator('#world-live');
   await world.getByText('Viewed month · ' + frame.label, { exact: true }).waitFor();
   await world.getByText(source, { exact: true }).waitFor();
+  const leaders = world.locator('.wealth-leaders');
+  const expectedLeaders = [...frame.sims].sort((a, b) => b.nw - a.nw || a.name.localeCompare(b.name)).slice(0, 10);
+  assert.deepEqual(await leaders.getByRole('button').allTextContents(), expectedLeaders.map(sim => sim.name));
+  const explorer = world.locator('.decision-explorer');
+  await explorer.getByLabel('Decision filter').selectOption('all');
+  await explorer.getByLabel('Find a resident').fill(resident.name);
+  await explorer.getByRole('link', { name: 'View decision' }).click();
+  await linked.getByRole('heading', { name: resident.name + '’s decision' }).waitFor();
+  await linked.getByText(frame.label, { exact: true }).waitFor();
+  await linked.getByRole('button', { name: 'Close' }).click();
   await world.getByText('Decision mix by personality', { exact: true }).click();
-  await world.getByRole('combobox').waitFor();
+  await world.getByRole('combobox', { name: 'Personality and decision source' }).waitFor();
   if (!decider) {
     await world.getByText('Past residents', { exact: true }).click();
     const past = world.locator('.past-residents');

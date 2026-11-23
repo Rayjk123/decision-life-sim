@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · mainline sync and Technical view
+
+- Merged mainline through `d867d7b`. Mainline makes E07m the default when a decision endpoint is configured and adds medieval evaluation results, GGUF release assets, and model and dataset cards. The merge retains the town's recorded-model counterfactual. The preview still runs the heuristic unless started with a model endpoint.
+- Technical view opens from the town header and uses the month the viewer is watching. It shows a wealth leaderboard chart and a searchable decision explorer with source and model-vs-heuristic filters. Open a resident profile or the exact dated evidence from the panel, or select Back to town to return to the same scene.
+
 ## Maple Hollow · release walkthrough and decision links
 
 - View decision opens the dated record from a financial errand or monthly timeline row, including for a departed resident. Copied links carry a labeled copy of the recorded evidence for after the shared timeline rolls over.

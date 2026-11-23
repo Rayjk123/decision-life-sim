@@ -4,7 +4,7 @@ Watch one shared simulation advance on a 90-second day clock. Click a resident o
 
 The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspector views to current fields and the records needed for future historical detail.
 
-Open **Lifetime history** in a resident profile for milestones by year and a net-worth chart. **World → Past residents** lets you search completed lives. An older town shows where its saved coverage begins.
+Open **Technical view** from the town header for a wealth leaderboard chart, searchable decision explorer, and decisions by personality for the shared world. **Past residents** lets you search completed lives. Open **Lifetime history** in a resident profile for milestones by year and a net-worth chart. An older town shows where its saved coverage begins.
 
 Choose **View decision** during a recorded errand or in the monthly timeline. The dated evidence opens over the town. Copy the link to share it. The link opens the record while it is retained and carries a labeled copy of the evidence for after the twelve-month timeline rolls over.
 

@@ -68,8 +68,23 @@ aside{overflow-wrap:anywhere}
 .rankings{padding-inline-start:2.6em}
 .rankings li::marker{font-variant-numeric:tabular-nums}
 .feed{list-style:none;padding:0}
-#world{position:absolute;inset:0 0 0 auto;z-index:2;width:min(360px,100%);box-shadow:-4px 0 16px #12192a80}
+#world{position:absolute;inset:0 0 0 auto;z-index:2;width:min(620px,100%);box-shadow:-4px 0 16px #12192a80}
+#world > .panel-heading{position:sticky;top:0;z-index:1;background:#232941;padding-block:4px}
 #world section{margin-top:18px;padding-top:4px;border-top:1px solid #776781}
+.wealth-chart{padding-inline-start:2em}
+.wealth-chart li{padding-block:4px}
+.wealth-chart button{margin-inline-end:8px}
+.wealth-chart strong{font-variant-numeric:tabular-nums}
+.wealth-track{height:5px;margin-top:5px;background:#11192f;border-radius:4px;overflow:hidden}
+.wealth-track span{display:block;height:100%;background:#e9ad61}
+.wealth-track .negative{background:#ef9a99}
+.explorer-controls,.explorer-pages{display:flex;gap:8px;flex-wrap:wrap}
+.explorer-controls label{flex:1 1 170px;min-width:0}
+.explorer-controls input,.explorer-controls select{display:block;width:100%;font:inherit;padding:6px;margin-top:3px}
+.decision-explorer li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;padding:5px 0;border-bottom:1px solid #776781}
+.decision-explorer li button{grid-column:1;grid-row:1}
+.decision-explorer li span{grid-column:1;grid-row:2}
+.decision-explorer li a{grid-column:2;grid-row:1 / span 2;align-self:center}
 canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 @media(max-width:900px){
   aside{max-height:none}

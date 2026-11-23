@@ -144,6 +144,10 @@ function residentButton(sim,text){
   return button;
 }
 
+function rankedResidents(sims){
+  return sims.filter(sim=>Number.isFinite(sim.nw)).sort((a,b)=>b.nw-a.nw||a.name.localeCompare(b.name));
+}
+
 function visibleInPanel(control,panel){
   const box=control.getBoundingClientRect(), bounds=panel.getBoundingClientRect();
   return box.height>0&&box.top>=Math.max(0,bounds.top)-1&&box.bottom<=Math.min(innerHeight,bounds.bottom)+1;
@@ -973,7 +977,7 @@ function renderPanels(){
     panel.append(header);
     if(view==='ranking'){
       panel.append(element('p','Current residents ranked by net worth.'));
-      const ranked=(frame?.sims??[]).filter(s=>Number.isFinite(s.nw)).sort((a,b)=>b.nw-a.nw||a.name.localeCompare(b.name));
+      const ranked=rankedResidents(frame?.sims??[]);
       if(!ranked.length){
         panel.append(element('p',frame?'No resident rankings available.':'Waiting for the shared world.'));
         return;
@@ -1090,6 +1094,98 @@ function decisionMixPanel(month){
   return details;
 }
 
+function wealthLeaders(sims){
+  const section=element('section',null,'wealth-leaders');
+  section.append(element('h3','Wealth leaders'));
+  const leaders=rankedResidents(sims).slice(0,10);
+  if(!leaders.length){
+    section.append(element('p','No resident balances available for this month.'));
+    return section;
+  }
+  section.append(element('p','Top '+leaders.length+' residents by net worth. Select a resident to see their lifetime chart.'));
+  const list=element('ol',null,'wealth-chart');
+  const scale=Math.max(1,...leaders.map(sim=>Math.abs(sim.nw)));
+  for(const sim of leaders){
+    const row=element('li');
+    const bar=element('div',null,'wealth-track');
+    bar.setAttribute('aria-hidden','true');
+    const amount=element('span');
+    amount.style.width=(100*Math.abs(sim.nw)/scale)+'%';
+    if(sim.nw<0)amount.className='negative';
+    bar.append(amount);
+    row.append(residentButton(sim,sim.name),element('strong',knownMoney(sim.nw)),bar);
+    list.append(row);
+  }
+  section.append(list);
+  return section;
+}
+
+let explorerFilter='actions',explorerSearch='';
+function decisionExplorer(decisions,month){
+  const section=element('section',null,'decision-explorer');
+  section.append(element('h3','Decision explorer'));
+  const filters=[
+    ['actions','Actions taken',sim=>sim.move!=='nothing'],
+    ['all','All recorded decisions',()=>true],
+    ['changed','Model changed the sampled move',sim=>sim.decision?.heuristicReplay
+      &&sim.decision.sampling?.move!==sim.decision.heuristicReplay.move],
+    ['fallback','Heuristic fallbacks',sim=>sim.decision?.provider==='heuristic-fallback'],
+  ];
+  const select=element('select');
+  select.dataset.focusKey='explorer-filter';
+  for(const [key,name] of filters){
+    const option=element('option',name);
+    option.value=key;
+    select.append(option);
+  }
+  select.value=explorerFilter;
+  const search=element('input');
+  search.type='search';
+  search.value=explorerSearch;
+  search.dataset.focusKey='explorer-search';
+  const controls=element('div',null,'explorer-controls');
+  const filterLabel=element('label','Decision filter');
+  filterLabel.append(select);
+  const searchLabel=element('label','Find a resident');
+  searchLabel.append(search);
+  controls.append(filterLabel,searchLabel);
+  const status=element('p');
+  status.setAttribute('aria-live','polite');
+  const list=element('ul',null,'list feed');
+  const pages=element('div',null,'explorer-pages');
+  const previous=element('button','Previous');
+  const next=element('button','Next');
+  pages.append(previous,next);
+  section.append(controls,status,list,pages);
+  const pageSize=25;
+  let page=0;
+  function render(){
+    const match=filters.find(([key])=>key===explorerFilter)[2];
+    const query=explorerSearch.trim().toLocaleLowerCase();
+    const filtered=decisions.filter(sim=>match(sim)&&sim.name.toLocaleLowerCase().includes(query));
+    const offset=page*pageSize;
+    const visible=filtered.slice(offset,offset+pageSize);
+    status.textContent=visible.length
+      ?'Showing '+(offset+1)+'–'+(offset+visible.length)+' of '+filtered.length.toLocaleString()+' decisions.'
+      :'No recorded decisions match this view.';
+    list.replaceChildren(...visible.map(sim=>{
+      const item=element('li');
+      item.append(residentButton(sim,sim.name),element('span',moveName(sim.move)+' · '+decisionSource(sim.decision)),
+        decisionLink(sim.id,month));
+      return item;
+    }));
+    pages.hidden=filtered.length<=pageSize;
+    previous.disabled=page===0;
+    next.disabled=offset+pageSize>=filtered.length;
+  }
+  select.onchange=()=>{explorerFilter=select.value;page=0;render();};
+  search.oninput=()=>{explorerSearch=search.value;page=0;render();};
+  previous.onclick=()=>{page--;render();};
+  next.onclick=()=>{page++;render();};
+  render();
+  return section;
+}
+
 function renderWorld(){
   const live=$('world-live');
   renderPanel(live,panel=>{
@@ -1105,21 +1201,7 @@ function renderWorld(){
       [loanName()+' rate',percent(frame.rate)],
       [(frame.presentation?.fund??'Guild Fund')+' return',percent(frame.change)],
       ['Configured decider',frame.deciderModel??(frame.decider==='kev'?'Decision model':title(frame.decider)||'Unavailable')],
-    ]),decisionMixPanel(frame.month),pastResidentsPanel(frame.month),element('h3','Decision feed'));
-    const active=decisions.filter(sim=>sim.move!=='nothing');
-    if(!active.length){
-      panel.append(element('p',decisions.length?'All residents who decided chose to do nothing.':'No decisions recorded this month.'));
-      return;
-    }
-    const listed=active.slice(0,24);
-    panel.append(element('p',`Showing ${listed.length} of ${active.length} recorded moves with an action.`));
-    const list=element('ul',null,'list feed');
-    for(const sim of listed){
-      const item=element('li');
-      item.append(residentButton(sim,sim.name+' · '+moveName(sim.move)));
-      list.append(item);
-    }
-    panel.append(list);
+    ]),wealthLeaders(frame.sims),decisionExplorer(decisions,frame.month),decisionMixPanel(frame.month),pastResidentsPanel(frame.month));
   },$('close-world'));
 }
 
