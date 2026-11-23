@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 28
+
+- Walk cycles now follow travel distance across the street, overview and workplace doorways. Desktop and phone Chrome checks and the full repository gate passed.
+- The desktop GPU was still busy. Live d3 verification remains open. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 27
 
 - Added twelve full-body walk poses to each of the six existing resident designs. The town uses the same foot-aligned sprites on streets, on the overview map, and in doorways.

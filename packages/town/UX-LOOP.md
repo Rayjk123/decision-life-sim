@@ -190,3 +190,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The built-in ImageGen prompts used the existing cast as identity references and requested one transparent four-column, three-row sheet per resident. The sheets show heel contact, weight transfer, passing, knee lift and the next heel contact. Arms, clothes and props move with the steps. The finished poses are packed in `art/resident-walk.png`.
 - Isolated Chrome at 1440 × 900 and 320 × 640 observed all 72 poses in Street and checked pose continuity through Pause, animation in Overview and workplace doorways, and a still pose with reduced motion. The full repository verification gate passed.
 - The live d3 release walkthrough remains open.
+
+## Round 28
+
+- Walk poses now advance with distance along each route instead of a fixed clock. Residents take fewer steps on shorter walks and hold a still pose through portions of a route where they are already on the sidewalk and have yet to move. Camera movement leaves the stride phase alone.
+- Isolated Chrome at 1440 × 900 and 320 × 640 checked curb and sidewalk segments, a stationary start, overview distance, all six walk cycles, doorway motion, pause, and reduced motion. The full repository verification gate passed.
+- The desktop GPU was still fully occupied at this check. Retry the live d3 walkthrough when the GPU has room for inference.
