@@ -274,27 +274,19 @@ function balanceChange(current,previous){
   return change===0?'No change':(change>0?'+':'−')+money(Math.abs(change));
 }
 
-function timelineRow(row,previous){
+function timelineRow(row){
   const item=element('li');
   const details=element('details');
   const summary=element('summary');
   const heading=element('span',null,'timeline-heading');
   const outcome=row.move?title(row.move):'No recorded move';
   heading.append(element('strong',row.label),element('small',outcome));
-  const change=row.nw-previous?.nw;
-  const delta=element('span',
-    previous?balanceChange(row.nw,previous.nw):'No comparison',
-    'timeline-change');
-  delta.dataset.direction=change>0?'up':change<0?'down':'flat';
-  summary.setAttribute('aria-label',row.label+' · '+outcome+' · Net worth change: '+delta.textContent);
+  const delta=element('span',null,'timeline-change');
   summary.append(heading,delta);
   summary.dataset.focusKey='month-'+row.month;
   const balances=statGrid([['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)]]);
-  details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances);
-  if(previous)details.append(statGrid([
-    ['Cash change',balanceChange(row.cash,previous.cash)],['Debt change',balanceChange(row.debt,previous.debt)],
-  ]));
-  else details.append(element('p','No preceding month was recorded for comparison.'));
+  const comparison=element('div');
+  details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
   if(row.move&&(row.decision||row.probabilities)){
     const evidence=element('details',null,'decision-details past-decision');
     const evidenceSummary=element('summary','Decision evidence');
@@ -308,53 +300,87 @@ function timelineRow(row,previous){
     details.append(element('p','Only the outcome was retained for this decision.'));
   }
   item.append(details);
-  return item;
+  let comparedMonth=null;
+  function compare(previous){
+    if(comparedMonth===previous?.month)return;
+    comparedMonth=previous?.month;
+    const change=row.nw-previous?.nw;
+    delta.textContent=previous?balanceChange(row.nw,previous.nw):'No comparison';
+    delta.dataset.direction=change>0?'up':change<0?'down':'flat';
+    summary.setAttribute('aria-label',row.label+' · '+outcome+' · Net worth change: '+delta.textContent);
+    comparison.replaceChildren(previous?statGrid([
+      ['Cash change',balanceChange(row.cash,previous.cash)],['Debt change',balanceChange(row.debt,previous.debt)],
+    ]):element('p','No preceding month was recorded for comparison.'));
+  }
+  return {item,compare};
 }
 
 let historyDisclosure;
 function residentHistory(sim,month){
-  const key=sim.id+':'+month;
-  if(historyDisclosure?.key===key)return historyDisclosure.details;
-  const open=historyDisclosure?.id===sim.id&&historyDisclosure.details.open;
+  if(historyDisclosure?.id===sim.id){
+    historyDisclosure.setMonth(month);
+    return historyDisclosure.details;
+  }
   const details=element('details',null,'decision-details resident-history');
-  historyDisclosure={key,id:sim.id,details};
   const summary=element('summary','Monthly timeline');
   summary.dataset.focusKey='timeline';
-  const body=element('div');
-  details.append(summary,body);
-  let loading=false,loaded=false;
+  const message=element('p');
+  const list=element('ol',null,'timeline');
+  const rows=new Map();
+  details.append(summary,message,list);
+  let shownMonth,loading=false;
+  function updateRows(visible){
+    const active=document.activeElement;
+    const restoreFocus=list.contains(active);
+    const retained=new Set(visible.map(row=>row.month));
+    for(const [id,row] of rows){
+      if(!retained.has(id)){row.item.remove();rows.delete(id);}
+    }
+    for(const [i,row] of visible.entries()){
+      if(!rows.has(row.month))rows.set(row.month,timelineRow(row));
+      const retainedRow=rows.get(row.month);
+      const previous=visible[i+1];
+      retainedRow.compare(previous?.month===row.month-1?previous:undefined);
+      if(list.children[i]!==retainedRow.item)list.insertBefore(retainedRow.item,list.children[i]??null);
+    }
+    if(restoreFocus&&document.activeElement!==active){
+      if(list.contains(active))active.focus({preventScroll:true});
+      else summary.focus();
+    }
+  }
   async function load(){
-    if(!details.open||loading||loaded)return;
+    if(!details.open||loading||shownMonth===month)return;
+    const requested=month;
     loading=true;
-    body.replaceChildren(element('p','Loading recorded months…'));
+    if(shownMonth===undefined)message.textContent='Loading recorded months…';
     try{
       const response=await fetch('/api/town/history/'+encodeURIComponent(sim.id));
       if(!response.ok)throw Error();
       const {months}=await response.json();
-      const visible=months.filter(row=>row.month<=month).reverse();
-      body.replaceChildren(element('p',visible.length
+      if(requested!==month)return;
+      const visible=months.filter(row=>row.month<=requested).reverse();
+      message.textContent=visible.length
         ?'Net worth change by month. Open a row for month-end balances.'
-        :'No months are available for this resident yet.'));
-      if(visible.length){
-        const list=element('ol',null,'timeline');
-        for(const [i,row] of visible.entries()){
-          const previous=visible[i+1];
-          list.append(timelineRow(row,previous?.month===row.month-1?previous:undefined));
-        }
-        body.append(list);
-        if(document.activeElement===summary&&matchMedia('(max-width: 570px)').matches){
-          list.firstElementChild?.scrollIntoView({block:'nearest'});
-        }
+        :'No months are available for this resident yet.';
+      const initial=shownMonth===undefined;
+      updateRows(visible);
+      if(initial&&document.activeElement===summary&&matchMedia('(max-width: 570px)').matches){
+        list.firstElementChild?.scrollIntoView({block:'nearest'});
       }
-      loaded=true;
+      shownMonth=requested;
     }catch{
-      body.replaceChildren(element('p','Timeline unavailable. Close and reopen to retry.'));
+      if(requested===month)message.textContent='Timeline unavailable. Close and reopen to retry.';
     }finally{
       loading=false;
+      if(requested!==month)load();
     }
   }
   details.addEventListener('toggle',load);
-  details.open=Boolean(open);
+  historyDisclosure={id:sim.id,details,setMonth(next){
+    if(month===next)return;
+    month=next;
+    load();
+  }};
   return details;
 }
 

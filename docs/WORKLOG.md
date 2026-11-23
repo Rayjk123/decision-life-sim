@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 17
+
+- A live month update preserves open timeline rows, nested decision details, and keyboard focus. If the inspected month drops out of retention, focus returns to the timeline heading.
+- Next, compare consecutive decisions and commission an independent review. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 16
 
 - Decision evidence now shows the cumulative interval that contained the draw. The readout adds precision for close calls, and Exact sampling values opens the unrounded draw, bounds, and sampling odds on keyboard or touch.

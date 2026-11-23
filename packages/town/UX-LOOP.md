@@ -114,3 +114,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The draw and its winning cumulative interval now use the same percentage scale. Close calls add display precision, and Exact sampling values exposes the recorded draw, bounds and ordered weights as unrounded fractions. This works in live and archived decision details.
 - An interval check covered close draws, a boundary too small to round safely, and the final move's floating-point remainder. Isolated Chrome verified the review's close-call example at 1440 × 900 via keyboard and at 320 × 640 via touch, plus an older record without sampling evidence.
 - Round 17 should preserve open timeline rows and keyboard focus across a live month change.
+
+## Round 17
+
+- The timeline updates its retained rows in place. Open months, nested evidence, and exact sampling values stay open as the shared month rolls over. A focused disclosure stays focused. If its month expires, focus returns to Monthly timeline.
+- Month deltas update when their preceding month expires. A failed refresh leaves the existing rows available to read.
+- Isolated Chrome at 1440 × 900 and 320 × 640 used a real 12-month record set. The first rollover retained the focused evidence and removed the expired comparison. The second expired the focused month and returned focus to the timeline.
+- Round 18 should compare decisions from two recorded months and commission the next independent review.
