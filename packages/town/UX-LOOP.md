@@ -215,3 +215,9 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - Added `npm run town:smoke -- --live-model` with explicit `DECISION_URL` and `DECISION_MODEL` configuration. It seeds a 12-resident checkpoint and requires a recorded decision and its counterfactual to come from the named model. Both smoke modes check the exact draw, original odds and normalized comparison odds.
 - A local SystemOne response fixture passed the model path at 1440 × 900 and 320 × 640 in nine requests. The full gate uses the heuristic path and remains independent of any desktop model server.
 - The desktop GPU remained fully occupied. Run the opt-in check against d3 when capacity returns.
+
+## Round 32
+
+- Expanded timeline months now show after-tax income, living and running costs, discretionary spending, and debt payments from the resident's ledger. The history endpoint carries the totals, keeping the regular town frame focused on playback. Older rows explain when totals are unavailable.
+- The checkpoint test checks ledger values and retention after restart. The desktop and 320-pixel Chrome gate opens a recorded month with ledger totals and an older month with the unavailable state.
+- The desktop GPU remains occupied. Next round should commission an independent review of the new timeline details and run the opt-in d3 check when capacity returns.

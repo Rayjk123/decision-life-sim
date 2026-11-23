@@ -435,6 +435,15 @@ function timelineRow(row,residentId){
   const balances=statGrid([['Net worth',knownMoney(row.nw)],['Cash',knownMoney(row.cash)],['Debt',knownMoney(row.debt)]]);
   const comparison=element('div');
   details.append(summary,element('p','Age '+row.age+' · Month-end balances'),balances,comparison);
+  if(row.cashFlow){
+    const {income,costs,discretionary,debtPayments}=row.cashFlow;
+    details.append(element('h4','Income and outgoings'),statGrid([
+      ['Income after tax',knownMoney(income)],['Living and running costs',knownMoney(costs)],
+      ['Discretionary spending',knownMoney(discretionary)],['Debt payments',knownMoney(debtPayments)],
+    ]));
+  }else{
+    details.append(element('p','Income and outgoings were not retained for this month.'));
+  }
   let updateProbe;
   if(row.move&&(row.decision||row.probabilities)){
     const evidence=element('details',null,'decision-details past-decision');

@@ -1,6 +1,6 @@
 import {
   ARCHETYPE, ARCHETYPES, ARRIVAL_MONTHS, BUSINESSES, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
-  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type DecisionResult, type World,
+  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type DecisionResult, type FlowKind, type World,
 } from '../../sim-core/src/index.ts';
 import { CURRENCY, FUND, LOAN_NAME, REGIME_NAME, RENTAL, VAULT, VENTURES } from '../../sim-core/src/theme.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
@@ -35,6 +35,17 @@ const presentation = {
     ])),
   },
 };
+
+function monthlyCashFlow(flows: World['sims'][number]['flows']) {
+  const total = (...kinds: FlowKind[]) => kinds.reduce((sum, kind) => sum + (flows[kind] ?? 0), 0);
+  const business = flows.business_profit ?? 0;
+  return {
+    income: total('salary', 'benefits', 'pension', 'part_time', 'rent_received', 'tax') + Math.max(0, business),
+    costs: -total('rent_paid', 'home_costs', 'rental_costs', 'living', 'repairs') - Math.min(0, business),
+    discretionary: -(flows.discretionary ?? 0),
+    debtPayments: -total('loan_payments', 'pay_debt', 'card_payment', 'past_due_payment'),
+  };
+}
 
 function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
   if (!doubleCoin?.applies(request.sim, request.world)) return undefined;
@@ -80,7 +91,7 @@ async function next(world: World, decider: Decider) {
         working: s.employed || s.selfEmployed, nw: sheet.netWorth, cash: sheet.cash, debt: sheet.debt,
         memories: s.memory, move: d?.picked, errand: d ? ERRAND[moveKindOf(d.picked)] : null,
         probabilities: d?.answers.main, draw: d?.draw, decision, spend: s.spendLevel, persona: s.persona,
-        probe: probes.get(s.id),
+        probe: probes.get(s.id), cashFlow: monthlyCashFlow(s.flows),
       };
     }),
   };
@@ -89,11 +100,11 @@ async function next(world: World, decider: Decider) {
 type Frame = Awaited<ReturnType<typeof next>>;
 type ResidentFrame = Frame['sims'][number];
 type ResidentMonth = Pick<ResidentFrame, 'age' | 'nw' | 'cash' | 'debt' | 'move'>
-  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe'>>;
+  & Partial<Pick<ResidentFrame, 'arch' | 'probabilities' | 'draw' | 'decision' | 'probe' | 'cashFlow'>>;
 type HistoryMonth = { month: number; residents: Record<string, ResidentMonth> };
 
-function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe }: ResidentFrame): ResidentMonth {
-  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe };
+function monthRecord({ age, nw, cash, debt, move, arch, probabilities, draw, decision, probe, cashFlow }: ResidentFrame): ResidentMonth {
+  return { age, nw, cash, debt, move, arch: move ? arch : undefined, probabilities, draw, decision, probe, cashFlow };
 }
 
 function publicMonthRecord(resident: ResidentMonth) {
@@ -168,7 +179,7 @@ export function sharedWorld(storage: Storage, {
   }
 
   function response(value: Checkpoint, now: number) {
-    const sims = value.current.sims.map(({ probe, ...sim }) => {
+    const sims = value.current.sims.map(({ probe, cashFlow, ...sim }) => {
       const career = CAREER[sim.career];
       const d = sim.decision;
       const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };

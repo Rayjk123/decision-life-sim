@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · round 32
+
+- Expanded monthly timeline rows show recorded income after tax, living and running costs, discretionary spending, and debt payments in crowns. Older rows explain when totals are unavailable.
+- Checkpoint tests cover retention, and the Chrome gate checks both history formats at desktop and phone widths. Live d3 verification remains open. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 31
 
 - The smoke walkthrough now has an opt-in model mode that checks the configured model, exact draw and double-coin odds against the recorded decision. A local SystemOne fixture passed on desktop and phone.

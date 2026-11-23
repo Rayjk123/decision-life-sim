@@ -20,6 +20,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(first, second);
   assert.equal(first.month, 121);
   assert.ok(first.sims.length > 0);
+  const ledger = new Map(saved!.world.sims.map(sim => [sim.id, sim.flows]));
   assert.equal(await town(now + 1000).then(x => x.month), 121);
   assert.equal(saved!.pending?.month, 122);
   const firstMix = await town.decisionMix(122);
@@ -37,6 +38,12 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(source.probe.modelRequest, undefined);
   assert.deepEqual(Object.keys(source.probe.heuristicOdds), source.probe.offered);
   assert.ok(!Object.hasOwn(original, 'probe'));
+  assert.ok(!Object.hasOwn(original, 'cashFlow'));
+  const flows = ledger.get(id)!;
+  const { salary = 0, benefits = 0, pension = 0, part_time = 0, rent_received = 0, tax = 0, business_profit = 0 } = flows;
+  assert.equal(source.cashFlow.income, salary + benefits + pension + part_time + rent_received + tax + Math.max(0, business_profit));
+  assert.equal(source.cashFlow.discretionary, -(flows.discretionary ?? 0));
+  assert.deepEqual((await town.residentHistory(id))[0].cashFlow, source.cashFlow);
   assert.deepEqual((await town.residentHistory(id)).map(row => row.month), [121]);
   assert.equal((await store.load())!.value.history, undefined);
   const restarted = sharedWorld(store, { pop: 12 });
@@ -51,6 +58,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(history[0].probabilities, original.probabilities);
   assert.equal(history[0].draw, original.draw);
   assert.equal(history[0].arch, original.arch);
+  assert.deepEqual(history[0].cashFlow, source.cashFlow);
   assert.equal(history[0].hasProbe, true);
   assert.ok(!Object.hasOwn(history[0], 'probe'));
   assert.deepEqual(saved!.history?.[0].residents[id].probe, source.probe);
