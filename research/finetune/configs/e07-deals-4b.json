@@ -1,0 +1,17 @@
+{
+  "_why": "E07: E06's data and recipe on Qwen3.5-4B (4.66B params, the same size as d3:4b's 4.84B) instead of 0.8B. E06 tied d3:4b on the golden suite (71% vs 72%, pairs 48% each) and lost the memory and nuance pairs (memory-raise, lossaversion-save). Does model size explain d3's edge there? Batch 1 x grad_accum 8 keeps 8 decisions per step (same as E06) within 12 GB.",
+  "base": "unsloth/Qwen3.5-4B",
+  "train": "data/sets/haiku-deals-hard/train.jsonl",
+  "val": "data/sets/haiku-deals-hard/val.jsonl",
+  "test": "data/sets/claude-hard/test.jsonl",
+  "max_seq_length": 2048,
+  "load_in_4bit": true,
+  "r": 16,
+  "lora_alpha": 16,
+  "lr": 0.0002,
+  "epochs": 2,
+  "batch": 1,
+  "grad_accum": 8,
+  "warmup_steps": 10,
+  "eval_every": 50
+}

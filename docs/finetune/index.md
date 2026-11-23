@@ -79,7 +79,8 @@ Each run: config in `research/finetune/configs/<name>.json` (copied to `runs/<na
 | E08 | 1 and 4 epochs | under- vs over-fitting | queued |
 | E09 | Brier + ordinal + label smoothing | the Clef loss terms | queued |
 | E10 | permute_fields | order-bias augmentation | queued |
-| E11 | Qwen3.5-2B, then 4B, on the best labels | does size matter more than labels? | queued |
+| E07 | **Qwen3.5-4B** (4.66B, d3:4b's size) on E06's data, batch 1 × accum 8 | does size explain d3's edge on the memory/nuance pairs? | training (~2 h) |
+| E11 | Qwen3.5-2B on the best labels | size curve | optional |
 | E12 | best model served via `serve_unsloth.py` on the golden suite + pairs + a 20-year world | the real test vs d3 and Kev | **E04 served next** (queue job `serve`, then `npm run eval -- --decider model --decision-url http://<desktop>:8010 --model e04-haiku-0.8b --style words`) |
 
 **Labelling queue:** Haiku train batches 16–29 and val 30–34 (rubric v1.2); **Opus gold test batches 36–42** (Claude labels them itself between runs).
