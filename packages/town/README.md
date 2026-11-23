@@ -4,6 +4,8 @@ Watch one shared simulation advance on a 90-second day clock. Click a resident o
 
 The [UX handoff](UX-HANDOFF.md) maps the resident, leaderboard, and world inspector views to current fields and the records needed for future historical detail.
 
+Open **Lifetime history** in a resident profile for milestones by year and a net-worth chart. **World → Past residents** lets you search completed lives. An older town shows where its saved coverage begins.
+
 ## Run locally
 
 From the repository root, run `npm ci` and `npm run town`, then open http://127.0.0.1:5192. The town warms up ten simulated years from seed 42 before opening. Set `DECISION_URL` to a server that supports `/v1/systemone` and `DECISION_MODEL` to its model name, such as `d3`. Without a URL, the town uses the heuristic. Configure `TOWN_DATA`, `TOWN_PORT`, or `TOWN_POP` to give local instances separate checkpoints, ports, and population sizes. Use one local server per checkpoint.

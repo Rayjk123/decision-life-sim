@@ -73,12 +73,15 @@ export async function handler(event: { rawPath: string; requestContext?: { http?
   const history = /^\/api\/town\/history\/([a-zA-Z0-9_-]{1,80})$/.exec(event.rawPath);
   const mix = /^\/api\/town\/mix\/([1-9][0-9]{0,8})$/.exec(event.rawPath);
   const probe = /^\/api\/town\/probe\/([a-zA-Z0-9_-]{1,80})\/([1-9][0-9]{0,8})$/.exec(event.rawPath);
-  if (event.rawPath === '/api/town' || history || mix || probe) {
+  const lifetime = /^\/api\/town\/lifetime\/([1-9][0-9]{0,8})(?:\/([a-zA-Z0-9_-]{1,80}))?$/.exec(event.rawPath);
+  if (event.rawPath === '/api/town' || history || mix || probe || lifetime) {
     try {
       const town = await world;
       const body = history ? { months: await town.residentHistory(history[1]) }
         : mix ? await town.decisionMix(Number(mix[1]))
-        : probe ? await town.counterfactual(probe[1], Number(probe[2])) : await town();
+        : probe ? await town.counterfactual(probe[1], Number(probe[2]))
+        : lifetime?.[2] ? { life: await town.residentLifetime(lifetime[2], Number(lifetime[1])) }
+        : lifetime ? { residents: await town.pastResidents(Number(lifetime[1])) } : await town();
       return { statusCode: 200, headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) };
     }
     catch (error) { console.error(error); return { statusCode: 503, headers, body: 'Town temporarily unavailable' }; }

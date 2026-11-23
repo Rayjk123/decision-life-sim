@@ -7,6 +7,12 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · lifetime history
+
+- Residents have an on-demand Lifetime history with dated milestones, a year picker, and a net-worth chart. World → Past residents searches completed lives and shows recorded deaths and final net worth.
+- New towns record their warm-up years. Older checkpoints recover their retained observations and report where coverage starts. The archive preserves milestones beyond the twelve-month window, and history queries expose only published months through the viewed date.
+- A 1,000-resident heuristic warm-up recorded about 575 KB of lifetime data. Browser checks cover living and past-resident histories at desktop and phone widths. The recurring UX loop remains paused.
+
 ## Maple Hollow · manual release follow-up
 
 - Independent desktop and phone review matched timeline cash flow and dated events to the ledger and history. The timeline now labels the figures as selected cash flows and explains what else affects cash change.

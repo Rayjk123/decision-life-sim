@@ -51,6 +51,11 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(await restarted(now + DAY).then(x => x.month), 122);
   const history = await restarted.residentHistory(id);
   assert.deepEqual(history.map(row => row.month), [121, 122]);
+  const recordedLife = await restarted.residentLifetime(id, 121);
+  assert(recordedLife && !recordedLife.partial);
+  assert(recordedLife.events.some(event => event.month < 121 && event.text.includes('moved to town')));
+  assert.equal(recordedLife.wealth.at(-1)?.nw, original.nw);
+  assert(recordedLife.wealth.every(point => point.month <= 121));
   assert.equal(history[0].nw, original.nw);
   assert.ok(recorded?.reason);
   assert.ok(recorded?.offered.includes(original.move!));
@@ -83,6 +88,39 @@ test('viewers share one paced world, and a restart preserves its month', async (
     await restarted(from + DAY);
   }
   assert.equal(saved!.history?.length, 11);
+  assert.deepEqual(await restarted.residentLifetime(id, 121), {
+    ...recordedLife, wealth: recordedLife.wealth.filter(point => point.month < 121),
+  });
   const months = saved!.history?.map(row => row.month);
   assert.deepEqual(months, Array.from({ length: 11 }, (_, i) => 124 + i));
+});
+
+test('lifetime records expose published deaths and recover older checkpoints without inventing history', async () => {
+  let saved: Checkpoint | undefined;
+  const storage: Storage = {
+    async load() { return saved ? { value: structuredClone(saved), version: 'test' } : null; },
+    async save(value) { saved = structuredClone(value); return true; },
+  };
+  const town = sharedWorld(storage, { pop: 12 });
+  const first = await town(0);
+  const resident = saved!.world.sims.find(sim => sim.arrivedMonth < first.month)!;
+  const id = resident.id;
+  resident.deathMonth = first.month + 1;
+  delete saved!.lifetimes;
+  const legacy = await town.residentLifetime(id, first.month);
+  assert(legacy?.partial);
+  assert.deepEqual(legacy.wealth.map(point => point.month), [first.month]);
+  assert.equal(saved!.lifetimes, undefined, 'reading should leave storage unchanged');
+  await town(1000);
+  const pending = saved!.world.hallOfFame.find(death => death.simId === id)!;
+  assert(pending);
+  assert(!(await town.pastResidents(first.month + 1)).some(resident => resident.id === id));
+  assert(!(await town.residentLifetime(id, first.month + 1))!.events.some(event => event.text.includes(' died ')));
+  await town(DAY);
+  const restarted = sharedWorld(storage, { pop: 12 });
+  assert.equal((await restarted.pastResidents(first.month + 1))[0].id, id);
+  const memorial = await restarted.residentLifetime(id, first.month + 1);
+  assert.equal(memorial?.wealth.at(-1)?.nw, pending.finalNetWorth);
+  assert(memorial?.events.some(event => event.month === pending.diedMonth && event.text.includes(' died ')));
+  assert.equal(await restarted.residentLifetime('constructor', first.month + 1), null);
 });

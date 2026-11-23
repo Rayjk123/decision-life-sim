@@ -111,6 +111,18 @@ Resources:
       ApiId: !Ref Api
       RouteKey: 'GET /api/town/probe/{resident}/{month}'
       Target: !Sub integrations/${TownIntegration}
+  TownLifetimeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Api
+      RouteKey: 'GET /api/town/lifetime/{month}'
+      Target: !Sub integrations/${TownIntegration}
+  TownResidentLifetimeRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref Api
+      RouteKey: 'GET /api/town/lifetime/{month}/{resident}'
+      Target: !Sub integrations/${TownIntegration}
   AllowApi:
     Type: AWS::Lambda::Permission
     Properties:
@@ -139,6 +151,13 @@ Resources:
       FunctionName: !Ref Town
       Principal: apigateway.amazonaws.com
       SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/GET/api/town/probe/*
+  AllowLifetimeApi:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref Town
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*/GET/api/town/lifetime/*
   SiteAccess:
     Type: AWS::CloudFront::OriginAccessControl
     Properties:

@@ -580,6 +580,177 @@ function residentHistory(sim,month){
   return details;
 }
 
+function lifetimeTrend(points){
+  const chart=element('canvas',null,'lifetime-trend');
+  chart.width=256;chart.height=76;
+  chart.setAttribute('role','img');
+  const first=points[0], last=points.at(-1);
+  chart.setAttribute('aria-label','Net worth from '+knownMoney(first.nw)+' in '+first.label+' to '+knownMoney(last.nw)+' in '+last.label);
+  const values=points.map(point=>point.nw);
+  const low=Math.min(0,...values), high=Math.max(1,...values);
+  const brush=chart.getContext('2d');
+  const x=month=>6+(chart.width-12)*(month-first.month)/(last.month-first.month);
+  const y=nw=>6+(chart.height-12)*(high-nw)/(high-low);
+  brush.strokeStyle='#776781';
+  brush.beginPath();brush.moveTo(6,y(0));brush.lineTo(chart.width-6,y(0));brush.stroke();
+  brush.strokeStyle='#e9ad61';brush.lineWidth=2;
+  brush.beginPath();brush.moveTo(x(first.month),y(first.nw));
+  for(const point of points.slice(1))brush.lineTo(x(point.month),y(point.nw));
+  brush.stroke();
+  return chart;
+}
+
+function lifetimeView(){
+  const body=element('div',null,'lifetime-view');
+  let request=0, selectedYear, selectedResident;
+  async function load(id,month){
+    const token=++request;
+    if(selectedResident!==id){selectedResident=id;selectedYear=undefined;}
+    const focused=body.contains(document.activeElement);
+    body.replaceChildren(element('p','Loading lifetime history…'));
+    try{
+      const response=await fetch('/api/town/lifetime/'+month+'/'+encodeURIComponent(id));
+      if(!response.ok)throw Error();
+      const {life}=await response.json();
+      if(token!==request)return;
+      if(!life){
+        body.replaceChildren(element('p','No lifetime records are available for this resident.'));
+        return;
+      }
+      const years=[...new Set([...life.events,...life.wealth].map(row=>row.year))].sort((a,b)=>b-a);
+      const year=element('select');
+      year.dataset.focusKey='lifetime-year';
+      for(const value of years){
+        const option=element('option','Year '+value);
+        option.value=String(value);
+        year.append(option);
+      }
+      if(years.includes(selectedYear))year.value=String(selectedYear);
+      const label=element('label','Browse by year');
+      label.append(year);
+      const results=element('div');
+      function renderYear(){
+        selectedYear=Number(year.value);
+        const wealth=life.wealth.filter(row=>row.year===selectedYear).at(-1);
+        const events=life.events.filter(row=>row.year===selectedYear);
+        results.replaceChildren();
+        if(wealth){
+          results.append(element('p',wealth.label+' · Age '+wealth.age),
+            statGrid([['Net worth',knownMoney(wealth.nw)]]));
+        }
+        if(events.length){
+          const list=element('ul',null,'lifetime-events');
+          for(const event of events){
+            const row=element('li');
+            row.append(element('strong',event.label),element('p',event.text));
+            list.append(row);
+          }
+          results.append(list);
+        }else results.append(element('p','No milestones recorded this year.'));
+      }
+      year.onchange=renderYear;
+      body.replaceChildren(element('p',(life.partial?'Available history begins in ':'Recorded from ')+life.from+'.'));
+      if(life.wealth.length>1)body.append(element('h4','Net worth over time'),lifetimeTrend(life.wealth));
+      body.append(label,results);
+      renderYear();
+      if(focused&&document.activeElement===document.body)year.focus({preventScroll:true});
+    }catch{
+      if(token!==request)return;
+      const retry=element('button','Retry lifetime history');
+      retry.onclick=()=>load(id,month);
+      body.replaceChildren(element('p','Lifetime history is unavailable.'),retry);
+    }
+  }
+  return {body,load};
+}
+
+let profileLife, pastResidentsView;
+function residentLifetime(sim,month){
+  if(profileLife?.id===sim.id){
+    profileLife.setMonth(month);
+    return profileLife.details;
+  }
+  const details=element('details',null,'decision-details resident-lifetime');
+  const summary=element('summary','Lifetime history');
+  summary.dataset.focusKey='lifetime';
+  const life=lifetimeView();
+  details.append(summary,life.body);
+  let shownMonth;
+  function refresh(){
+    if(details.open&&month!==shownMonth){
+      shownMonth=month;
+      life.load(sim.id,month);
+    }
+  }
+  details.addEventListener('toggle',refresh);
+  profileLife={id:sim.id,details,setMonth(next){month=next;refresh();}};
+  return details;
+}
+
+function pastResidentsPanel(month){
+  if(pastResidentsView?.month===month)return pastResidentsView.details;
+  const details=element('details',null,'decision-details past-residents');
+  const summary=element('summary','Past residents');
+  summary.dataset.focusKey='past-residents';
+  const body=element('div');
+  details.append(summary,body);
+  let loaded=false, loading=false;
+  details.addEventListener('toggle',async()=>{
+    if(!details.open||loaded||loading)return;
+    loading=true;
+    body.replaceChildren(element('p','Loading past residents…'));
+    try{
+      const response=await fetch('/api/town/lifetime/'+month);
+      if(!response.ok)throw Error();
+      const {residents}=await response.json();
+      loaded=true;
+      if(!residents.length){
+        body.replaceChildren(element('p','No deaths were recorded through this month.'));
+        return;
+      }
+      const search=element('input');
+      search.type='search';
+      search.dataset.focusKey='past-residents-search';
+      const label=element('label','Find a past resident');
+      label.append(search);
+      const matching=element('p');
+      const list=element('ul',null,'list');
+      const story=element('details',null,'decision-details');
+      const name=element('summary');
+      story.hidden=true;
+      const life=lifetimeView();
+      story.append(name,life.body);
+      function showResidents(){
+        const query=search.value.trim().toLowerCase();
+        const found=residents.filter(resident=>resident.name.toLowerCase().includes(query));
+        matching.textContent=found.length>20?'Showing 20 matches. Search by name to narrow the list.':found.length?'':'No matching residents.';
+        list.replaceChildren();
+        for(const resident of found.slice(0,20)){
+          const row=element('li');
+          const button=element('button',resident.name+' · '+resident.label+' · Age '+resident.age);
+          button.onclick=()=>{
+            name.textContent=resident.name+' · Lifetime history';
+            story.hidden=false;
+            story.open=true;
+            life.load(resident.id,month);
+            name.focus();
+            name.scrollIntoView({block:'nearest'});
+          };
+          row.append(button);
+          list.append(row);
+        }
+      }
+      search.oninput=showResidents;
+      body.replaceChildren(label,matching,list,story);
+      showResidents();
+    }catch{
+      body.replaceChildren(element('p','Past residents are unavailable. Close and reopen to retry.'));
+    }finally{loading=false;}
+  });
+  pastResidentsView={month,details};
+  return details;
+}
+
 function renderPanels(){
   const resident=$('resident'), location=$('place'), sim=get();
   const disclosure=resident.querySelector('details');
@@ -651,6 +822,7 @@ function renderPanels(){
     panel.append(identity,statGrid([['Net worth',knownMoney(sim.nw)],['Cash',knownMoney(sim.cash)],['Debt',knownMoney(sim.debt)]]));
     panel.append(element('p','Recorded move · '+(sim.move?moveName(sim.move):'No decision recorded this month')),decisionDetails(sim));
     panel.append(residentHistory(sim,frame.month));
+    panel.append(residentLifetime(sim,frame.month));
     panel.append(element('h3','Recent life events'));
     const memories=sim.memories??[];
     if(memories.length){
@@ -761,7 +933,7 @@ function renderWorld(){
       [loanName()+' rate',percent(frame.rate)],
       [(frame.presentation?.fund??'Guild Fund')+' return',percent(frame.change)],
       ['Configured decider',frame.deciderModel??(frame.decider==='kev'?'Decision model':title(frame.decider)||'Unavailable')],
-    ]),decisionMixPanel(frame.month),element('h3','Decision feed'));
+    ]),decisionMixPanel(frame.month),pastResidentsPanel(frame.month),element('h3','Decision feed'));
     const active=decisions.filter(sim=>sim.move!=='nothing');
     if(!active.length){
       panel.append(element('p',decisions.length?'All residents who decided chose to do nothing.':'No decisions recorded this month.'));

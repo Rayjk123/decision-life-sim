@@ -97,6 +97,13 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await earlier.locator(':scope > details > summary').click();
   await earlier.getByText('Income and outgoings were not retained for this month.', { exact: true }).waitFor();
   await earlier.getByText('Life events were not retained for this month.', { exact: true }).waitFor();
+  await profile.getByText('Lifetime history', { exact: true }).click();
+  const lifetime = profile.locator('.resident-lifetime');
+  await lifetime.getByRole('img', { name: /Net worth from/ }).waitFor();
+  const year = lifetime.getByLabel('Browse by year');
+  await year.waitFor();
+  await year.selectOption({ index: (await year.locator('option').count()) - 1 });
+  await lifetime.getByText(/moved to town/).waitFor();
   await profile.getByText('Advanced decision details', { exact: true }).click();
   const source = resident.decision?.model ?? 'Heuristic';
   const evidence = profile.locator('.decision-details').filter({ hasText: 'Advanced decision details' }).first();
@@ -124,6 +131,15 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await world.getByText(source, { exact: true }).waitFor();
   await world.getByText('Decision mix by personality', { exact: true }).click();
   await world.getByRole('combobox').waitFor();
+  if (!decider) {
+    await world.getByText('Past residents', { exact: true }).click();
+    const past = world.locator('.past-residents');
+    const entry = past.locator('.list button').first();
+    await entry.click();
+    const memorial = past.locator('.lifetime-view');
+    await memorial.getByLabel('Browse by year').waitFor();
+    assert.match(await memorial.innerText(), /died at (?:age )?\d+/i);
+  }
   await page.locator('#close-world').click();
   assert.equal(await page.locator('#pause').getAttribute('aria-pressed'), 'true');
   assert.equal(await page.locator('#street-resident').textContent(), resident.name);
@@ -134,6 +150,11 @@ let server: ChildProcess | undefined;
 let browser: Browser | undefined;
 try {
   await town(0);
+  if (!decider) {
+    // Give the isolated smoke world a published death to exercise past-resident browsing.
+    assert(saved?.world.sims.length);
+    saved.world.sims[0].deathMonth = saved.world.month + 1;
+  }
   await town(1000);
   const frame = await town(DAY);
   await town(DAY + 1000);

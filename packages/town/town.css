@@ -93,6 +93,12 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 
 #live{min-inline-size:64px}
 .resident-history{margin-top:8px}
+.resident-lifetime,.past-residents{margin-top:8px}
+.lifetime-view select,.past-residents input{display:block;width:100%;margin-top:4px;padding:5px;font:inherit}
+.lifetime-trend{height:auto;margin-bottom:8px;background:#1a2238;cursor:default;touch-action:pan-y;image-rendering:auto}
+.lifetime-events{list-style:none;padding:0}
+.lifetime-events li{padding:7px 0;border-top:1px solid #776781}
+.lifetime-events p{margin:2px 0 0}
 .timeline{margin:0;padding:0;list-style:none}
 .timeline li{padding:5px 0;border-top:1px solid #776781}
 .timeline li>details>summary{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px;align-items:center;min-height:42px}

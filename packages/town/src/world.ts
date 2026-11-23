@@ -4,6 +4,7 @@ import {
 } from '../../sim-core/src/index.ts';
 import { CURRENCY, FUND, LOAN_NAME, REGIME_NAME, RENTAL, VAULT, VENTURES } from '../../sim-core/src/theme.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
+import { readLife, recordLifeMonth, recordLifeTick, type LifetimeArchive } from './lifetime.ts';
 
 export const DAY = 90_000;
 const IDLE = 15 * 60_000;
@@ -63,7 +64,7 @@ function captureProbe(request: DecisionRequest, keepModelRequest: boolean) {
   };
 }
 
-async function next(world: World, decider: Decider) {
+async function next(world: World, decider: Decider, archive: LifetimeArchive) {
   const probes = new Map<string, NonNullable<ReturnType<typeof captureProbe>>>();
   const result = await runMonth(world, decider, {
     onDecisionRequest(request) {
@@ -71,6 +72,7 @@ async function next(world: World, decider: Decider) {
       if (capture) probes.set(request.sim.id, capture);
     },
   });
+  recordLifeTick(archive, world, result.events);
   const decisions = new Map(result.decisions.map(d => [d.simId, d]));
   const eventsByResident = new Map<string, string[]>();
   for (const event of result.events) {
@@ -131,6 +133,21 @@ export interface Checkpoint {
   startedAt: number;
   lastSeenAt: number;
   history?: HistoryMonth[];
+  lifetimes?: LifetimeArchive;
+}
+
+function lifetimeArchive(value: Checkpoint) {
+  if (value.lifetimes) return value.lifetimes;
+  // Recover only observations the checkpoint already contains. Never rerun past decisions.
+  const archive: LifetimeArchive = {};
+  const arrivals = new Map(value.world.sims.map(sim => [sim.id, sim.arrivedMonth]));
+  for (const { month, residents } of value.history ?? []) {
+    recordLifeMonth(archive, month, Object.entries(residents).map(([id, row]) => ({ ...row, id, arrived: arrivals.get(id) })));
+  }
+  for (const frame of [value.current, value.pending]) {
+    if (frame) recordLifeMonth(archive, frame.month, frame.sims.map(row => ({ ...row, arrived: arrivals.get(row.id) })));
+  }
+  return archive;
 }
 export interface Storage {
   load(): Promise<{ value: Checkpoint; version: string } | null>;
@@ -155,10 +172,15 @@ export function sharedWorld(storage: Storage, {
       let value: Checkpoint;
       if (!saved) {
         const world = createWorld(42, pop);
-        while (world.month < ARRIVAL_MONTHS) await runMonth(world, heuristicDecider);
-        value = { world, current: await next(world, decider), pending: null, startedAt: now, lastSeenAt: now };
+        const lifetimes: LifetimeArchive = {};
+        while (world.month < ARRIVAL_MONTHS) {
+          const result = await runMonth(world, heuristicDecider);
+          recordLifeTick(lifetimes, world, result.events);
+        }
+        value = { world, current: await next(world, decider, lifetimes), pending: null, startedAt: now, lastSeenAt: now, lifetimes };
       } else {
         value = saved.value;
+        const lifetimes = value.lifetimes ??= lifetimeArchive(value);
         const dormant = now - value.lastSeenAt >= IDLE;
         if (dormant) value.startedAt += now - value.lastSeenAt;
         // Keep the visible month stable while preparing the following one.
@@ -174,7 +196,7 @@ export function sharedWorld(storage: Storage, {
           value.pending = null;
           value.startedAt = now;
         } else if (!value.pending && !dormant) {
-          value.pending = await next(value.world, decider);
+          value.pending = await next(value.world, decider, lifetimes);
         } else if (now - value.lastSeenAt < 25_000) {
           return response(value, now);
         }
@@ -207,6 +229,27 @@ export function sharedWorld(storage: Storage, {
     const resident = current.sims.find(sim => sim.id === id);
     if (resident) months.push({ month: current.month, label: current.label, ...publicMonthRecord(monthRecord(resident)) });
     return months;
+  }
+
+  async function residentLifetime(id: string, month: number) {
+    const saved = await storage.load();
+    if (!saved) return null;
+    const value = saved.value;
+    const through = Math.min(month, value.current.month);
+    const residents = value.history?.find(entry => entry.month === through)?.residents;
+    const row = through === value.current.month ? value.current.sims.find(sim => sim.id === id)
+      : residents && Object.hasOwn(residents, id) ? residents[id] : undefined;
+    const viewed = row && { month: through, age: row.age, nw: row.nw };
+    return readLife(lifetimeArchive(value), value.world, through, id, viewed);
+  }
+
+  async function pastResidents(month: number) {
+    const saved = await storage.load();
+    if (!saved) return [];
+    const { world, current } = saved.value;
+    return world.hallOfFame.filter(death => death.diedMonth <= Math.min(month, current.month))
+      .map(({ simId, name, ageAtDeath, diedMonth }) => ({ id: simId, name, age: ageAtDeath, label: monthLabel(diedMonth) }))
+      .reverse();
   }
 
   async function counterfactual(id: string, month: number) {
@@ -322,6 +365,6 @@ export function sharedWorld(storage: Storage, {
 
   return Object.assign(
     (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; }),
-    { residentHistory, decisionMix, counterfactual },
+    { residentHistory, residentLifetime, pastResidents, decisionMix, counterfactual },
   );
 }
