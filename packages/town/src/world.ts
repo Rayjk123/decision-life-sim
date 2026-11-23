@@ -14,11 +14,12 @@ async function next(world: World, decider: Decider) {
     sims: world.sims.map(s => {
       const d = decisions.get(s.id);
       const sheet = balanceSheet(s);
+      const decision = d && { provider: d.provider, model: d.model, valid: d.valid, sampling: d.sampling };
       return {
         id: s.id, name: s.name, arch: s.archetype, career: s.career, age: ageInt(s, world.month),
         working: s.employed || s.selfEmployed, nw: sheet.netWorth, cash: sheet.cash, debt: sheet.debt,
         memories: s.memory, move: d?.picked, errand: d ? ERRAND[moveKindOf(d.picked)] : null,
-        probabilities: d?.answers.main, draw: d?.draw, spend: s.spendLevel, persona: s.persona,
+        probabilities: d?.answers.main, draw: d?.draw, decision, spend: s.spendLevel, persona: s.persona,
       };
     }),
   };

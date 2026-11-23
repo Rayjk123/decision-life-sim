@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 13
+
+- Advanced now shows raw odds separately from the ordered sampling odds, marks the sampled move, and reports the final outcome and recorded decision source. Older frames show that sampling evidence was unavailable.
+- Next round should make the monthly timeline compact with month-end balance changes. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 12
 
 - The scene and resident profile keep the viewed month while paused. Local playback finishes the viewed day before starting the next known month. Go live switches immediately to the latest shared frame and its clock.

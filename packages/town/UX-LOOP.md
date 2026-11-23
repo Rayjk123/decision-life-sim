@@ -87,3 +87,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - At the end of a local day, the next received month starts at dawn when available. When playback has run ahead of the shared clock it shows End of this day.
 - Isolated Chrome verified the pinned date and Advanced panel at 1440 × 900 and 320 × 640, then verified a 12× resume into the next month's dawn and a return to the live clock.
 - The independent review confirmed timeline rows matched the API and retry worked on desktop and phone. It reproduced a case where replaying the draw against the displayed raw probabilities suggested a different move. Round 13 should expose the distribution used for sampling and the actual decision source when recorded. The next timeline pass should make rows compact and show month-end balances and deltas.
+
+## Round 13
+
+- The engine records the exact ordered distribution sampled after its discipline adjustment and the sampled move before execution. The town shows that evidence in Advanced alongside the raw odds, the final outcome, and the recorded source. The source distinguishes an ordinary heuristic decision from a model fallback.
+- Older frames retain whatever raw odds they recorded and explicitly mark the missing source and sampling evidence. Historical timeline rows still retain outcomes rather than full decision records.
+- Isolated Chrome at 1440 × 900 and 320 × 640 checked a real decision where the raw odds and sampled odds led to different moves. It also checked the older frame state. Engine tests replay the draw and check fallback provenance.
+- Round 14 should give the timeline compact month-end rows and balance changes between adjacent months.

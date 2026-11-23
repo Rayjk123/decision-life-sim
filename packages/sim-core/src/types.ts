@@ -140,6 +140,8 @@ export interface DecisionRecord {
   answers: Answers;
   picked: string;
   draw: number;
+  /** Ordered odds used by the engine and the sampled move before execution. */
+  sampling?: { odds: Record<string, number>; move: string };
   heuristicPick: string;
   reason: string;
   investLevel?: number;

@@ -175,26 +175,51 @@ function renderPanel(panel,render,fallback){
   }
 }
 
+function decisionSource(decision){
+  if(!decision?.provider)return 'Source was not recorded';
+  if(decision.provider==='heuristic-fallback')return 'Heuristic fallback';
+  if(decision.provider==='heuristic')return 'Heuristic';
+  if(decision.provider==='kev')return decision.model??'Decision model';
+  return decision.model??title(decision.provider.replaceAll('-',' '));
+}
+
+function moveOdds(odds,chosen){
+  const entries=Object.entries(odds??{}).filter(([,p])=>Number.isFinite(p));
+  if(!entries.length)return element('p','No odds recorded for this month.');
+  const list=element('dl',null,'odds');
+  for(const [move,p] of entries){
+    const name=element('dt',title(move)+(move===chosen?' · Sampled':''));
+    const value=element('dd',percent(p));
+    value.title=String(p);
+    if(move===chosen){name.className='sampled-odds';value.className='sampled-odds';}
+    list.append(name,value);
+  }
+  return list;
+}
+
 function decisionDetails(sim){
   const details=element('details',null,'decision-details');
   const summary=element('summary','Advanced decision details');
   summary.dataset.focusKey='advanced';
   details.dataset.residentId=sim.id;
   details.open=advancedFor===sim.id;
-  details.append(summary,element('p',frame.label),statGrid([
-    ['Current move',sim.move?title(sim.move):'No recorded move'],
-    ['Random draw',Number.isFinite(sim.draw)?String(sim.draw):'Unavailable'],
-  ]),element('h3','Raw move odds'));
-  const odds=Object.entries(sim.probabilities??{}).filter(([,p])=>Number.isFinite(p)).sort((a,b)=>b[1]-a[1]);
-  if(odds.length){
-    const list=element('dl',null,'odds');
-    for(const [move,p] of odds)list.append(element('dt',title(move)),element('dd',String(p)));
-    details.append(list);
-  }else details.append(element('p','No odds available for this month.'));
-  details.append(element('h3','Provenance'),statGrid([
-    ['Decision inputs','Input snapshot unavailable'],
-    ['Model provenance','Provider and model unavailable'],
-  ]));
+  details.append(summary,element('p',frame.label));
+  if(!sim.move){
+    details.append(element('p','No decision recorded for this month.'));
+    return details;
+  }
+  const sampling=sim.decision?.sampling;
+  details.append(statGrid([
+    ['Recorded outcome',title(sim.move)],
+    ['Decision source',decisionSource(sim.decision)],
+    ['Random draw',Number.isFinite(sim.draw)?sim.draw.toFixed(6):'Unavailable'],
+  ]),element('h3','Sampling odds'));
+  if(sampling){
+    details.append(element('p','The engine adjusts the raw odds for discipline, then compares the draw with the running total in the order shown.'),
+      moveOdds(sampling.odds,sampling.move));
+    if(sim.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
+  }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
+  details.append(element('h3','Raw move odds'),moveOdds(sim.probabilities));
   return details;
 }
 

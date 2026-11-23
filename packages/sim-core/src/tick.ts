@@ -152,6 +152,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     const rec: DecisionRecord = {
       simId: sim.id, month: m, provider: res.provider, model: res.model, moves: moves.map((mv) => mv.id), answers: res.answers,
       picked: valid ? move.id : 'nothing', draw, heuristicPick, reason, investLevel: p.shareLevel, retired: p.retire, spendLevel: spend,
+      sampling: { odds: p.sharpened, move: p.picked },
       valid, latencyMs: res.latencyMs, tokens: res.tokens,
       state: req.state, descriptions: Object.fromEntries(moves.map((mv) => [mv.id, mv.description])),
     };
