@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 12
+
+- The scene and resident profile keep the viewed month while paused. Local playback finishes the viewed day before starting the next known month. Go live switches immediately to the latest shared frame and its clock.
+- Next work should make the stored decision evidence more legible and distinguish raw model scores from the probabilities actually used to pick a move. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 11
 
 - Resident profiles now have a monthly timeline sourced from the same checkpoint as the scene. It loads up to 12 visible months on demand, with dated balances and recorded moves where available. Existing checkpoints build history as their current month advances.

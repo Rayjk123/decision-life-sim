@@ -98,7 +98,7 @@ for(const [i,b] of blocks.entries()){
     draw(g,tx-2,ty-3,7,7,'#a05051');draw(g,tx-1,ty-3,3,3,'#c87455');
   }
 }
-let frame, selected, view = 'resident', paused=false, speed=1, localProgress=null, lastTime=0, offset=0;
+let frame, liveFrame, selected, view = 'resident', paused=false, speed=1, localProgress=null, lastTime=0, offset=0;
 let hits=[], transform={scale:1,x:0,y:0}, inFlight=false, lastPoll=0;
 const streetFitZoom=6.2;
 const streetCamera={x:420,y:300,zoom:streetFitZoom};
@@ -694,6 +694,21 @@ function showStory(person,p){
   $('street-activity').textContent=message;
 }
 $('street-follow').onclick=toggleFollow;
+function displayFrame(next){
+  const newMonth=next.month!==frame?.month;
+  frame=next;
+  if(!newMonth)return;
+  refreshNeighbors(next.sims);
+  if(selected&&!get()){leaveFollow(false);selected=null;advancedFor=null;}
+  const living=new Set(next.sims.map(sim=>sim.id));
+  for(const id of outfits.keys())if(!living.has(id))outfits.delete(id);
+  if(!opened&&next.sims.length){
+    opened=true;
+    if(view==='resident'&&streetMode)startStreet();
+    else renderPanels();
+  }else renderPanels();
+  if(!$('world').hidden)renderWorld();
+}
 async function poll(){
   if(inFlight||document.hidden)return;
   inFlight=true;lastPoll=Date.now();
@@ -701,21 +716,12 @@ async function poll(){
     const res=await fetch('/api/town');if(!res.ok)throw Error();
     const next=await res.json();
     offset=next.serverTime-Date.now();
-    const newMonth=next.month!==frame?.month;
+    if(next.month!==liveFrame?.month)liveProgress=0;
+    liveFrame=next;
     const reconnected=connection!=='live';
     connection='live';
-    frame=next;
-    refreshNeighbors(next.sims);
-    if(newMonth){
-      liveProgress=0;
-      if(!paused&&localProgress!==null)localProgress=0;
-      if(selected&&!get()){leaveFollow(false);selected=null;advancedFor=null;}
-      const living=new Set(next.sims.map(s=>s.id));
-      for(const id of outfits.keys())if(!living.has(id))outfits.delete(id);
-      if(!opened&&next.sims.length){opened=true;if(view==='resident'&&streetMode)startStreet();else renderPanels();}
-      else renderPanels();
-    }
-    if((newMonth||reconnected)&&!$('world').hidden)renderWorld();
+    if(!frame||localProgress===null)displayFrame(next);
+    if(reconnected&&!$('world').hidden)renderWorld();
   }catch{
     if(connection!=='offline'){connection='offline';if(!$('world').hidden)renderWorld();}
     $('phase').textContent='Reconnecting to shared world…';
@@ -725,14 +731,21 @@ async function poll(){
 function drawFrame(time){
   const elapsed=Math.max(0,time-lastTime);lastTime=time;
   if(frame){
-    const live=liveProgress=Math.max(liveProgress,clamp((Date.now()+offset-frame.startedAt)/frame.duration,0,1));
-    if(!paused&&localProgress!==null)localProgress=Math.min(1,localProgress+elapsed*speed/frame.duration);
+    const live=liveProgress=Math.max(liveProgress,clamp((Date.now()+offset-liveFrame.startedAt)/liveFrame.duration,0,1));
+    if(!paused&&!document.hidden&&localProgress!==null){
+      if(localProgress>=1&&frame.month!==liveFrame.month){
+        localProgress=0;
+        displayFrame(liveFrame);
+      }else localProgress=Math.min(1,localProgress+elapsed*speed/frame.duration);
+    }
     const p=localProgress??live;
     const minutes=Math.floor(6*60+p*16*60);
     $('date').textContent=frame.label+' · '+String(Math.floor(minutes/60)).padStart(2,'0')+':'+String(minutes%60).padStart(2,'0');
     $('day').value=p;
     $('market').textContent=frame.sims.length+' residents · '+title(frame.market)+' · Mortgages '+(frame.rate*100).toFixed(1)+'%';
-    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+(p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening':'Waiting for next month');
+    const period=p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening'
+      :localProgress===null?'Waiting for next month':'End of this day';
+    $('phase').textContent=(paused?'Paused locally · ':'')+'Town · '+period;
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
     const w=Math.max(1,canvas.clientWidth), h=Math.max(1,canvas.clientHeight);
     if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
@@ -1047,9 +1060,11 @@ for(const button of speedButtons)button.onclick=()=>{
   updatePlaybackControls();
 };
 $('live').onclick=()=>{
+  if(!liveFrame)return;
   localProgress=null;
   paused=false;
   speed=1;
+  displayFrame(liveFrame);
   // The action becomes disabled while live, so keep keyboard focus in the controls.
   if(document.activeElement===$('live'))$('pause').focus({preventScroll:true});
   updatePlaybackControls();

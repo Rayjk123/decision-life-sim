@@ -80,3 +80,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - The same checkpoint archives only published frames. A pending month stays out of the timeline, and a legacy checkpoint starts with its current frame. The history endpoint does not advance the simulation and returns an empty timeline for an unknown resident.
 - Isolated Chrome at 1440 × 900 and 320 × 640 loaded two actual promoted months through the timeline endpoint. Tests cover restart, pre-history checkpoints, pending frames, and the retention cap. The CloudFormation template parses locally.
 - Round 12 should keep the scene and profile pinned during local playback across a shared month rollover, then commission the next independent review.
+
+## Round 12
+
+- Local playback keeps its own displayed frame while the shared clock receives the latest frame. Pausing keeps the scene, profile, and decision date pinned. Resume continues the local day, and Go live jumps to the current shared frame at 1×.
+- At the end of a local day, the next received month starts at dawn when available. When playback has run ahead of the shared clock it shows End of this day.
+- Isolated Chrome verified the pinned date and Advanced panel at 1440 × 900 and 320 × 640, then verified a 12× resume into the next month's dawn and a return to the live clock.
+- The independent review confirmed timeline rows matched the API and retry worked on desktop and phone. It reproduced a case where replaying the draw against the displayed raw probabilities suggested a different move. Round 13 should expose the distribution used for sampling and the actual decision source when recorded. The next timeline pass should make rows compact and show month-end balances and deltas.
