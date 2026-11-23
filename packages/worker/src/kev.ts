@@ -3,7 +3,10 @@
 import { createHash } from 'node:crypto';
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { dirname } from 'node:path';
-import type { Answers, Decider, DecisionRequest, DecisionResult } from '@dls/sim-core';
+import type { Answers, DecisionRequest, DecisionResult } from '@dls/sim-core';
+
+type ModelRequest = Pick<DecisionRequest, 'state' | 'questions' | 'moves'>
+  & Partial<Pick<DecisionRequest, 'sim' | 'world' | 'askRetire'>>;
 
 export interface KevOptions {
   url: string;              // e.g. http://127.0.0.1:8009
@@ -12,6 +15,7 @@ export interface KevOptions {
   timeoutMs?: number;
   retries?: number;
   cacheFile?: string;       // NDJSON file of {key, result}; omit to disable the disk cache
+  cacheResults?: boolean;   // omit to retain in-memory results
 }
 
 interface KevAnswer { type: string; choice?: string; noul?: number; score?: number; probabilities?: Record<string, number> }
@@ -22,7 +26,7 @@ export function decisionUrl(flags: { 'decision-url'?: string; 'kev-url'?: string
   return flags['decision-url'] ?? flags['kev-url'] ?? process.env.DECISION_URL ?? process.env.KEV_URL ?? fallback;
 }
 
-export function kevDecider(opts: KevOptions): Decider & { stats: { calls: number; cacheHits: number; latencies: number[]; errors: number } } {
+export function kevDecider(opts: KevOptions) {
   const model = opts.model ?? 'kev-latest';
   const cache = new Map<string, DecisionResult>();
   if (opts.cacheFile && existsSync(opts.cacheFile)) {
@@ -58,7 +62,7 @@ export function kevDecider(opts: KevOptions): Decider & { stats: { calls: number
   return {
     name: 'kev',
     stats,
-    async decide(req: DecisionRequest): Promise<DecisionResult> {
+    async decide(req: ModelRequest): Promise<DecisionResult> {
       const body = { model, state: req.state, questions: req.questions };
       const key = createHash('sha256').update(JSON.stringify(body)).digest('hex');
       const hit = cache.get(key);
@@ -70,14 +74,14 @@ export function kevDecider(opts: KevOptions): Decider & { stats: { calls: number
       const latency = r.latency_ms ?? Date.now() - started;
       stats.latencies.push(latency);
       const result: DecisionResult = { answers: toAnswers(r, req), provider: 'kev', model, latencyMs: latency, tokens: r.usage?.input_tokens ?? 0 };
-      cache.set(key, result);
+      if (opts.cacheResults !== false) cache.set(key, result);
       if (opts.cacheFile) appendFileSync(opts.cacheFile, JSON.stringify({ key, result }) + '\n');
       return result;
     },
   };
 }
 
-function toAnswers(r: KevResponse, req: DecisionRequest): Answers {
+function toAnswers(r: KevResponse, req: ModelRequest): Answers {
   const main = r.answers.main?.probabilities ?? {};
   // keep only legal moves and renormalize (defensive: the server should only return these)
   const legal = Object.fromEntries(req.moves.map((m) => [m.id, main[m.id] ?? 0]));

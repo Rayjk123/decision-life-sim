@@ -245,7 +245,7 @@ function decisionDetails(sim){
   return details;
 }
 
-function appendDecisionEvidence(details,record){
+function appendDecisionEvidence(details,record,residentId=record.id){
   if(!record.move){
     details.append(element('p','No decision recorded for this month.'));
     return;
@@ -278,6 +278,55 @@ function appendDecisionEvidence(details,record){
     if(record.decision.valid===false)details.append(element('p','The sampled move failed the rules check, so the outcome was Do nothing.'));
   }else details.append(element('p','Sampling odds were not recorded for this month. The raw odds alone do not reproduce the pick.'));
   details.append(element('h3','Raw move odds'),moveOdds(record.probabilities));
+  if(record.hasProbe)details.append(probePanel(residentId,record.month??frame.month));
+  else details.append(element('p','Counterfactual inputs were not retained for this decision.'));
+}
+
+function probePanel(id,month){
+  const details=element('details',null,'decision-details counterfactual');
+  const summary=element('summary','What changes the odds?');
+  summary.dataset.focusKey='probe-'+month;
+  const button=element('button','Try twice the coin');
+  const result=element('div',null,'probe-result');
+  result.setAttribute('aria-live','polite');
+  details.append(summary,element('p','Change the coin on hand before this decision. The comparison recomputes available moves and raw odds.'),button,result);
+  button.onclick=async()=>{
+    button.disabled=true;
+    result.replaceChildren(element('p','Calculating comparison…'));
+    try{
+      const response=await fetch('/api/town/probe/'+encodeURIComponent(id)+'/'+month);
+      if(!response.ok)throw Error();
+      const probe=await response.json();
+      if(probe.status!=='ready'){
+        const message=probe.status==='busy'?'The decision model is busy. Try again in a few seconds.'
+          :probe.status==='source-unavailable'?'The recorded decision source is unavailable for comparison.'
+          :'The inputs for this comparison are no longer available.';
+        result.replaceChildren(element('p',message));
+        return;
+      }
+      result.replaceChildren(element('p',probe.label+' · '+decisionSource(probe)),statGrid([
+        ['Recorded coin',knownMoney(probe.beforeCoin)],['With twice the coin',knownMoney(probe.afterCoin)],
+      ]));
+      if(probe.movesAdded.length)result.append(element('p','New offers · '+probe.movesAdded.map(title).join(', ')));
+      if(probe.movesRemoved.length)result.append(element('p','Offers removed · '+probe.movesRemoved.map(title).join(', ')));
+      const odds=element('dl',null,'odds');
+      const moves=[...new Set([...Object.keys(probe.base),...Object.keys(probe.variant)])];
+      const shift=move=>Math.abs((probe.variant[move]??0)-(probe.base[move]??0));
+      moves.sort((a,b)=>shift(b)-shift(a));
+      for(const move of moves){
+        const before=Object.hasOwn(probe.base,move)?percent(probe.base[move]):'Not offered';
+        const after=Object.hasOwn(probe.variant,move)?percent(probe.variant[move]):'Not offered';
+        odds.append(element('dt',title(move)),element('dd',before+' → '+after));
+      }
+      result.append(element('h3','Recorded → variant raw odds'),odds);
+      result.append(element('p','This comparison does not execute a move or change the town.'));
+    }catch{
+      result.replaceChildren(element('p','Comparison unavailable. Try again.'));
+    }finally{
+      button.disabled=false;
+    }
+  };
+  return details;
 }
 
 function balanceChange(current,previous){
@@ -338,7 +387,7 @@ function decisionComparison(row,prior){
   return body;
 }
 
-function timelineRow(row){
+function timelineRow(row,residentId){
   const item=element('li');
   const details=element('details');
   const summary=element('summary');
@@ -357,7 +406,7 @@ function timelineRow(row){
     evidenceSummary.dataset.focusKey='evidence-'+row.month;
     evidence.append(evidenceSummary);
     evidence.addEventListener('toggle',()=>{
-      if(evidence.open&&evidence.childElementCount===1)appendDecisionEvidence(evidence,row);
+      if(evidence.open&&evidence.childElementCount===1)appendDecisionEvidence(evidence,row,residentId);
     });
     details.append(evidence);
   }else if(row.move){
@@ -422,7 +471,7 @@ function residentHistory(sim,month){
       if(!retained.has(id)){row.item.remove();rows.delete(id);}
     }
     for(const [i,row] of visible.entries()){
-      if(!rows.has(row.month))rows.set(row.month,timelineRow(row));
+      if(!rows.has(row.month))rows.set(row.month,timelineRow(row,sim.id));
       const retainedRow=rows.get(row.month);
       const previous=visible[i+1];
       retainedRow.compare(previous?.month===row.month-1?previous:undefined);

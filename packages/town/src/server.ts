@@ -12,9 +12,14 @@ for (const name of ['street-day.png', 'street-evening.png', 'bakery.png', 'cotta
   assets.set('/art/' + name, ['art/' + name, 'image/png']);
 }
 const assetDir = process.env.TOWN_ASSETS ?? fileURLToPath(new URL('../', import.meta.url));
-const decider = process.env.DECISION_URL ? kevDecider({
+const modelOptions = process.env.DECISION_URL ? {
   url: process.env.DECISION_URL, model: process.env.DECISION_MODEL ?? 'kev-latest', apiKey: process.env.KEV_API_KEY,
-}) : undefined;
+} : undefined;
+const decider = modelOptions && kevDecider(modelOptions);
+const modelProbe = modelOptions && {
+  model: modelOptions.model,
+  decide: kevDecider({ ...modelOptions, timeoutMs: 5000, retries: 0, cacheResults: false }).decide,
+};
 const pop = Number(process.env.TOWN_POP ?? 1000);
 if (!Number.isInteger(pop) || pop < 1 || pop > 1000) throw new Error('TOWN_POP must be an integer from 1 to 1000');
 
@@ -60,18 +65,20 @@ async function cloudStorage(bucket: string): Promise<Storage> {
 }
 
 const world = (process.env.TOWN_BUCKET ? cloudStorage(process.env.TOWN_BUCKET) : Promise.resolve(localStorage()))
-  .then(storage => sharedWorld(storage, { pop, decider }));
+  .then(storage => sharedWorld(storage, { pop, decider, modelProbe }));
 
 export async function handler(event: { rawPath: string; requestContext?: { http?: { method?: string } } }) {
   const headers = { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'content-type': 'text/plain; charset=utf-8' };
   if (event.requestContext?.http?.method !== 'GET') return { statusCode: 405, headers, body: 'Method not allowed' };
   const history = /^\/api\/town\/history\/([a-zA-Z0-9_-]{1,80})$/.exec(event.rawPath);
   const mix = /^\/api\/town\/mix\/([1-9][0-9]{0,8})$/.exec(event.rawPath);
-  if (event.rawPath === '/api/town' || history || mix) {
+  const probe = /^\/api\/town\/probe\/([a-zA-Z0-9_-]{1,80})\/([1-9][0-9]{0,8})$/.exec(event.rawPath);
+  if (event.rawPath === '/api/town' || history || mix || probe) {
     try {
       const town = await world;
       const body = history ? { months: await town.residentHistory(history[1]) }
-        : mix ? await town.decisionMix(Number(mix[1])) : await town();
+        : mix ? await town.decisionMix(Number(mix[1]))
+        : probe ? await town.counterfactual(probe[1], Number(probe[2])) : await town();
       return { statusCode: 200, headers: { ...headers, 'content-type': 'application/json' }, body: JSON.stringify(body) };
     }
     catch (error) { console.error(error); return { statusCode: 503, headers, body: 'Town temporarily unavailable' }; }

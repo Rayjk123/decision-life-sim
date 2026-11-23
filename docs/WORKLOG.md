@@ -8,6 +8,11 @@ nav_order: 4
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
 
+## Maple Hollow · round 22
+
+- What changes the odds? compares the recorded decision with twice the coin, showing legal moves and raw odds under both conditions. Current and archived evidence can open the probe when a capture remains available.
+- The read-only path uses precomputed heuristic results or a matching configured model. The model path allows one call at a time per process with a short cooldown and caches repeated results. [UX loop](../packages/town/UX-LOOP.md)
+
 ## Maple Hollow · round 21
 
 - Town decisions now capture a twice-as-much-coin variant from the actual pre-decision context. The capture recomputes available moves and heuristic odds without changing the world. External-model request snapshots have a shorter retention window.

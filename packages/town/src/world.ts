@@ -1,6 +1,6 @@
 import {
   ARCHETYPE, ARRIVAL_MONTHS, CAREER, PROBE_CHANGES, ageInt, balanceSheet, buildRequest, createWorld,
-  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type World,
+  heuristicAnswers, heuristicDecider, runMonth, type Decider, type DecisionRequest, type DecisionResult, type World,
 } from '../../sim-core/src/index.ts';
 import { ERRAND, monthLabel, moveKindOf } from '../../worker/src/store.ts';
 
@@ -94,8 +94,17 @@ export interface Storage {
   save(value: Checkpoint, version?: string): Promise<boolean>;
 }
 
-export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicDecider }: { pop?: number; decider?: Decider } = {}) {
+type ModelProbe = {
+  model: string;
+  decide(request: Pick<DecisionRequest, 'state' | 'questions' | 'moves'>): Promise<DecisionResult>;
+};
+
+export function sharedWorld(storage: Storage, {
+  pop = 1000, decider = heuristicDecider, modelProbe,
+}: { pop?: number; decider?: Decider; modelProbe?: ModelProbe } = {}) {
   let inFlight: ReturnType<typeof read> | undefined;
+  let modelProbeRunning = false, lastModelProbe = -Infinity;
+  const probeCache = new Map<string, Record<string, number>>();
 
   async function read(now: number) {
     for (let attempt = 0; attempt < 4; attempt++) {
@@ -152,6 +161,54 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
     const resident = current.sims.find(sim => sim.id === id);
     if (resident) months.push({ month: current.month, label: current.label, ...publicMonthRecord(monthRecord(resident)) });
     return months;
+  }
+
+  async function counterfactual(id: string, month: number) {
+    const saved = await storage.load();
+    if (!saved) return { status: 'unavailable' as const };
+    const { current, history = [] } = saved.value;
+    const archived = history.find(row => row.month === month)?.residents;
+    const record = month === current.month ? current.sims.find(sim => sim.id === id)
+      : archived && Object.hasOwn(archived, id) ? archived[id] : undefined;
+    const capture = record?.probe, decision = record?.decision, base = record?.probabilities;
+    if (!capture || !decision || !base) return { status: 'unavailable' as const };
+    let variant = capture.heuristicOdds;
+    if (decision.provider === 'kev') {
+      if (!capture.modelRequest || !decision.model || modelProbe?.model !== decision.model) {
+        return { status: 'source-unavailable' as const };
+      }
+      const key = month + ':' + id;
+      const cached = probeCache.get(key);
+      if (cached) variant = cached;
+      else {
+        if (modelProbeRunning || Date.now() - lastModelProbe < 3000) return { status: 'busy' as const };
+        modelProbeRunning = true;
+        lastModelProbe = Date.now();
+        try {
+          const answer = await modelProbe.decide(capture.modelRequest);
+          if (answer.provider !== decision.provider || answer.model !== decision.model
+            || !Object.values(answer.answers.main).some(weight => Number.isFinite(weight) && weight > 0)) {
+            return { status: 'source-unavailable' as const };
+          }
+          variant = answer.answers.main;
+          probeCache.set(key, variant);
+          if (probeCache.size > 64) probeCache.delete(probeCache.keys().next().value!);
+        } catch {
+          return { status: 'source-unavailable' as const };
+        } finally {
+          modelProbeRunning = false;
+        }
+      }
+    } else if (decision.provider !== 'heuristic' && decision.provider !== 'heuristic-fallback') {
+      return { status: 'source-unavailable' as const };
+    }
+    const offered = decision.offered ?? Object.keys(base);
+    return {
+      status: 'ready' as const, month, label: monthLabel(month), beforeCoin: capture.beforeCoin, afterCoin: capture.afterCoin,
+      provider: decision.provider, model: decision.model, base, variant,
+      movesAdded: capture.offered.filter(move => !offered.includes(move)),
+      movesRemoved: offered.filter(move => !capture.offered.includes(move)),
+    };
   }
 
   async function decisionMix(through: number) {
@@ -219,6 +276,6 @@ export function sharedWorld(storage: Storage, { pop = 1000, decider = heuristicD
 
   return Object.assign(
     (now = Date.now()) => inFlight ??= read(now).finally(() => { inFlight = undefined; }),
-    { residentHistory, decisionMix },
+    { residentHistory, decisionMix, counterfactual },
   );
 }

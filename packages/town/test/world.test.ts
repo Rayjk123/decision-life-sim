@@ -54,6 +54,14 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.equal(history[0].hasProbe, true);
   assert.ok(!Object.hasOwn(history[0], 'probe'));
   assert.deepEqual(saved!.history?.[0].residents[id].probe, source.probe);
+  const beforeProbe = await store.load();
+  const comparison = await restarted.counterfactual(id, 121);
+  assert.equal(comparison.status, 'ready');
+  assert.deepEqual(comparison.base, original.probabilities);
+  assert.deepEqual(comparison.variant, source.probe.heuristicOdds);
+  assert.equal(comparison.afterCoin, comparison.beforeCoin * 2);
+  assert.deepEqual(await store.load(), beforeProbe);
+  assert.deepEqual(await restarted.counterfactual(id, 123), { status: 'unavailable' });
   assert.deepEqual(await restarted.decisionMix(121), firstMix);
   assert.deepEqual(await restarted.residentHistory('toString'), []);
   const wake = await restarted(now + DAY + 16 * 60_000);

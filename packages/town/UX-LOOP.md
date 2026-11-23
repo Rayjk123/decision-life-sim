@@ -149,3 +149,10 @@ Once the watching experience is solid or around round ten, wire the deeper resid
 - A 1,000-resident replay matched the existing probe’s variant odds and kept all published moves identical. The measured checkpoint was about 5.95 MB with heuristic capture and 8.47 MB with a model fixture after the retention cap.
 - Isolated Chrome at 1440 × 900 and 320 × 640 confirmed decision evidence still worked, including timeline availability without the private request. Round 22 should expose the read-only comparison and a resident control.
 - The independent review verified source separation, missing-personality counts, and deduplicated offers. It found that Picked was ambiguous because it counts final outcomes, that reopening a paused mix could reuse expired data, and that narrow headers broke mid-word. Fix these before release.
+
+## Round 22
+
+- What changes the odds? uses the selected decision month’s private capture to compare its original raw odds with the double-coin variant. The control shows money on hand, changed offers, and the odds for each move. Current and archived evidence can open it.
+- Heuristic and fallback results are precomputed. Model probes require a configured matching model and use a five-second timeout, one in-flight request per process, a three-second cooldown, and a bounded result cache. The probe endpoint leaves the shared checkpoint untouched.
+- Isolated Chrome verified the heuristic path at 1440 × 900 and 320 × 640 and the matching model path with a local fixture. The fixture also verified repeated requests use the cache and a different concurrent request respects the cooldown. Direct tests verified archived results and an unchanged checkpoint.
+- Round 23 should address the decision-mix review findings before the release review.
