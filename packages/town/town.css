@@ -143,11 +143,14 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 .mix-status:empty{display:none}
 
 #district-pins{position:absolute;inset:0;pointer-events:none}
-.district-pin{position:absolute;display:grid;place-items:center;min-width:44px;min-height:44px;padding:0;transform:translate(-50%,-50%);pointer-events:auto;border:0;border-radius:50%;background:transparent}
-.district-pin[aria-pressed=true]{background:transparent;border:0}
-.district-pin::before{content:"";width:11px;height:11px;border:2px solid #fff1d7;border-radius:50%;background:#26233a;box-shadow:0 1px 6px 2px #171e35}
-.district-pin[aria-pressed=true]::before{background:#ffbf60}
-.district-pin.followed::before{outline:2px solid #ffcf86;outline-offset:3px}
+.district-pin{position:absolute;display:grid;place-items:center;min-width:44px;min-height:44px;padding:0;transform:translate(-50%,-50%);pointer-events:auto;border:0;border-radius:5px;background:transparent}
+.district-pin[aria-pressed=true]{background:transparent}
+.district-sign{background:#171e35ed;border:1px solid #ab856d;border-radius:5px;color:#ffdda8;font-weight:650;padding:5px 8px;white-space:nowrap;box-shadow:0 2px #0d1425}
+.district-sign::after{content:' ↗';font-weight:400}
+.district-pin[aria-pressed=true] .district-sign{background:#e9ad61;color:#271f30}
+.district-pin.followed .district-sign{outline:2px solid #ffcf86;outline-offset:2px}
+.district-pin:focus-visible,.district-pin:hover{z-index:2}
+@media(max-width:570px){.district-sign{font-size:12px;padding:4px 6px}}
 .district-tip{display:none;position:absolute;top:44px;left:50%;transform:translateX(-50%);max-width:144px;width:max-content;padding:5px 8px;border:1px solid #ab856d;border-radius:5px;background:#171e35;color:#ffe0b6;pointer-events:none;text-align:left;font-size:12px;z-index:1}
 .district-pin:focus-visible .district-tip{display:block}
 @media(hover:hover){.district-pin:hover .district-tip{display:block}}

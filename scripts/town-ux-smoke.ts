@@ -94,7 +94,7 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await page.locator('#overview').click();
   await stage.and(page.locator('[data-drawn-artwork="town-overview.jpg"]')).waitFor();
   const pins = page.locator('#district-pins button');
-  assert.equal(await pins.count(), 4);
+  assert.deepEqual(await pins.locator('.district-sign').allTextContents(), ['Waterfront', 'Market Lane', 'Guild Row', 'Town Square']);
   const occupancy = await pins.evaluateAll(nodes => nodes.reduce((sum, node) =>
     sum + Number(node.getAttribute('aria-label')?.match(/(\d+) here now/)?.[1]), 0));
   assert.equal(occupancy, frame.sims.length, 'Every resident should occupy one street');

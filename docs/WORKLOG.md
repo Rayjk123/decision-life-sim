@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · labeled overview and walking pace
+
+- Overview names are visible on the map. Street walks advance by distance along the whole route, so doorway turns and district boundaries preserve the walking pace.
+- Public-room visitors follow browser-local floor paths, with brief stops and routes back to the door. The town clock still controls occupancy. Pausing and reduced motion keep the characters still.
+
 ## Maple Hollow · resident chart and public interiors
 
 - Personality moved below the resident's identity. The lifetime chart highlights plotted months on hover or keyboard navigation and opens dated evidence on selection. Recent months use their full timeline records. Older samples show archived wealth and same-month milestones where available.

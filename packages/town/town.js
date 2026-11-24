@@ -1307,18 +1307,72 @@ function setWorld(open,moveFocus=true){
   if(moveFocus)$(open?'close-world':'toggle').focus({preventScroll:true});
 }
 const workplaceFor=s=>s.working?(workplaceScenes[s.workplace]??workplaceScenes.shop):null;
+// Travel time comes from the whole route, including doorway segments and street crossings.
+const streetPlans=new WeakMap();
+const streetAspect=16/9, streetPace=24;
+
+function walkingPath(points,aspect){
+  let length=0;
+  const segments=points.slice(1).flatMap((to,i)=>{
+    const from=points[i];
+    const size=Math.hypot((to[0]-from[0])*aspect,to[1]-from[1]);
+    if(!size)return [];
+    const segment={from,to,size,start:length};
+    length+=size;
+    return [segment];
+  });
+  return {segments,length,origin:points[0]};
+}
+function positionOnPath(path,distance){
+  const part=path.segments.find(segment=>distance<segment.start+segment.size)??path.segments.at(-1);
+  if(!part)return path.origin;
+  const t=clamp((distance-part.start)/part.size,0,1);
+  return [part.from[0]+(part.to[0]-part.from[0])*t,part.from[1]+(part.to[1]-part.from[1])*t];
+}
+
+function streetPlan(person){
+  const cached=streetPlans.get(person);
+  if(cached)return cached;
+  const h=hash(person.id);
+  const homeStreet=homeDistrict(person);
+  const workStreet=person.working?workDistrict[stopFor(person,'work')]:homeStreet;
+  const destination=destinationFor(person);
+  const errandStreet=errandDistrict[destination]??workStreet;
+  const sidewalk=.77+(h%9)*.008, threshold=.681;
+  const home=[homeStreet==='square'?.045:.13,threshold];
+  const work=[person.working?(workDoor[person.workplace]??.70):.78,person.working?threshold:sidewalk];
+  const errand=[destination==='bakery'?.523:destination==='car_lot'?.78:destination?.70:.58,destination?threshold:sidewalk];
+  function route(from,to,first,last){
+    const path=(a,b)=>walkingPath([a,[a[0],sidewalk],[b[0],sidewalk],b],streetAspect);
+    const exit=districts[last].x>districts[first].x?.99:.01;
+    const before=path(from,first===last?to:[exit,sidewalk]);
+    const after=first===last?null:path([1-exit,sidewalk],to);
+    const length=before.length+(after?.length??0);
+    return {first,last,before,after,length,facing:to[0]<from[0]?-1:1,crossing:after?before.length/length:null};
+  }
+  const commute=route(home,work,homeStreet,workStreet);
+  const outbound=route(work,errand,workStreet,errandStreet);
+  const returning=route(errand,home,errandStreet,homeStreet);
+  const morning=.04+(h%101)/500;
+  const arriving=morning+commute.length/streetPace;
+  const midday=Math.max(arriving+.03,.35+((h>>>8)%100)/480);
+  const errandDone=midday+outbound.length/streetPace;
+  const evening=Math.max(errandDone+.015,.64+((h>>>16)%100)/470);
+  const end=evening+returning.length/streetPace;
+  const plan={home,work,errand,homeStreet,workStreet,errandStreet,commute,outbound,returning,morning,arriving,midday,errandDone,evening,end};
+  streetPlans.set(person,plan);
+  return plan;
+}
+
 function routine(s,t){
-  const h=hash(s.id), stagger=(h%101)/100;
-  const morning=.04+stagger*.20, arriving=morning+.09+(h%7)/100;
-  const midday=Math.max(arriving+.03,.35+((h>>>8)%100)/480), errandDone=midday+.09;
-  const evening=Math.max(errandDone+.015,.64+((h>>>16)%100)/470), end=Math.min(.98,evening+.13);
+  const {morning,arriving,midday,errandDone,evening,end}=streetPlan(s);
   if(t<morning)return ['home',t/morning];
   if(t<arriving)return ['commute',(t-morning)/(arriving-morning)];
   if(t<midday)return [s.working?'work':'outside',(t-arriving)/(midday-arriving)];
   if(t<errandDone)return ['outbound',(t-midday)/(errandDone-midday)];
   if(t<evening)return ['errand',(t-errandDone)/(evening-errandDone)];
   if(t<end)return ['returning',(t-evening)/(end-evening)];
-  return ['home',(t-end)/(1-end)];
+  return ['home',clamp((t-end)/Math.max(.001,1-end),0,1)];
 }
 const workDistrict={office:'guild',factory:'guild',shop:'market',hospital:'square',realtor:'square',civic:'square',school:'square'};
 const errandDistrict={bakery:'waterfront',bank:'square',realtor:'square',city_hall:'square',car_lot:'market'};
@@ -1389,15 +1443,12 @@ function updatePlaceRoster(){
 const homeDistrict=sim=>districtKeys[hash(sim.id)%districtKeys.length];
 function streetJourney(sim,p){
   const [activity,progress]=routine(sim,p);
-  const home=homeDistrict(sim);
-  const work=sim.working?workDistrict[stopFor(sim,'work')]:home;
-  const stop=destinationFor(sim);
-  const errand=errandDistrict[stop]??work;
-  const legs={commute:[home,work],outbound:[work,errand],returning:[errand,home]};
-  const leg=legs[activity];
-  const district=leg?leg[progress<.5?0:1]:activity==='home'?home:activity==='errand'?errand:work;
-  const inside=activity==='home'||activity==='work'||(activity==='errand'&&Boolean(stop));
-  return {activity,progress,district,inside,leg};
+  const plan=streetPlan(sim);
+  const route=activity==='commute'||activity==='outbound'||activity==='returning'?plan[activity]:null;
+  const district=route?(route.crossing===null||progress<route.crossing?route.first:route.last)
+    :activity==='home'?plan.homeStreet:activity==='errand'?plan.errandStreet:plan.workStreet;
+  const inside=activity==='home'||activity==='work'||(activity==='errand'&&Boolean(destinationFor(sim)));
+  return {activity,progress,district,inside,route};
 }
 function streetActivity(person,activity,p){
   const stop=destinationFor(person);
@@ -1412,10 +1463,11 @@ const districtPins=new Map();
 for(const [id,district] of Object.entries(districts)){
   const button=element('button',null,'district-pin');
   const tip=element('span',null,'district-tip');
+  const sign=element('span',district.name,'district-sign');
   button.type='button';
   button.dataset.district=id;
   tip.setAttribute('aria-hidden','true');
-  button.append(tip);
+  button.append(sign,tip);
   button.onclick=()=>{
     if(inspectedStreet!==id)rosterExpanded=false;
     inspectedStreet=id;
@@ -1550,40 +1602,79 @@ function destinationFor(s){
   return !s.errand&&(hash(s.id)>>>12)%4===0?'bakery':null;
 }
 const roomCapacity=15;
-let roomCast={key:null,slots:new Map()};
-function drawRoomResidents(key,neighbors,person,x,y,width,height,viewWidth,p,animated){
-  if(roomCast.key!==key)roomCast={key,slots:new Map()};
-  const active=new Map(neighbors.filter(({sim})=>sim.id!==person?.id).map(entry=>[entry.sim.id,entry]));
-  for(const id of roomCast.slots.keys())if(!active.has(id))roomCast.slots.delete(id);
-  const occupancy=new Set(roomCast.slots.values());
-  for(const id of active.keys()){
-    if(roomCast.slots.size>=roomCapacity)break;
-    if(roomCast.slots.has(id))continue;
-    let slot=0;
-    while(occupancy.has(slot))slot++;
-    occupancy.add(slot);
-    roomCast.slots.set(id,slot);
+// Only the room roster is shared. Each viewer gets their own floor paths.
+const roomSeed=crypto.getRandomValues(new Uint32Array(1))[0];
+let roomCast={key:null,paths:new Map()};
+
+function roomPath(id,duration,aspect){
+  const speed=.19;
+  const entry=[.10,.91];
+  const budget=duration*speed*.9;
+  const points=[entry];
+  const length=(a,b)=>Math.hypot((b[0]-a[0])*aspect,b[1]-a[1]);
+  let traveled=0;
+  for(let i=0;i<10;i++){
+    const a=hash(roomSeed+'/'+id+'/'+i);
+    const b=hash(id+'/'+i+'/'+roomSeed);
+    const point=[.17+(a%672)/1000,.64+(b%236)/1000];
+    const size=length(points.at(-1),point);
+    if(points.length>1&&traveled+size+length(point,entry)>budget)continue;
+    if(points.length===1&&2*size>budget){
+      const scale=budget/(2*size);
+      point[0]=entry[0]+(point[0]-entry[0])*scale;
+      point[1]=entry[1]+(point[1]-entry[1])*scale;
+    }
+    traveled+=length(points.at(-1),point);
+    points.push(point);
   }
-  const left=Math.max(0,x),right=Math.min(viewWidth,x+width);
-  const span=right-left;
-  const entry=left+span*.10;
-  const actors=[...roomCast.slots].map(([id,slot])=>{
-    const {sim,journey}=active.get(id);
-    const walk=routine(sim,p);
-    const progress=walk[0]===journey.activity?walk[1]:journey.progress;
-    const arrival=clamp(Math.min(progress,1-progress)/.18,0,1);
-    const settled=animated?arrival:1;
-    const facing=progress>.5?-1:1;
-    const col=slot%5,row=Math.floor(slot/5);
-    const spot=left+span*(.16+col*.16+(row%2)*.025);
-    const cx=entry+(spot-entry)*settled;
-    const cy=y+height*(.91+(.66+row*.09-.91)*settled);
-    const size=Math.min(height*(.125+row*.013),span*.20);
-    const distance=arrival===1?null:Math.abs(spot-entry)*(facing>0?settled:1-settled);
-    return {sim,cx,cy,size,distance,facing};
+  const path=walkingPath([...points,entry],aspect);
+  const pause=(duration-path.length/speed)/Math.max(1,path.segments.length-1);
+  const arrive=points[1]??entry;
+  return {path,pause,arrive,speed};
+}
+function drawRoomResidents(key,neighbors,person,x,y,width,height,viewWidth,p,animated){
+  const left=Math.max(0,x),right=Math.min(viewWidth,x+width),span=right-left;
+  if(span<=0)return;
+  const aspect=span/height;
+  const cacheKey=frame.month+':'+key+':'+aspect.toFixed(2);
+  if(roomCast.key!==cacheKey)roomCast={key:cacheKey,paths:new Map()};
+  const residents=neighbors.filter(({sim,journey})=>sim.id!==person?.id&&routine(sim,p)[0]===journey.activity)
+    .slice(0,roomCapacity).map(({sim})=>sim);
+  if(person)residents.push(person);
+  const active=new Set(residents.map(sim=>sim.id));
+  for(const id of roomCast.paths.keys())if(!active.has(id))roomCast.paths.delete(id);
+  const actors=residents.map(sim=>{
+    const [activity,progress]=routine(sim,p);
+    const plan=streetPlan(sim);
+    const duration=(activity==='work'?plan.midday-plan.arriving:plan.evening-plan.errandDone)*frame.duration/1000;
+    let entry=roomCast.paths.get(sim.id);
+    if(!entry||entry.activity!==activity){
+      entry={activity,...roomPath(cacheKey+'/'+sim.id+'/'+activity,duration,aspect)};
+      roomCast.paths.set(sim.id,entry);
+    }
+    const {path,pause,arrive,speed}=entry;
+    let t=progress*duration, distance=null, facing=1;
+    let point=arrive;
+    if(animated){
+      for(const segment of path.segments){
+        const duration=segment.size/speed;
+        facing=segment.to[0]<segment.from[0]?-1:1;
+        if(t<duration){
+          distance=segment.start+t*speed;
+          point=positionOnPath(path,distance);
+          break;
+        }
+        point=segment.to;
+        t-=duration;
+        if(t<pause)break;
+        t-=pause;
+      }
+    }
+    const size=Math.min(height*(sim===person ? .21 : .146),span*.21);
+    return {sim,cx:left+span*point[0],cy:y+height*point[1],size,distance:distance===null?null:distance*height,facing};
   }).sort((a,b)=>a.cy-b.cy);
   for(const actor of actors)drawPerson(actor.sim,actor.cx,actor.cy,actor.size,
-    walkPhaseFor(actor.sim,actor.distance,actor.size),false,actor.facing);
+    walkPhaseFor(actor.sim,actor.distance,actor.size),actor.sim===person,actor.facing);
 }
 function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey){
   const atHome=placeKey==='home';
@@ -1612,7 +1703,8 @@ function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey)
     const width=artwork.width*scale,height=artwork.height*scale;
     const standingX=atHome ? .67 : .51;
     const residentX=.16+(standingX-.16)*acrossFloor;
-    const x=width>w?clamp(w/2-width*(person?residentX:.5),w-width,0):(w-width)/2;
+    const cameraX=atHome&&person?residentX:.5;
+    const x=width>w?clamp(w/2-width*cameraX,w-width,0):(w-width)/2;
     const y=(h-height)/2;
     ctx.imageSmoothingEnabled=false;ctx.drawImage(artwork,x,y,width,height);
     if(!atHome&&eveningAmount(p)<1){
@@ -1620,7 +1712,7 @@ function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey)
     }
     if(atHome&&animated)drawHearth(x,y,width,height,clock);
     if(!atHome)drawRoomResidents(roomKey,neighbors,person,x,y,width,height,w,p,animated);
-    if(person){
+    if(atHome&&person){
       const stride=walkPhaseFor(person,travel===null?null:travel*Math.hypot(width*(standingX-.16),height*.09),height*.23);
       drawPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1,shift);
     }
@@ -1660,7 +1752,7 @@ function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey)
   }
   const y=140-31*acrossFloor;
   if(!atHome)drawRoomResidents(roomKey,neighbors,person,10,0,220,156,240,p,animated);
-  if(person){
+  if(atHome&&person){
     draw(ctx,113,y+1,14,3,'#fbd15a');
     drawPerson(person,120,y,32,walkPhaseFor(person,travel===null?null:travel*31,32),true,leaving?-1:1,shift);
     label(ctx,120,y-17,person.name);
@@ -1694,52 +1786,20 @@ function doorwayVisibility(activity,t,working){
   const exiting=activity!=='commute'||working;
   return clamp(Math.min(entering?t/.09:1,exiting?(1-t)/.09:1),0,1);
 }
-function streetPosition(person,p,aspect){
-  const journey=streetJourney(person,p);
-  const {activity,leg}=journey;
-  let {progress}=journey;
-  const lane=(hash(person.id)%9)*.008;
-  const destination=destinationFor(person);
-  const home=homeDistrict(person)==='square'?.045:.13;
-  const work=person.working?(workDoor[person.workplace]??.70):.78;
-  const errand=destination==='bakery'?.523:destination==='car_lot'?.95:destination?.70:.58;
-  const sidewalk=.77+lane, threshold=.681;
-  const workY=person.working?threshold:sidewalk;
-  const errandY=destination?threshold:sidewalk;
-  const routes={
-    commute:[home,threshold,work,workY],
-    outbound:[work,workY,errand,errandY],
-    returning:[errand,errandY,home,threshold],
-  };
-  const walking=activity in routes;
-  let x={home,work,outside:work,errand}[activity];
-  let y={home:threshold,work:workY,outside:workY,errand:errandY}[activity];
-  let facing=1;
-  let distance=null;
-  if(walking){
-    let [from,fromY,to,toY]=routes[activity];
-    if(leg[0]!==leg[1]){
-      const exit=districts[leg[1]].x>districts[leg[0]].x?.99:.01;
-      if(progress<.5){
-        progress*=2;
-        to=exit;toY=sidewalk;
-      }else{
-        progress=(progress-.5)*2;
-        from=1-exit;fromY=sidewalk;
-      }
-    }
-    const across=clamp((progress-.16)/.68,0,1);
-    x=from+(to-from)*across;
-    y=progress<.16?fromY+(sidewalk-fromY)*progress/.16
-      :sidewalk+(toY-sidewalk)*clamp((progress-.84)/.16,0,1);
-    facing=to<from?-1:1;
-    if(progress<.16){
-      if(fromY!==sidewalk)distance=Math.abs(y-fromY);
-    }else if(progress<=.84||toY!==sidewalk){
-      distance=Math.abs(sidewalk-fromY)+Math.abs(x-from)*aspect+Math.abs(y-sidewalk);
-    }
+function streetPosition(person,p){
+  const {activity,progress,route}=streetJourney(person,p);
+  const plan=streetPlan(person);
+  if(!route){
+    const [x,y]=activity==='home'?plan.home:activity==='errand'?plan.errand:plan.work;
+    return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing:1,distance:null};
   }
-  return {x,y,visibility:doorwayVisibility(activity,journey.progress,person.working),facing,distance};
+  const distance=progress*route.length;
+  const crossing=route.crossing!==null&&progress>=route.crossing;
+  const path=crossing?route.after:route.before;
+  const [x,y]=positionOnPath(path,crossing?distance-route.before.length:distance);
+  const dx=path.segments.find(segment=>segment.from[0]!==segment.to[0]);
+  const facing=dx?(dx.to[0]<dx.from[0]?-1:1):route.facing;
+  return {x,y,visibility:doorwayVisibility(activity,progress,person.working),facing,distance};
 }
 function drawPerson(person,x,y,height,walkPhase,focused,facing=1,lean=0){
   const sprite=appearance(person.id);
@@ -1790,9 +1850,8 @@ function drawStreet(focus,p,w,h){
     return true;
   }
   const tone=eveningAmount(p);
-  const aspect=day.width/day.height;
   const localFocus=focus&&streetJourney(focus,p).district===activeStreet?focus:null;
-  const point=localFocus&&streetPosition(localFocus,p,aspect);
+  const point=localFocus&&streetPosition(localFocus,p);
   const scale=Math.max(w/day.width,h/day.height)*streetCamera.zoom/streetFitZoom;
   const width=day.width*scale,height=day.height*scale;
   const target=streetCamera.pan??(following?point?.x:.5)??.5;
@@ -1816,7 +1875,7 @@ function drawStreet(focus,p,w,h){
   }
   const heightOfPerson=clamp(height*.105,43,100);
   hits=cast.map(sim=>{
-    const pt=sim===localFocus?point:streetPosition(sim,p,aspect);
+    const pt=sim===localFocus?point:streetPosition(sim,p);
     return {sim,sx:x+pt.x*width,sy:y+pt.y*height,distance:pt.distance,facing:pt.facing,height:heightOfPerson,opacity:sim===localFocus?1:pt.visibility};
   }).filter(hit=>hit.opacity>0&&hit.sx>-50&&hit.sx<w+50&&hit.sy>0&&hit.sy<h).sort((a,b)=>a.sy-b.sy);
   const pointed=hover&&nearest(hover.x,hover.y)?.sim;
@@ -1838,8 +1897,8 @@ function drawStreet(focus,p,w,h){
     const hasErrand=Boolean(destinationFor(focus));
     const atDeparture=activity==='commute'||(activity==='outbound'&&focus.working)||(activity==='returning'&&hasErrand);
     const atArrival=activity==='returning'||(activity==='commute'&&focus.working)||(activity==='outbound'&&hasErrand);
-    const leg=streetJourney(focus,p).leg;
-    const crossing=leg&&leg[0]!==leg[1]?Math.abs(progress-.5):1;
+    const split=streetJourney(focus,p).route?.crossing;
+    const crossing=split==null?1:Math.abs(progress-split);
     const edge=Math.min(atDeparture?progress:1,atArrival?1-progress:1,crossing);
     shadeDoorway(w,h,1-clamp(edge/.06,0,1));
   }
