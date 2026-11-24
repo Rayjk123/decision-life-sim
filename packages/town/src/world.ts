@@ -68,6 +68,7 @@ async function next(world: World, decider: Decider, archive: LifetimeArchive, ca
   const probes = new Map<string, NonNullable<ReturnType<typeof captureProbe>>>();
   const replays = new Map<string, { odds: Record<string, number>; move: string }>();
   const result = await runMonth(world, decider, {
+    policy: 'monthly',
     onDecisionRequest(request) {
       if (decider !== heuristicDecider) {
         // Requests are built before any resident's move can change the town economy.
@@ -188,7 +189,7 @@ export function sharedWorld(storage: Storage, {
         const lifetimes: LifetimeArchive = {};
         const history: HistoryMonth[] = [];
         while (world.month < ARRIVAL_MONTHS - (HISTORY_MONTHS - 1)) {
-          const result = await runMonth(world, heuristicDecider);
+          const result = await runMonth(world, heuristicDecider, { policy: 'monthly' });
           recordLifeTick(lifetimes, world, result.events);
         }
         while (world.month < ARRIVAL_MONTHS) {

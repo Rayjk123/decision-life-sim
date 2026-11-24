@@ -134,6 +134,7 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 **6. The pixel town.** The first Maple Hollow build uses a Canvas street grid and frames projected from the same simulation engine. The remaining roadmap includes:
 
 - Five original lo-fi arrangements are synthesized with Web Audio. The selected track repeats, and the browser stores the track, volume and mute settings. Audio starts on the first interaction when autoplay is blocked.
+- Maple Hollow uses monthly financial reviews for newly simulated months and new-world warm-up. The engine skips residents in school and residents with only the default move and no retirement question. Saved months retain their original decisions. Standalone worker runs keep their configured call policy.
 
 - For model-backed decisions, Advanced and retained Decision evidence offer a Model vs. heuristic replay. It records the heuristic's main-move sampling odds before anyone acts, using the same resident state, legal moves, discipline adjustment and keyed draw as the model. Both sampled moves can be compared with the recorded outcome. Older decisions without a captured replay explain that gap.
 - View decision opens dated evidence from a recorded errand or a retained timeline row. Copied links carry the public decision evidence in their fragment so articles can link to a labeled copy after the record ages out of the twelve-month window. Retained records take precedence.

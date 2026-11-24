@@ -7,6 +7,10 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · monthly financial reviews
+
+- Newly simulated town months now use the engine's monthly policy, including warm-up for new towns. Existing checkpoints keep their published and prepared decisions. The timeline explains why a month can still have no recorded decision.
+
 ## Maple Hollow · lo-fi track picker
 
 - Added Rain on Market Lane, Saturday Market, Waterfront Dawn, and Lanterns in Guild Row alongside Maple Evening. The Tracks menu repeats the selected arrangement and stores the selection and volume locally. All five are synthesized in the browser.

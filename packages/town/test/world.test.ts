@@ -72,9 +72,14 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert.deepEqual(first, second);
   assert.equal(first.month, 121);
   assert.ok(first.sims.length > 0);
+  const currentDecisions = saved!.current.sims.flatMap(sim => sim.decision ? [sim.decision] : []);
+  assert(currentDecisions.length > 0);
+  assert(currentDecisions.every(decision => decision.reason === 'monthly'));
+  assert(saved!.history!.some(month => Object.values(month.residents).some(sim => sim.decision?.reason === 'monthly')));
   const ledger = new Map(saved!.world.sims.map(sim => [sim.id, sim.flows]));
   assert.equal(await town(now + 1000).then(x => x.month), 121);
   assert.equal(saved!.pending?.month, 122);
+  assert(saved!.pending?.sims.some(sim => sim.decision?.reason === 'monthly'));
   const firstMix = await town.decisionMix(122);
   assert.deepEqual(firstMix.months.map(row => row.month), Array.from({ length: 12 }, (_, i) => 110 + i));
   assert.equal(firstMix.decisions, first.sims.filter(sim => sim.move).length + saved!.history!

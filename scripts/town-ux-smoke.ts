@@ -299,8 +299,13 @@ try {
   const eventsByResident = new Map(fixture.current.sims.map(sim => [sim.id, sim.events]));
   const resident = candidates.find(sim => eventsByResident.get(sim.id)?.length) ?? candidates[0];
   assert(resident, `Seeded smoke world should contain a working resident with history and a ${decider?.model ?? provider} decision`);
-  // The older row represents a checkpoint written before cash flow and events were captured.
+  // Exercise a quiet legacy month before monthly reviews and cash flow recording.
   const earlier = fixture.history![0].residents[resident.id];
+  earlier.move = undefined;
+  delete earlier.decision;
+  delete earlier.probabilities;
+  delete earlier.draw;
+  delete earlier.probe;
   delete earlier.cashFlow;
   delete earlier.events;
   server = spawn(process.execPath, ['--import', 'tsx', 'packages/town/src/server.ts'], {

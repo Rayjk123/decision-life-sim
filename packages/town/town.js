@@ -714,7 +714,7 @@ function residentHistory(sim,month){
       if(key!==coverageKey())return;
       const visible=months.filter(row=>row.month<=requested).reverse();
       message.textContent=visible.length
-        ?'Open a month for events and balances. Residents get periodic reviews or a review after a significant event, so some months have no recorded decision.'
+        ?'Open a month for events and balances. Financial reviews now run monthly when there’s a choice to make. Older months and months without a choice may have no recorded decision.'
         :'No months are available for this resident yet.';
       const initial=shownKey===undefined;
       updateRows(visible);
