@@ -7,6 +7,10 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · clickable indoor residents
+
+- Indoor characters now expose click and tap targets at their current drawn positions. Inspecting a resident, either on the floor or from the indoor roster, keeps the current room visible. Follow switches to the inspected resident when requested.
+
 ## Maple Hollow · labeled overview and walking pace
 
 - Overview names are visible on the map. Street walks advance by distance along the whole route, so doorway turns and district boundaries preserve the walking pace.

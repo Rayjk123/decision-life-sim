@@ -56,6 +56,16 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
       },
     });
   });
+  // Read the rendered sprite position so the test clicks the canvas, not the roster.
+  await page.route('**/town.js', async route => {
+    const response = await route.fetch();
+    const source = await response.text();
+    await route.fulfill({ response, body: source + `
+      Object.defineProperty(window, 'roomTargets', { get: () => interiorOpen ? hits.map(hit => ({
+        id: hit.sim.id, name: hit.sim.name, x: hit.sx, y: hit.sy - hit.height / 2,
+      })).filter(hit => roomResidentAt(hit.x, hit.y)?.sim.id === hit.id) : [] });
+    ` });
+  });
   const atlas = page.waitForResponse(response => response.url() === url + '/art/resident-walk.png');
   await page.goto(url);
   assert((await atlas).ok(), 'Walk atlas should load');
@@ -272,6 +282,19 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await linked.getByRole('heading', { name: onErrand.name + '’s decision' }).waitFor();
   await linked.getByText('Recorded outcome', { exact: true }).waitFor();
   await linked.getByRole('button', { name: 'Close' }).click();
+  assert.equal(await page.locator('#street-follow').textContent(), 'Stop following');
+  type RoomTarget = { id: string; name: string; x: number; y: number };
+  const target = await page.evaluate(id => {
+    const targets = (window as Window & { roomTargets?: RoomTarget[] }).roomTargets ?? [];
+    return targets.find(hit => hit.id !== id) ?? targets[0];
+  }, onErrand.id);
+  assert(target, 'The interior should have a visible resident to select');
+  const position = { x: target.x, y: target.y };
+  if ((page.viewportSize()?.width ?? 1000) < 500) await stage.tap({ position });
+  else await stage.click({ position });
+  await profile.getByRole('heading', { name: target.name, exact: true }).waitFor();
+  await page.locator('#inside').getByText('Step outside', { exact: true }).waitFor();
+  await profile.getByRole('button', { name: 'Close', exact: true }).click();
   assert.equal(await page.locator('#street-follow').textContent(), 'Stop following');
   const tracks = page.locator('#music-settings > summary');
   await tracks.click();

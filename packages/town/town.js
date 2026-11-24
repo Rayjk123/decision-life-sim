@@ -83,7 +83,7 @@ let hits=[], inFlight=false, lastPoll=0;
 const streetFitZoom=6.2;
 const streetCamera={zoom:streetFitZoom,pan:null};
 let following=false;
-let interiorOpen=false;
+let interiorOpen=false, interiorProfile=null;
 let hover=null, drag=null, liveProgress=0;
 let streetMode=true, opened=false, place=null, storyText="";
 let activeStreet='waterfront', inspectedStreet='market', inspectorOpen=false, rosterExpanded=false;
@@ -105,17 +105,30 @@ function choose(id){
     advancedFor=null;
     replayOpen=false;
   }
-  selected=id;view='resident';place=null;
+  selected=id;view='resident';place=null;interiorProfile=null;
   if(!$('world').hidden)setWorld(false,false);
   renderPanels();
   $('resident-title')?.focus();
 }
 
-function followButton(){
+function inspectRoomResident(id){
+  if(id!==interiorProfile){advancedFor=null;replayOpen=false;}
+  interiorProfile=id;view='resident';
+  if(!$('world').hidden)setWorld(false,false);
+  renderPanels();
+  $('resident-title')?.focus();
+}
+
+function followButton(sim){
   const button=element('button','Follow','follow');
   button.dataset.focusKey='follow';
-  button.setAttribute('aria-pressed',following);
-  button.onclick=toggleFollow;
+  button.setAttribute('aria-pressed',following&&sim.id===selected);
+  button.onclick=()=>{
+    if(sim.id!==selected||place){
+      choose(sim.id);
+      if(!following)toggleFollow();
+    }else toggleFollow();
+  };
   return button;
 }
 function toggleFollow(){
@@ -137,10 +150,10 @@ function statGrid(entries){
   return stats;
 }
 
-function residentButton(sim,text){
+function residentButton(sim,text,onSelect=choose){
   const button=element('button',text);
   button.dataset.focusKey=sim.id;
-  button.onclick=()=>choose(sim.id);
+  button.onclick=()=>onSelect(sim.id);
   return button;
 }
 
@@ -1010,14 +1023,16 @@ function pastResidentsPanel(month){
 }
 
 function renderPanels(){
-  const resident=$('resident'), location=$('place'), sim=get();
+  const resident=$('resident'), location=$('place');
+  const inspected=view==='resident'&&interiorProfile?frame?.sims.find(sim=>sim.id===interiorProfile):null;
+  const sim=inspected??get();
   $('district-panel').hidden=streetMode||!inspectorOpen||view!=='street'||place!==null;
   const disclosure=resident.querySelector('details');
   if(disclosure&&disclosure.dataset.residentId===sim?.id){
     advancedFor=disclosure.open?sim.id:null;
     replayOpen=Boolean(disclosure.querySelector('.decision-replay')?.open);
   }
-  location.hidden=place===null;
+  location.hidden=place===null||Boolean(inspected);
   renderPanel(location, panel=>{
     if(panel.hidden)return;
     const heading=element('h2',place.name);
@@ -1041,7 +1056,7 @@ function renderPanels(){
     panel.append(close);
     updatePlaceRoster();
   },canvas);
-  resident.hidden=view==='street'||place!==null||(view!=='ranking'&&!sim);
+  resident.hidden=view==='street'||(place!==null&&!inspected)||(view!=='ranking'&&!sim);
   resident.dataset.mode=view==='ranking'?'ranking':'profile';
   $('ranking').setAttribute('aria-expanded',view==='ranking'&&!resident.hidden);
   renderPanel(resident,panel=>{
@@ -1054,13 +1069,13 @@ function renderPanels(){
     close.dataset.focusKey='close';
     close.onclick=()=>{
       if(view==='ranking'){view='resident';renderPanels();$('ranking').focus();return;}
-      view='street';
+      view='street';interiorProfile=null;
       renderPanels();
-      (streetMode?$('street-resident'):canvas).focus();
+      (inspected||!streetMode?canvas:$('street-resident')).focus();
     };
     const header=element('div',null,'panel-heading');
     const actions=element('div',null,'resident-actions');
-    if(view!=='ranking')actions.append(followButton());
+    if(view!=='ranking')actions.append(followButton(sim));
     actions.append(close);
     header.append(heading,actions);
     panel.append(header);
@@ -1400,6 +1415,7 @@ for(const [district,blocks] of Object.entries(doors)){
 }
 function openPlace(door){
   place=door;
+  interiorProfile=null;
   lookingInside=false;
   leaveFollow(false);
   renderPanels();
@@ -1436,7 +1452,8 @@ function updatePlaceRoster(){
   renderPanel(roster,panel=>{
     panel.append(element('p',neighbors.length?neighbors.length+' here now':'Nobody is here right now.'));
     const list=element('div',null,'list');
-    for(const {sim} of neighbors)list.append(residentButton(sim,sim.name+' · '+occupation(sim)));
+    for(const {sim} of neighbors)list.append(residentButton(sim,sim.name+' · '+occupation(sim),
+      lookingInside?inspectRoomResident:choose));
     panel.append(list);
   },$('place').querySelector('[data-focus-key=place-enter]'));
 }
@@ -1673,10 +1690,30 @@ function drawRoomResidents(key,neighbors,person,x,y,width,height,viewWidth,p,ani
     const size=Math.min(height*(sim===person ? .21 : .146),span*.21);
     return {sim,cx:left+span*point[0],cy:y+height*point[1],size,distance:distance===null?null:distance*height,facing};
   }).sort((a,b)=>a.cy-b.cy);
-  for(const actor of actors)drawPerson(actor.sim,actor.cx,actor.cy,actor.size,
+  for(const actor of actors)drawRoomPerson(actor.sim,actor.cx,actor.cy,actor.size,
     walkPhaseFor(actor.sim,actor.distance,actor.size),actor.sim===person,actor.facing);
 }
+
+function drawRoomPerson(sim,x,y,size,stride,focused,facing,lean){
+  drawPerson(sim,x,y,size,stride,focused,facing,lean);
+  const {a,d,e,f}=ctx.getTransform();
+  const sprite=appearance(sim.id);
+  hits.push({sim,sx:x*a+e,sy:y*d+f,height:size*d,width:size*a*sprite.width/sprite.height});
+}
+function roomResidentAt(x,y){
+  for(let i=hits.length-1;i>=0;i--){
+    const hit=hits[i];
+    if(Math.abs(x-hit.sx)<=Math.max(10,hit.width/2)&&y>=hit.sy-hit.height-3&&y<=hit.sy+4)return hit;
+  }
+  return null;
+}
+function showRoomHover(){
+  const hit=hover&&roomResidentAt(hover.x,hover.y);
+  canvas.classList.toggle('over-room-resident',Boolean(hit));
+  if(hit)label(ctx,hit.sx,hit.sy-hit.height-9,hit.sim.name);
+}
 function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey){
+  hits=[];scene=null;
   const atHome=placeKey==='home';
   const morning=p<.5;
   const edge=!animated?1:atHome?(morning?1-progress:progress):Math.min(progress,1-progress);
@@ -1714,10 +1751,10 @@ function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey)
     if(!atHome)drawRoomResidents(roomKey,neighbors,person,x,y,width,height,w,p,animated);
     if(atHome&&person){
       const stride=walkPhaseFor(person,travel===null?null:travel*Math.hypot(width*(standingX-.16),height*.09),height*.23);
-      drawPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1,shift);
+      drawRoomPerson(person,x+width*residentX,y+height*(.89-.09*acrossFloor),height*.23,stride,true,leaving?-1:1,shift);
     }
     shadeDoorway(w,h,transition);
-    hits=[];scene=null;
+    showRoomHover();
     return;
   }
   const room=workplace?{name:workplace.name,wall:'#dfbd91',trim:'#774935',shelf:'#b68154',counter:'Work bench'}:interiors[placeKey];
@@ -1754,13 +1791,13 @@ function drawInterior(placeKey,person,progress,w,h,p,animated,neighbors,roomKey)
   if(!atHome)drawRoomResidents(roomKey,neighbors,person,10,0,220,156,240,p,animated);
   if(atHome&&person){
     draw(ctx,113,y+1,14,3,'#fbd15a');
-    drawPerson(person,120,y,32,walkPhaseFor(person,travel===null?null:travel*31,32),true,leaving?-1:1,shift);
+    drawRoomPerson(person,120,y,32,walkPhaseFor(person,travel===null?null:travel*31,32),true,leaving?-1:1,shift);
     label(ctx,120,y-17,person.name);
   }
   label(ctx,120,39,room.name,room.trim);
   ctx.resetTransform();
   shadeDoorway(w,h,transition);
-  hits=[];scene=null;
+  showRoomHover();
 }
 function drawHearth(x,y,w,h,clock){
   const size=Math.max(1,Math.round(h*.004));
@@ -1997,6 +2034,7 @@ function drawFrame(time){
     if(streetName.textContent!==districts[activeStreet].name)streetName.textContent=districts[activeStreet].name;
     showStory(focus,p);
     if(!streetMode){
+      canvas.classList.remove('over-room-resident');
       $('inside').hidden=true;
       markerLayer.hidden=true;
       $('room-occupants').hidden=true;
@@ -2038,6 +2076,7 @@ function drawFrame(time){
       return;
     }
     $('room-occupants').hidden=true;
+    canvas.classList.remove('over-room-resident');
     drawStreet(focus,p,w,h);
   }
   requestAnimationFrame(drawFrame);
@@ -2152,7 +2191,7 @@ function updateCameraControls(){
   $('zoom-in').disabled=interiorOpen||streetCamera.zoom>=maxZoom();
   for(const id of ['zoom-out','zoom-in','zoom-level'])$(id).hidden=!streetMode;
   canvas.setAttribute('aria-label',!streetMode?'Town overview. Use the street pins to explore.'
-    :interiorOpen?'Interior scene. Use Step outside to return to the street.'
+    :interiorOpen?'Interior scene. Select a resident to open their profile. Use Step outside to return to the street.'
       :'Town street. Use left and right arrows to pan, and plus or minus to zoom.');
 }
 const maxZoom=()=>streetFitZoom*2;
@@ -2168,8 +2207,11 @@ const coords=event=>{
 };
 canvas.addEventListener('wheel',event=>{event.preventDefault();zoom(Math.exp(clamp(-event.deltaY*.002,-.5,.5)));},{passive:false});
 canvas.addEventListener('pointerdown',event=>{
-  if(event.button!==0||drag||!streetMode||interiorOpen)return;
-  drag={...coords(event),id:event.pointerId,moving:false};
+  if(event.button!==0||drag||!streetMode)return;
+  const point=coords(event);
+  const resident=interiorOpen?roomResidentAt(point.x,point.y)?.sim.id:null;
+  if(interiorOpen&&!resident)return;
+  drag={...point,id:event.pointerId,moving:false,resident};
   canvas.setPointerCapture(event.pointerId);
 });
 canvas.addEventListener('pointermove',event=>{
@@ -2178,6 +2220,7 @@ canvas.addEventListener('pointermove',event=>{
   if(drag.id!==event.pointerId)return;
   const dx=point.x-drag.x,dy=point.y-drag.y;
   if(!drag.moving&&Math.hypot(dx,dy)<5)return;
+  if(drag.resident){drag.moving=true;return;}
   if(!drag.moving&&event.pointerType==='touch'&&Math.abs(dy)>Math.abs(dx))return;
   leaveFollow();hover=null;canvas.classList.add('dragging');
   if(scene){streetCamera.pan=clamp((streetCamera.pan??(canvas.clientWidth*.5-scene.x)/scene.width)-dx/scene.width,0,1);drag={...point,id:drag.id,moving:true};return;}
@@ -2186,7 +2229,9 @@ canvas.addEventListener('pointermove',event=>{
 canvas.addEventListener('pointerleave',()=>{hover=null;});
 function endDrag(event){
   if(drag?.id!==event.pointerId)return;
-  if(!drag.moving&&event.type==='pointerup'&&($('inside').hidden||$('inside').textContent==='Go inside')){
+  if(!drag.moving&&event.type==='pointerup'&&drag.resident&&interiorOpen){
+    if(hits.some(hit=>hit.sim.id===drag.resident))inspectRoomResident(drag.resident);
+  }else if(!drag.moving&&event.type==='pointerup'&&!interiorOpen&&!drag.resident){
     const {x,y}=coords(event),hit=nearest(x,y);
     if(hit)choose(hit.sim.id);
     else if(scene){
