@@ -26,6 +26,10 @@ DECISION_URL='http://<ollama-host>:11434' DECISION_MODEL=d3 npm run town:smoke -
 
 The live check uses a 12-resident town. It requires a recorded decision and a double-coin comparison from the named model and checks both against the saved evidence. The full verification gate runs the heuristic check.
 
+## Verify a recorded release
+
+Use `npm run town:replay:verify` for the static browser fixture. For a recorded world, pass `--source <run-dir> --site <new-site-dir> --evidence <new-evidence-dir>` after npm's `--`. The report captures the bundle digest, data counts, screenshots, and a trace on failure. Serve the resulting site directory with a static origin. See the [verification case study](../../docs/verification.md).
+
 ## Host a shared town
 
 Run `bash packages/town/deploy/aws.sh` from an AWS profile with CloudFormation, CloudFront, API Gateway, Lambda, IAM, and S3 deployment access. It prints a public HTTPS URL. The stack stores the private checkpoint in S3, writes with an ETag precondition, and retains the checkpoint bucket on stack deletion. The deployment artifacts have a separate private bucket. CloudFront serves the static app from a private S3 bucket. Only the town API reaches Lambda, through API Gateway with a best-effort throttle of 5 requests per second and a burst of 10. Static delivery and API requests are metered. This throttle limits downstream work and is not a hard billing cap.

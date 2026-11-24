@@ -1,3 +1,6 @@
+const isReplay = document.documentElement.hasAttribute('data-replay');
+const townFetch = isReplay ? (await import('./replay.js')).replayFetch : fetch;
+
 const $ = id => document.getElementById(id);
 const canvas = $('town');
 const ctx = canvas.getContext('2d');
@@ -369,7 +372,7 @@ async function showLinkedDecision(){
   const [,id,month,encoded]=match;
   const saved=readSavedDecision(encoded,Number(month));
   try{
-    const response=await fetch('/api/town/history/'+encodeURIComponent(id),{signal:controller.signal});
+    const response=await townFetch('/api/town/history/'+encodeURIComponent(id)+(isReplay?'?through='+month:''),{signal:controller.signal});
     if(!response.ok)throw Error();
     const {months}=await response.json();
     if(controller.signal.aborted)return;
@@ -500,7 +503,7 @@ function probePanel(id,month,focusMonth){
     button.disabled=true;
     result.replaceChildren(element('p','Calculating comparison…'));
     try{
-      const response=await fetch('/api/town/probe/'+encodeURIComponent(id)+'/'+month);
+      const response=await townFetch('/api/town/probe/'+encodeURIComponent(id)+'/'+month);
       if(!response.ok)throw Error();
       const probe=await response.json();
       if(probe.status!=='ready'){
@@ -721,7 +724,7 @@ function residentHistory(sim,month){
     loading=true;
     if(shownKey===undefined)message.textContent='Loading recorded months…';
     try{
-      const response=await fetch('/api/town/history/'+encodeURIComponent(sim.id));
+      const response=await townFetch('/api/town/history/'+encodeURIComponent(sim.id)+(isReplay?'?through='+requested:''));
       if(!response.ok)throw Error();
       const {months}=await response.json();
       if(key!==coverageKey())return;
@@ -814,7 +817,7 @@ function lifetimeView(onLife){
     const focused=body.contains(document.activeElement);
     body.replaceChildren(element('p','Loading lifetime history…'));
     try{
-      const response=await fetch('/api/town/lifetime/'+month+'/'+encodeURIComponent(id));
+      const response=await townFetch('/api/town/lifetime/'+month+'/'+encodeURIComponent(id));
       if(!response.ok)throw Error();
       const {life}=await response.json();
       if(token!==request)return;
@@ -874,7 +877,7 @@ function lifetimeView(onLife){
         if(recent.has(point.month)){
           monthBody.replaceChildren(element('p','Loading recorded month…'));
           try{
-            const response=await fetch('/api/town/history/'+encodeURIComponent(id));
+            const response=await townFetch('/api/town/history/'+encodeURIComponent(id)+(isReplay?'?through='+point.month:''));
             if(!response.ok)throw Error();
             const {months}=await response.json();
             if(token!==request||selectedMonth!==point.month)return;
@@ -971,7 +974,7 @@ function pastResidentsPanel(month){
     loading=true;
     body.replaceChildren(element('p','Loading past residents…'));
     try{
-      const response=await fetch('/api/town/lifetime/'+month);
+      const response=await townFetch('/api/town/lifetime/'+month);
       if(!response.ok)throw Error();
       const {residents}=await response.json();
       loaded=true;
@@ -1133,7 +1136,7 @@ function decisionMixPanel(month){
     loading=true;
     status.textContent=body.childElementCount?'Refreshing retained months…':'Loading recorded decisions…';
     try{
-      const response=await fetch('/api/town/mix/'+month);
+      const response=await townFetch('/api/town/mix/'+month);
       if(!response.ok)throw Error();
       const {months,decisions,missingArchetype,groups}=await response.json();
       const focus=body.contains(document.activeElement);
@@ -1986,7 +1989,7 @@ async function poll(){
   if(inFlight||document.hidden)return;
   inFlight=true;lastPoll=Date.now();
   try{
-    const res=await fetch('/api/town');if(!res.ok)throw Error();
+    const res=await townFetch('/api/town');if(!res.ok)throw Error();
     const next=await res.json();
     offset=next.serverTime-Date.now();
     const sharedMonthChanged=next.month!==liveFrame?.month;
@@ -2019,7 +2022,7 @@ function drawFrame(time){
     $('day').value=p;
     $('market').textContent=frame.sims.length+' residents · '+marketName(frame.market)+' · '+loanName()+' rate '+percent(frame.rate);
     const period=p<.30?'Morning':p<.48?'Midday':p<.78?'Afternoon':p<1?'Evening'
-      :localProgress===null?'Waiting for next month':'End of this day';
+      :localProgress===null&&(!isReplay||$('shared-replay').hidden)?'Waiting for next month':'End of this day';
     const status=connection==='offline'?'Reconnecting…':(paused?'Paused · ':'')+period;
     if(phaseStatus.textContent!==status)phaseStatus.textContent=status;
     if(Date.now()-lastPoll>(live===1?4000:12000))poll();
@@ -2289,7 +2292,7 @@ function updatePlaybackControls(){
   $('pause').setAttribute('aria-pressed',paused);
   for(const button of speedButtons)button.setAttribute('aria-pressed',Number(button.dataset.speed)===speed);
   $('live').disabled=localProgress===null;
-  $('live').textContent=localProgress===null?'Live':'Go live';
+  $('live').textContent=isReplay?(localProgress===null?'Replay':'Resume replay'):(localProgress===null?'Live':'Go live');
 }
 function keepLocalTime(){
   localProgress??=$('day').value;

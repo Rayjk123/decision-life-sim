@@ -26,6 +26,8 @@
     "eval:fingerprint": "tsx packages/evals/src/fingerprint.ts",
     "ux": "tsx scripts/ux-smoke.ts",
     "town:smoke": "tsx scripts/town-ux-smoke.ts",
+    "town:replay:build": "node scripts/build-town-replay.mjs",
+    "town:replay:verify": "node --import tsx scripts/town-replay-verify.mjs",
     "town:soak": "tsx scripts/town-soak.ts",
     "town": "tsx packages/town/src/server.ts",
     "probe": "tsx packages/worker/src/probeCli.ts"

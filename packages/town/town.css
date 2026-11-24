@@ -194,3 +194,5 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
 @media(max-width:570px){.place-marker{font-size:12px}.wealth-graph canvas{image-rendering:auto}#room-occupants{top:auto;bottom:53px;right:8px}}
 
 #town.over-room-resident{cursor:pointer}
+
+.replay-nav{display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;padding:6px 14px;background:#1c253d;border-bottom:1px solid #796178;font-size:12px;flex:none}.replay-nav form{display:flex;align-items:center;gap:6px;margin:0}.replay-nav select,.replay-nav button{padding:3px 6px}.replay-nav a{color:#ffdda8}

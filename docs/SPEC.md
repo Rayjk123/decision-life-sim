@@ -33,6 +33,8 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 | 19 | Setting | **A medieval market town** (user, 2026-11-22, to match the pixel town): gold crowns at the same numbers; the index fund is the **Guild Fund** (pooled, steady), stocks are **merchant ventures** (one ship or caravan, big swings), the savings account is the **counting-house vault**; cottages, townhouses and manor houses; cottages to let; a horse and cart; a tavern tab (the 24% card); medieval careers and businesses (the tech startup is an alchemist's workshop). Every word comes from `sim-core/src/theme.ts` and the tables in `data.ts`; **mechanics, numbers and ids are unchanged** (`invest_index`, `trade_stocks`, … stay) | The town's look and its numbers tell one story; one theme file keeps the wording consistent; unchanged ids keep logs, labels and golden expectations valid. Changes what the model reads, so model results are re-run and fine-tuned models retrained on re-sampled states (same towns, same labels) |
 | 12 | Hosting (later) | One rented GPU (RunPod 4090/L4) running Kev + worker; S3 + CloudFront for files | ~$260–300/mo 24/7; viewers cost nothing extra |
 
+The recorded Maple Hollow demo uses a static site bundle with compressed monthly frames and lifetime history. A release candidate carries a bundle digest and browser evidence for the dated decisions, rollover, failure recovery, and phone layout. See [release verification](verification.md).
+
 ## Kev request (exact shape)
 
 `POST http://127.0.0.1:8009/v1/systemone`. `state` may be an object; Kev flattens it to `key: value` lines. Choice options are shown to the model as `name: description`.

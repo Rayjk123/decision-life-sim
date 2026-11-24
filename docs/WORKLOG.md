@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Verification · recorded replay release
+
+- Promoted the static replay preview into a reproducible build and added a browser gate to CI. The gate rejects a corrupt fixture, checks a 503 and recovery at rollover, and attaches evidence for desktop, phone, dated decisions, and lifetime history.
+- Added a project verification skill, feature map, and [portfolio case study](verification.md). Full recordings can run through the same gate. Hosted CDN delivery and model quality remain separate checks.
+
 ## Verification · faster historical warm-up
 
 - Main's browser checks passed on Node 20 and 22, while the first health seed ran just over the eight-second budget. Warm-up now skips unused heuristic prompts and decision records. Normal visible-month records and external model requests are preserved, and the timing budget stays at eight seconds.

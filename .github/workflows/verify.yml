@@ -29,3 +29,12 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run verify -- --all
+        env:
+          REPLAY_EVIDENCE_DIR: world/replay-evidence
+      - name: Upload replay verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: town-replay-verification-node-${{ matrix.node }}
+          path: world/replay-evidence/
+          if-no-files-found: ignore

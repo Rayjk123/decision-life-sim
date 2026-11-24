@@ -28,7 +28,7 @@ const gates: Gate[] = [
     return 'no type errors';
   } },
   { name: 'G2-G5 tests (determinism, ledger, golden validity)', run: () => {
-    const r = sh('node', ['--import', 'tsx', '--test', ...execFileSync('sh', ['-c', 'ls packages/*/test/*.test.ts'], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n')]);
+    const r = sh('node', ['--import', 'tsx', '--test', '--test-reporter=tap', ...execFileSync('sh', ['-c', 'ls packages/*/test/*.test.ts'], { cwd: ROOT, encoding: 'utf8' }).trim().split('\n')]);
     const s = parseTestSummary(r.out);
     if (!s) throw new Error(`could not read the test summary:\n${r.out.slice(-2000)}`);
     if (s.fail > 0 || !r.ok) throw new Error(`${s.fail} failing:\n${r.out.split('\n').filter((l) => /^not ok/.test(l)).join('\n')}`);
@@ -60,6 +60,12 @@ const gates: Gate[] = [
   { name: 'G10 Maple Hollow smoke (real browser)', run: () => {
     const r = sh('npx', ['tsx', 'scripts/town-ux-smoke.ts']);
     if (!r.ok) throw new Error(r.out.trim().slice(-3000));
+    return r.out.trim().split('\n').pop() ?? '';
+  } },
+  { name: 'G10 static replay (real browser)', run: () => {
+    const evidence = process.env.REPLAY_EVIDENCE_DIR;
+    const r = sh('npm', ['run', 'town:replay:verify', ...(evidence ? ['--', '--evidence', evidence] : [])]);
+    if (!r.ok) throw new Error(r.out.trim().slice(-3500));
     return r.out.trim().split('\n').pop() ?? '';
   } },
   { name: 'G9 docs in sync', run: () => {
