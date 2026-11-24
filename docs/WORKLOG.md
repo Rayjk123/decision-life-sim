@@ -7,6 +7,11 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Maple Hollow · resident chart and public interiors
+
+- Personality moved below the resident's identity. The lifetime chart highlights plotted months on hover or keyboard navigation and opens dated evidence on selection. Recent months use their full timeline records. Older samples show archived wealth and same-month milestones where available.
+- Named entrances open live occupant rosters. Look inside stays in a public room as people arrive and leave, including when the room starts empty. Followed workplace and shop visits also render other occupants.
+
 ## Maple Hollow · monthly financial reviews
 
 - Newly simulated town months now use the engine's monthly policy, including warm-up for new towns. Existing checkpoints keep their published and prepared decisions. The timeline explains why a month can still have no recorded decision.

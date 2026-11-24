@@ -113,6 +113,8 @@ test('viewers share one paced world, and a restart preserves its month', async (
   assert(recordedLife.events.some(event => event.month < 121 && event.text.includes('moved to town')));
   assert.equal(recordedLife.wealth.at(-1)?.nw, original.nw);
   assert(recordedLife.wealth.every(point => point.month <= 121));
+  assert.equal(recordedLife.recentWealth.at(-1)?.nw, original.nw);
+  assert(recordedLife.recentWealth.every(point => point.month <= 121));
   assert.equal(history[0].nw, original.nw);
   assert.ok(recorded?.reason);
   assert.ok(recorded?.offered.includes(original.move!));
@@ -146,7 +148,7 @@ test('viewers share one paced world, and a restart preserves its month', async (
   }
   assert.equal(saved!.history?.length, 11);
   assert.deepEqual(await restarted.residentLifetime(id, 121), {
-    ...recordedLife, wealth: recordedLife.wealth.filter(point => point.month < 121),
+    ...recordedLife, wealth: recordedLife.wealth.filter(point => point.month < 121), recentWealth: [],
   });
   const months = saved!.history?.map(row => row.month);
   assert.deepEqual(months, Array.from({ length: 11 }, (_, i) => 124 + i));

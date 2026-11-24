@@ -177,3 +177,15 @@ canvas:focus-visible{outline:3px solid #83adff;outline-offset:-3px}
   .music-options{inset-block-start:calc(100% - 5px);inset-inline-end:8px}
 }
 @media(max-width:570px){#music-settings summary{font-size:12px;padding-inline:4px}}
+
+.wealth-graph{padding:0;display:block;width:100%;text-align:left;overflow:hidden}
+.wealth-graph .lifetime-trend{margin:0;cursor:crosshair}
+.wealth-chart-caption{display:block;padding:5px 8px;font-variant-numeric:tabular-nums}
+.wealth-month{margin-block:8px 12px;padding:8px;border:1px solid #776781;border-radius:4px}
+.wealth-month h4{margin:0 0 8px}
+.wealth-month-record{list-style:none;margin:0;padding:0}
+#place-markers{position:absolute;inset:0;pointer-events:none}
+.place-marker{position:absolute;transform:translate(-50%,-50%);background:#171e35ed;border-color:#ab856d;color:#ffdda8;font-weight:650;min-height:36px;padding:4px 8px;white-space:nowrap;pointer-events:auto;box-shadow:0 2px #0d1425}
+.place-marker::after{content:' ↗';font-weight:400}
+#room-occupants{position:absolute;right:12px;top:12px;background:#171e35ed;border:1px solid #ab856d;border-radius:4px;padding:5px 8px;pointer-events:none}
+@media(max-width:570px){.place-marker{font-size:12px}.wealth-graph canvas{image-rendering:auto}#room-occupants{top:auto;bottom:53px;right:8px}}

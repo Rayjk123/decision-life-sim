@@ -146,7 +146,17 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
   await profile.getByText('Lifetime history', { exact: true }).click();
   await profile.locator('.recent-milestones strong').first().waitFor();
   const lifetime = profile.locator('.resident-lifetime');
-  await lifetime.getByRole('img', { name: /Net worth from/ }).waitFor();
+  const chart = lifetime.getByRole('img', { name: /Net worth from/ });
+  await chart.waitFor();
+  const graph = lifetime.locator('.wealth-graph');
+  if (!page.viewportSize()?.width || page.viewportSize()!.width > 500) {
+    await chart.hover({ position: { x: 6, y: 12 } });
+    assert(!(await graph.locator('.wealth-chart-caption').textContent())?.startsWith(frame.label));
+  }
+  await graph.press('End');
+  await graph.press('Enter');
+  await lifetime.locator('.wealth-month').getByText('Month details · ' + frame.label, { exact: true }).waitFor();
+  await lifetime.locator('.wealth-month').getByRole('heading', { name: 'Selected cash flows' }).waitFor();
   const year = lifetime.getByLabel('Browse by year');
   await year.waitFor();
   await year.selectOption({ index: (await year.locator('option').count()) - 1 });
@@ -230,6 +240,17 @@ async function verifyViewport(page: Page, url: string, frame: Awaited<ReturnType
     await panel.getByRole('button', { name: 'Zoom to street' }).click();
     await stage.and(page.locator(`[data-drawn-artwork="street-${district}.jpg"]`)).waitFor();
   }
+  const zoomOut = page.locator('#zoom-out');
+  while (await zoomOut.isEnabled()) await zoomOut.click();
+  const marker = page.locator('#place-markers').getByRole('button', { name: 'Schoolhouse' });
+  await marker.click();
+  const premises = page.getByRole('complementary', { name: 'Place details' });
+  await premises.getByRole('heading', { name: 'Schoolhouse' }).waitFor();
+  await premises.getByRole('button', { name: 'Look inside' }).click();
+  await page.locator('#room-occupants').getByText(/Schoolhouse · \d+ here now/).waitFor();
+  await premises.getByRole('button', { name: 'Step outside' }).click();
+  await page.locator('#room-occupants').waitFor({ state: 'hidden' });
+  await premises.getByRole('button', { name: 'Close place' }).click();
   const onErrand = frame.sims.find(sim => sim.errand && sim.move && sim.decision?.provider === resident.decision?.provider);
   assert(onErrand, 'The walkthrough needs a recorded errand');
   await page.locator('#ranking').click();

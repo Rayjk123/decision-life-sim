@@ -259,7 +259,15 @@ export function sharedWorld(storage: Storage, {
     const row = through === value.current.month ? value.current.sims.find(sim => sim.id === id)
       : residents && Object.hasOwn(residents, id) ? residents[id] : undefined;
     const viewed = row && { month: through, age: row.age, nw: row.nw };
-    return readLife(lifetimeArchive(value), value.world, through, id, viewed);
+    const life = readLife(lifetimeArchive(value), value.world, through, id, viewed);
+    if (!life) return null;
+    const retained = (value.history ?? []).flatMap(({ month, residents }) => {
+      if (month > through || !Object.hasOwn(residents, id)) return [];
+      const { age, nw } = residents[id];
+      return [{ month, age, nw }];
+    });
+    if (viewed && through === value.current.month) retained.push(viewed);
+    return { ...life, recentWealth: retained.map(point => ({ ...point, label: monthLabel(point.month) })) };
   }
 
   async function pastResidents(month: number) {
