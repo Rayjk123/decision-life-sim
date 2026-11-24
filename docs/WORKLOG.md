@@ -10,6 +10,7 @@ Newest session first. Each entry: what was done, the current state, and the next
 ## Verification · recorded replay release
 
 - Promoted the static replay preview into a reproducible build and added a browser gate to CI. The gate rejects a corrupt fixture, checks a 503 and recovery at rollover, and attaches evidence for desktop, phone, dated decisions, and lifetime history.
+- An independent review found that inconsistent timeline balances and odds could pass packaging. The gate now compares those fields against every frame, rejects both mutations, and checks the displayed values against the final recorded month in Chrome.
 - Added a project verification skill, feature map, and [portfolio case study](verification.md). Full recordings can run through the same gate. Hosted CDN delivery and model quality remain separate checks.
 
 ## Verification · faster historical warm-up

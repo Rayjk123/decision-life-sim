@@ -13,8 +13,8 @@ The first local preview used a one-off adapter and browser walkthrough. The repo
 
 | Gate | What the reviewer gets |
 |---|---|
-| Data and packaging | Every month decompresses in order, each resident has a matching timeline row, and every recorded decision agrees with the declared model. A deliberately corrupted month must fail before the site entry point is written. |
-| Browser journeys | Four districts, a jump to the final month, a named resident’s history, a dated decision link, lifetime wealth, personality mix, and a phone layout. Screenshots let reviewers inspect the result directly. |
+| Data and packaging | Every month decompresses in order, each resident has a matching timeline row, and every recorded decision agrees with the declared model. A separate mutation changes a balance or odds in a timeline row and must also fail. A deliberately corrupted month must fail before the site entry point is written. |
+| Browser journeys | Four districts, a jump to the final month, a named resident’s balances and decision odds checked against the recording, a dated decision link, lifetime wealth, personality mix, and a phone layout. Screenshots let reviewers inspect the result directly. |
 | Recovery | A forced HTTP 503 at the final-month boundary. The test observes the reconnect state and checks that the date remains on the last good frame until the first month loads. |
 | Delivery | The client loads its data from static files, including both raw and HTTP-decoded gzip. The test checks that no API calls occur and the private checkpoint is inaccessible. |
 
@@ -27,14 +27,15 @@ For an actual release, run this from a clean checkout with a complete recording 
 ```sh
 npm run town:replay:verify -- \
   --source <recorded-run-dir> \
+  --expect e06/200/1200 \
   --site <new-static-site-dir> \
   --evidence <new-evidence-dir>
 ```
 
-The report records the commit, working-tree status, bundle digest, browser, timing, and results. Keep that exact site directory with the report so a reviewer can identify the tested bundle. On failure, open the saved Playwright trace to see the browser actions and network state.
+The report records the commit, working-tree status, recording and bundle hashes, replay epoch, browser, timing, and results. Use `--epoch <milliseconds>` to reproduce a candidate with the same shared clock and bundle digest. Keep that exact site directory with the report so a reviewer can identify the tested bundle. On failure, open the saved Playwright trace to see the browser actions and network state.
 
 ## How I use the evidence
 
 The code author runs the narrowest failing journey, fixes the cause, and reruns the larger gate. A reviewer can start with the report, screenshots, and failure demonstration. If a bug escapes, the follow-up changes the feature map or adds a failing assertion at the layer that should have caught it.
 
-The E06 recording contains **1,200 consecutive months, 207,287 model decisions, zero heuristic fallbacks, and 629 lifetime histories**. Those counts describe the data exercised. The gate does not evaluate E06’s financial judgment, establish that the music sounds good, or verify a production CloudFront distribution. Those claims require model evaluations, listening, and a check of the deployed candidate respectively.
+The E06 recording contains **1,200 consecutive months, 207,287 model decisions, zero heuristic fallbacks, and 629 lifetime histories**. The rules engine rejected one sampled move, and the recording preserves that outcome. Those counts describe the data exercised. The gate does not evaluate E06’s financial judgment, establish that the music sounds good, or verify a production CloudFront distribution. Those claims require model evaluations, listening, and a check of the deployed candidate respectively.

@@ -11,17 +11,26 @@ import { heuristicDecider } from '../packages/sim-core/src/index.ts';
 import { DAY, sharedWorld } from '../packages/town/src/world.ts';
 import { buildReplay, monthFile } from './build-town-replay.mjs';
 
-const {values} = parseArgs({options: {source:{type:'string'}, evidence:{type:'string'}, site:{type:'string'}}});
+const {values} = parseArgs({options: {
+  source:{type:'string'}, evidence:{type:'string'}, site:{type:'string'}, epoch:{type:'string'}, expect:{type:'string'},
+}});
 const temp = await mkdtemp(join(tmpdir(), 'maple-hollow-release-'));
 const evidence = resolve(values.evidence ?? join(temp, 'evidence'));
 await mkdir(dirname(evidence), {recursive:true});
 await mkdir(evidence);
 const report = {result: 'FAIL', createdAt: new Date().toISOString(), node: process.version, commit: execFileSync('git', ['rev-parse','HEAD'], {encoding:'utf8'}).trim(),
   workingTree: execFileSync('git', ['status','--porcelain'], {encoding:'utf8'}).trim() ? 'modified' : 'clean',
-  source: values.source ? 'recorded run' : 'deterministic test fixture', checks: []};
+  source: values.source ? 'recorded run' : 'deterministic test fixture', expectedRelease: values.expect, checks: []};
 const start = performance.now();
-const epoch = Date.now();
+const epoch = values.epoch === undefined ? Date.now() : Number(values.epoch);
 let server, browser, context, page;
+const journey = {
+  districts:'Open the replay and inspect four districts through the published UI',
+  evidence:'Match the final month’s resident, outcome, odds and balances to the recording',
+  recovery:'Roll over to the first month after a failed download, retaining the last good frame',
+  phone:'Use the phone layout and confirm static-only requests with private data excluded',
+};
+let openingBrowser = false;
 
 async function check(name, run, screenshot) {
   const step = {name, result:'FAIL'};
@@ -99,17 +108,43 @@ try {
   const source = values.source ? resolve(values.source) : fixtureSource;
   const site=values.site ? resolve(values.site) : join(temp,'site');
   await check('Package every month and verify chronological coverage, decision provenance and lifetime history',async () => {
+    const identity = await readFile(join(source,'manifest.json'),'utf8').then(JSON.parse);
+    if (values.expect) {
+      assert.equal([identity.model,identity.population,identity.months].join('/'),values.expect,
+        'Expected release identity as model/population/months');
+    }
     report.bundle=await buildReplay(source,site,epoch);
   });
   await check('Reject a replay with a corrupt month before exposing a site entry point',async () => {
     const path=join(fixtureSource,monthFile(2));
-    const payload=JSON.parse(gunzipSync(await readFile(path)));
+    const original=await readFile(path);
+    const payload=JSON.parse(gunzipSync(original));
     payload.frame.month++;
-    await writeFile(path,gzipSync(JSON.stringify(payload)));
     const invalid=join(temp,'invalid');
-    await assert.rejects(buildReplay(fixtureSource,invalid,epoch),/month out of sequence/);
-    await assert.rejects(access(join(invalid,'index.html')),{code:'ENOENT'});
+    await writeFile(path,gzipSync(JSON.stringify(payload)));
+    try {
+      await assert.rejects(buildReplay(fixtureSource,invalid,epoch),/month out of sequence/);
+      await assert.rejects(access(join(invalid,'index.html')),{code:'ENOENT'});
+    } finally {
+      await writeFile(path,original);
+    }
   });
+  await check('Reject a timeline that disagrees with the recorded frame',async () => {
+    const path=join(fixtureSource,monthFile(2));
+    const payload=JSON.parse(gunzipSync(await readFile(path)));
+    const original = payload.rows.find(row => row.probabilities && Object.keys(row.probabilities).length);
+    assert(original,'Missing a fixture decision');
+    const oldWorth=original.nw;
+    original.nw+=100;
+    await writeFile(path,gzipSync(JSON.stringify(payload)));
+    await assert.rejects(buildReplay(fixtureSource,join(temp,'bad-balance'),epoch),/disagree on nw/);
+    original.nw=oldWorth;
+    const option=Object.keys(original.probabilities)[0];
+    original.probabilities[option]=original.probabilities[option] === 0 ? 1 : 0;
+    await writeFile(path,gzipSync(JSON.stringify(payload)));
+    await assert.rejects(buildReplay(fixtureSource,join(temp,'bad-odds'),epoch),/disagree on probabilities/);
+  });
+  openingBrowser=true;
   const base=await serve(site);
   const manifest=JSON.parse(await readFile(join(site,'replay','manifest.json'),'utf8'));
   const firstMonth=manifest.firstMonth, lastMonth=firstMonth+manifest.published-1;
@@ -117,6 +152,7 @@ try {
   const firstLabel=JSON.parse(gunzipSync(await readFile(join(site,'replay',monthFile(1))))).frame.label;
   browser=await chromium.launch(process.env.CHROMIUM_PATH ? {executablePath:process.env.CHROMIUM_PATH} : {channel:'chrome'});
   report.browser='Chromium '+browser.version();
+  openingBrowser=false;
   context=await browser.newContext({viewport:{width:1440,height:900}});
   await context.tracing.start({screenshots:true,snapshots:true});
   page=await context.newPage();
@@ -126,8 +162,20 @@ try {
   context.on('page',tab => tab.on('pageerror',error => errors.push(error.message)));
   page.on('pageerror',error => errors.push(error.message));
   let decisionHref, lastLabel;
+  const lastFrame=JSON.parse(gunzipSync(await readFile(join(site,'replay',monthFile(manifest.published))))).frame;
+  const term=(container,key) => container.locator('dt').getByText(key,{exact:true}).first().locator('xpath=following-sibling::dd[1]');
+  const visibleValue=async (locator,expected) => {
+    await locator.waitFor();
+    assert.equal(await locator.textContent(),expected);
+  };
+  const crowns=cents => {
+    const amount=new Intl.NumberFormat('en-US',{maximumFractionDigits:Math.abs(cents)<100?2:0}).format(cents/100);
+    const currency=lastFrame.presentation.currency;
+    return amount+' '+(currency==='crowns' && Math.abs(Number(amount))===1 ? 'crown' : currency);
+  };
+  const moveLabel=move => lastFrame.presentation.moves[move] ?? move.replaceAll('_',' ').replace(/\b\w/g,letter=>letter.toUpperCase());
 
-  await check('Open the replay and inspect four districts through the published UI', async () => {
+  await check(journey.districts, async () => {
     await page.clock.setFixedTime(new Date(epoch+20_000));
     await page.goto(base);
     await page.locator('#market').getByText(/residents/).waitFor();
@@ -139,7 +187,7 @@ try {
     await page.getByRole('heading',{name:'Who’s here'}).waitFor();
   }, 'overview.png');
 
-  await check('Jump to the last month and inspect its saved decision, timeline and lifetime chart', async () => {
+  await check(journey.evidence, async () => {
     const target=date(lastMonth);
     await page.getByLabel('Simulation year').selectOption(target.year);
     await page.getByLabel('Simulation month').selectOption(target.part);
@@ -152,10 +200,24 @@ try {
     decisionHref=await link.getAttribute('href');
     assert(decisionHref?.endsWith('/'+lastMonth),'Decision link should point to the viewed month');
     lastLabel=(await world.getByText(/^Viewed month/).textContent()).replace('Viewed month · ','');
-    await link.click();
+    const residentId=decisionHref.split('/')[1];
+    const expected=lastFrame.sims.find(sim=>sim.id===residentId);
+    assert(expected?.decision?.sampling,'Missing saved sampling evidence');
     const dialog=page.getByRole('dialog');
-    await dialog.getByText('Recorded outcome',{exact:true}).waitFor();
-    await dialog.getByText(manifest.model,{exact:true}).first().waitFor();
+    async function verifyDecision() {
+      await dialog.getByText(lastLabel,{exact:true}).waitFor();
+      await dialog.getByRole('heading',{name:expected.name+'’s decision'}).waitFor();
+      await visibleValue(term(dialog,'Recorded outcome'),moveLabel(expected.move));
+      await visibleValue(term(dialog,'Decision source'),manifest.model);
+      const odds=dialog.locator('h3').getByText('Raw move odds',{exact:true}).locator('xpath=following-sibling::dl[1]');
+      for (const [move, probability] of Object.entries(expected.probabilities)) {
+        const value=term(odds,moveLabel(move));
+        await visibleValue(value,(probability*100).toFixed(1)+'%');
+        assert.equal(await value.getAttribute('title'),String(probability));
+      }
+    }
+    await link.click();
+    await verifyDecision();
     await page.screenshot({path:join(evidence,'decision.png'),animations:'disabled'});
     await page.keyboard.press('Escape');
     await world.getByText('Decision mix by personality',{exact:true}).click();
@@ -166,14 +228,17 @@ try {
     await world.locator('[data-focus-key="'+decisionHref.split('/')[1]+'"]').first().click();
     const profile=page.locator('#resident');
     await profile.getByText('Monthly timeline',{exact:true}).click();
-    await profile.locator('.timeline').getByText(lastLabel,{exact:true}).first().waitFor();
+    const timeline=profile.locator('.timeline > li').filter({hasText:lastLabel});
+    await timeline.getByText(lastLabel,{exact:true}).click();
+    for (const [key, cents] of [['Net worth',expected.nw],['Cash',expected.cash],['Debt',expected.debt]]) {
+      await visibleValue(term(timeline,key),crowns(cents));
+    }
     const beginning=new URLSearchParams(date(firstMonth));
     await page.goto(base+'/?'+beginning+decisionHref);
-    await dialog.getByText('Recorded outcome',{exact:true}).waitFor();
-    await dialog.getByText(lastLabel,{exact:true}).waitFor();
+    await verifyDecision();
   }, 'deep-link.png');
 
-  await check('Roll over to the first month after a failed download, retaining the last good frame', async () => {
+  await check(journey.recovery, async () => {
     const replay=await context.newPage();
     await replay.clock.setFixedTime(new Date(epoch+(manifest.published-1)*DAY+20_000));
     await replay.goto(base);
@@ -196,7 +261,7 @@ try {
     await replay.close();
   });
 
-  await check('Use the phone layout and confirm static-only requests with private data excluded', async () => {
+  await check(journey.phone, async () => {
     await page.setViewportSize({width:390,height:844});
     await page.goto(base);
     await page.locator('#market').getByText(/residents/).waitFor();
@@ -210,10 +275,14 @@ try {
     assert.deepEqual(errors,[]);
   }, 'phone.png');
 
-  report.result='PASS';
   await context.tracing.stop();
+  report.result='PASS';
 } catch (error) {
   report.error=error.message;
+  if (openingBrowser) report.result='BLOCKED';
+  for (const name of Object.values(journey)) {
+    if (!report.checks.some(step=>step.name===name)) report.checks.push({name,result:'BLOCKED'});
+  }
   if (page && !page.isClosed()) await page.screenshot({path:join(evidence,'failure.png')}).catch(()=>{});
   if (context) await context.tracing.stop({path:join(evidence,'failure-trace.zip')}).catch(()=>{});
   throw error;
@@ -223,7 +292,7 @@ try {
   report.seconds=Number(((performance.now()-start)/1000).toFixed(2));
   await writeFile(join(evidence,'report.json'),JSON.stringify(report,null,2)+'\n');
   const {bundle} = report;
-  const rows=report.checks.map(step=> '| '+step.result+' | '+step.name+' | '+step.seconds+' s | '+
+  const rows=report.checks.map(step=> '| '+step.result+' | '+step.name+' | '+(step.seconds===undefined?'—':step.seconds+' s')+' | '+
     (step.screenshot?'['+step.screenshot+'](./'+step.screenshot+')':'')+' |');
   await writeFile(join(evidence,'report.md'),[
     '# Maple Hollow replay verification', '', '**'+report.result+'** · '+report.source+' · '+report.seconds+' s',
@@ -231,13 +300,15 @@ try {
     ...(bundle?['','Bundle SHA-256 `'+bundle.bundleSha256+'`.','',
       bundle.months.toLocaleString()+' months · population '+bundle.minimumPopulation+'–'+bundle.population+' · '+
       bundle.decisions.toLocaleString()+' decisions from '+bundle.model+' · '+bundle.fallbacks+' fallbacks · '+
-      bundle.lifetimeHistories.toLocaleString()+' lifetime histories.']:[]),
+      bundle.lifetimeHistories.toLocaleString()+' lifetime histories.',
+      'Rules check rejected '+bundle.invalidDecisions.toLocaleString()+' sampled moves.',
+      'Recording SHA-256 `'+bundle.recordingSha256+'`. Replay epoch `'+bundle.epoch+'`.']:[]),
     '', '| Result | Check | Time | Evidence |','|---|---|---:|---|',...rows,
-    '', ...(report.error?['Failure details are in [report.json](./report.json).']:[]),
+    '', ...(report.error?[report.error.split('\n')[0], '', 'Full diagnostics are in [report.json](./report.json).']:[]),
     ...(report.result === 'PASS' ? ['', '[Decision details](./decision.png) · [Failed download](./recovery-503.png) · [Recovered first month](./recovery-restored.png)', ''] : []),
     'Scope covers loopback static delivery in Chromium. Model quality and deployed CDN behavior are separate checks.', '',
   ].join('\n'));
   if (values.evidence) await rm(temp,{recursive:true,force:true});
-  else await Promise.all(['site','fixture','invalid'].map(name=>rm(join(temp,name),{recursive:true,force:true})));
+  else await Promise.all(['site','fixture','invalid','bad-balance','bad-odds'].map(name=>rm(join(temp,name),{recursive:true,force:true})));
   console.log('Evidence: '+evidence);
 }
