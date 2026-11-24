@@ -22,6 +22,8 @@ export interface TickOptions {
   policy?: CallPolicy;
   concurrency?: number;
   style?: StateStyle;
+  /** Historical warm-up retains life events and can discard decision records. */
+  recordDecisions?: boolean;
   /** Read-only hook before decision execution changes the resident or the world. */
   onDecisionRequest?: (request: DecisionRequest) => void;
   onDecision?: (d: DecisionRecord) => void;
@@ -59,12 +61,22 @@ async function pool<T, R>(items: T[], limit: number, fn: (t: T) => Promise<R>): 
   return out;
 }
 
-/** Build the decision request for one sim (also used by evals and probes). */
-export function buildRequest(sim: Sim, world: World, style: StateStyle = 'words'): DecisionRequest {
+function decisionOptions(sim: Sim, world: World) {
   const m = world.month;
   const moves = legalMoves(sim, world);
   const askRetire = !sim.retired && !inSchool(sim, m) && ageInt(sim, m) >= 55 && canAffordRetirement(sim, m);
-  return { sim, world, moves, askRetire, state: buildState(sim, world, style), questions: buildQuestions(sim, moves, askRetire) };
+  return { moves, askRetire };
+}
+
+function decisionRequest(sim: Sim, world: World, { moves, askRetire }: ReturnType<typeof decisionOptions>,
+  style: StateStyle, withPrompt: boolean): DecisionRequest {
+  return { sim, world, moves, askRetire, state: withPrompt ? buildState(sim, world, style) : {},
+    questions: withPrompt ? buildQuestions(sim, moves, askRetire) : {} };
+}
+
+/** Build the decision request for one sim (also used by evals and probes). */
+export function buildRequest(sim: Sim, world: World, style: StateStyle = 'words'): DecisionRequest {
+  return decisionRequest(sim, world, decisionOptions(sim, world), style, true);
 }
 
 export async function runMonth(world: World, decider: Decider, opts: TickOptions = {}): Promise<MonthResult> {
@@ -110,13 +122,16 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
   }
   world.sims = survivors;
 
-  // Decisions
+  // Decisions. Build prompts only for viable choices, and omit unused heuristic warm-up text.
+  const recordDecisions = opts.recordDecisions !== false || opts.onDecision !== undefined;
+  const withPrompt = recordDecisions || opts.onDecisionRequest !== undefined || decider !== heuristicDecider;
   const requests: Array<{ req: DecisionRequest; reason: string }> = [];
   for (const sim of [...world.sims].sort((a, b) => a.id.localeCompare(b.id))) {
     const reason = decisionReason(sim, world, eventsBySim.get(sim.id) ?? [], opts.policy ?? 'events');
     if (!reason) continue;
-    const req = buildRequest(sim, world, opts.style);
-    if (req.moves.length === 1 && !req.askRetire) continue; // nothing to decide
+    const options = decisionOptions(sim, world);
+    if (options.moves.length === 1 && !options.askRetire) continue; // nothing to decide
+    const req = decisionRequest(sim, world, options, opts.style ?? 'words', withPrompt);
     opts.onDecisionRequest?.(req);
     requests.push({ reason, req });
   }
@@ -139,7 +154,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     const draw = drawFor(world.seed, m, sim.id, 'main');
     const retireDraw = drawFor(world.seed, m, sim.id, 'retire');
     const p = pick(sim, res.answers, draw, retireDraw);
-    const heuristicPick = argmax(heuristicAnswers(sim, world, moves, req.askRetire).main);
+    const heuristicPick = recordDecisions ? argmax(heuristicAnswers(sim, world, moves, req.askRetire).main) : null;
 
     if (p.retire) {
       retire(sim);
@@ -152,6 +167,7 @@ export async function runMonth(world: World, decider: Decider, opts: TickOptions
     const spend = res.answers.spendLevel ? sampleSpendLevel(res.answers.spendLevel, drawFor(world.seed, m, sim.id, 'spend')) : heuristicSpendLevel(sim, world);
     events.push(...applySpendLevel(world, sim, spend));
     sim.lastDecisionMonth = m;
+    if (heuristicPick === null) return;
     const rec: DecisionRecord = {
       simId: sim.id, month: m, provider: res.provider, model: res.model, moves: moves.map((mv) => mv.id), answers: res.answers,
       picked: valid ? move.id : 'nothing', draw, heuristicPick, reason, investLevel: p.shareLevel, retired: p.retire, spendLevel: spend,

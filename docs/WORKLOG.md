@@ -7,6 +7,10 @@ nav_order: 4
 
 Newest session first. Each entry: what was done, the current state, and the next steps, so work can resume after a break or a context reset.
 
+## Verification · faster historical warm-up
+
+- Main's browser checks passed on Node 20 and 22, while the first health seed ran just over the eight-second budget. Warm-up now skips unused heuristic prompts and decision records. Normal visible-month records and external model requests are preserved, and the timing budget stays at eight seconds.
+
 ## Maple Hollow · clickable indoor residents
 
 - Indoor characters now expose click and tap targets at their current drawn positions. Inspecting a resident, either on the floor or from the indoor roster, keeps the current room visible. Follow switches to the inspected resident when requested.

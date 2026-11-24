@@ -29,7 +29,7 @@ export async function growHistory(world: World, years = HISTORY_YEARS, decider: 
   const months = Math.round(years * 12);
   const past: SimEvent[] = [];
   while (world.month < months) {
-    const r = await runMonth(world, decider);
+    const r = await runMonth(world, decider, { recordDecisions: false });
     for (const e of r.events) if (e.simId && HISTORY_MILESTONES.has(e.type)) past.push({ month: e.month, simId: e.simId, type: e.type, text: e.text });
   }
   const shift = world.month;

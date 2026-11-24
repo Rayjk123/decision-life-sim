@@ -131,6 +131,8 @@ Status: milestones 1–2 built (engine, Kev gateway, CLI, golden eval suite, exp
 - Rentals can oversupply (frequent rent cuts); homeownership varies a lot by seed.
 - Inflation, capital gains tax and progressive taxes are simplified (real terms, flat effective tax).
 
+Historical warm-up records life milestones and applies the same financial decisions as a visible month. The warm-up skips generating heuristic prompts and decision records that no reader consumes. External deciders still receive full requests.
+
 **6. The pixel town.** The first Maple Hollow build uses a Canvas street grid and frames projected from the same simulation engine. The remaining roadmap includes:
 
 - Five original lo-fi arrangements are synthesized with Web Audio. The selected track repeats, and the browser stores the track, volume and mute settings. Audio starts on the first interaction when autoplay is blocked.

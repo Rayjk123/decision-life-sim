@@ -53,3 +53,19 @@ test('movers arrive at every adult age; about half at 18', () => {
   assert.ok(Math.min(...ages) >= 18 && Math.max(...ages) <= 55);
   assert.ok(ages.filter((a) => a >= 40).length > 100, 'some movers are 40+');
 });
+
+test('omitting warm-up decision records preserves the world and real life events', async () => {
+  const recorded = await growHistory(createWorld(8, 45), 15);
+  const unrecorded = structuredClone(recorded);
+  let decisions = 0;
+  for (let i = 0; i < 12; i++) {
+    const full = await runMonth(recorded, heuristicDecider);
+    const compact = await runMonth(unrecorded, heuristicDecider, { recordDecisions: false });
+    assert.equal(full.calls, compact.calls);
+    assert.deepEqual(compact.decisions, []);
+    assert.deepEqual(compact.events, full.events.filter(event => event.type !== 'decision'));
+    decisions += full.decisions.length;
+  }
+  assert(decisions > 0);
+  assert.deepEqual(recorded, unrecorded);
+});
